@@ -1,0 +1,26 @@
+# --- A3 Modbus DPI: function-code detection (payload offset 7; proto-id anchor offset 2) ---
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-CONTROL-coil";  content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; sid:1000020; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-WRITE-reg";   content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; sid:1000021; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-CONTROL-coils"; content:"|00 00|"; offset:2; depth:2; content:"|0F|"; offset:7; depth:1; sid:1000022; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-WRITE-regs";  content:"|00 00|"; offset:2; depth:2; content:"|10|"; offset:7; depth:1; sid:1000023; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-READ-holding"; content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; sid:1000024; rev:3;)
+# --- A3/P5 S7CommPlus session detection to the real PLC1 (.2.10:102). PDU-relative anchoring (Gap-2 reassembly fix, 2026-08-07):
+#     matched relative to the TPKT / S7-job header so a reassembled PDU is recognised wherever it sits in the stream.
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7COMMPLUS-session-PLC1"; content:"|03 00|"; content:"|72|"; distance:5; within:6; sid:1000040; rev:2;)
+# CC-51 broadened ICS intelligence: dangerous Modbus ops
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-DIAG-diagnostics"; content:"|00 00|"; offset:2; depth:2; content:"|08|"; offset:7; depth:1; sid:1000025; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-PROGRAM-mei"; content:"|00 00|"; offset:2; depth:2; content:"|2B|"; offset:7; depth:1; sid:1000026; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-ILLEGAL-fc"; content:"|00 00|"; offset:2; depth:2; byte_test:1,>,43,7; sid:1000027; rev:1;)
+# PD-3: classic S7comm Write-Var on real PLC1 (PDU-relative: match relative to the S7 job header, not a fixed offset)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|05|"; distance:8; within:9; sid:1000041; rev:2;)
+# PD-7: classic S7comm PLC-control on real PLC1 -- STOP (0x29) / Control-start (0x28) => DIAG (dangerous)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|29|"; distance:8; within:9; sid:1000042; rev:2;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-control"; content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|28|"; distance:8; within:9; sid:1000043; rev:2;)
+# showcase: S7 read (func 0x04) => READ => OPERATIONAL (contrast vs write/stop)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-READ-var"; content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|04|"; distance:8; within:9; sid:1000044; rev:2;)
+# PLC2-2: Cell-2 target .3.10 S7 operation DPI (PDU-relative)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|05|"; distance:8; within:9; sid:1000045; rev:2;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|29|"; distance:8; within:9; sid:1000046; rev:2;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-READ-var";     content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|04|"; distance:8; within:9; sid:1000047; rev:2;)
+# N2 (audit 07-24): Cell-2 symmetry -- S7 control-start (0x28) DPI
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-DIAG-control"; content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|28|"; distance:8; within:9; sid:1000048; rev:2;)

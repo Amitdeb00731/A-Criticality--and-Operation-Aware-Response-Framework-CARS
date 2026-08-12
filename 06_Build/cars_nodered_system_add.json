@@ -1,0 +1,83 @@
+[
+  {
+    "id": "mqtt_in_sys",
+    "type": "mqtt in",
+    "name": "sys: subscribe cars/#",
+    "topic": "cars/#",
+    "qos": "0",
+    "datatype": "auto",
+    "broker": "cfg_mqtt",
+    "x": 190,
+    "y": 760,
+    "wires": [ [ "fn_system" ] ]
+  },
+  {
+    "id": "fn_system",
+    "type": "function",
+    "name": "two-tank system view",
+    "func": "// Coupled two-tank supervisory view (READ-ONLY; no PLC writes).\n// Tank1 (Cell-1) = upstream; Tank2 (Cell-2) = downstream buffer.\nvar t = msg.topic || '';\nvar v = Number(msg.payload);\nif (t.indexOf('cell1/plc1/level') >= 0) flow.set('l1', v);\nif (t.indexOf('cell2/plc2/level') >= 0) flow.set('l2', v);\nif (t.indexOf('cell1/plc1/pump')  >= 0) flow.set('p1', v);\nif (t.indexOf('cell2/plc2/pump')  >= 0) flow.set('p2', v);\nvar l1 = flow.get('l1'), l2 = flow.get('l2'), p1 = flow.get('p1'), p2 = flow.get('p2');\nif (l1 === undefined || l2 === undefined) return null;\nvar total = Number((l1 + l2).toFixed(1));\nvar status = 'nominal';\nif (l1 < 30 && l2 < 20)        status = 'SUPPLY LOW (both tanks)';\nelse if (p1 == 1 && l1 > 50)   status = 'Tank1 -> Tank2 transfer active';\nelse if (l2 > 50)              status = 'Tank2 buffer high';\nvar pub = [\n  { topic: 'cars/system/total',  payload: total },\n  { topic: 'cars/system/status', payload: status }\n];\nreturn [ pub, { payload: total }, { payload: status } ];",
+    "outputs": 3,
+    "noerr": 0,
+    "x": 450,
+    "y": 760,
+    "wires": [ [ "mqtt_out_sys" ], [ "ui_sys_total" ], [ "ui_sys_status" ] ]
+  },
+  {
+    "id": "mqtt_out_sys",
+    "type": "mqtt out",
+    "name": "publish cars/system",
+    "topic": "",
+    "qos": "0",
+    "retain": "false",
+    "broker": "cfg_mqtt",
+    "x": 720,
+    "y": 720,
+    "wires": []
+  },
+  {
+    "id": "ui_grp_system",
+    "type": "ui_group",
+    "name": "Two-Tank System",
+    "tab": "ui_tab_cars",
+    "order": 4,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ui_sys_total",
+    "type": "ui_gauge",
+    "name": "System inventory",
+    "group": "ui_grp_system",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "gtype": "gage",
+    "title": "Total inventory (TB1+TB2)",
+    "label": "%",
+    "format": "{{value | number:1}}",
+    "min": "0",
+    "max": "200",
+    "colors": [ "#00b500", "#e6e600", "#ca3838" ],
+    "seg1": "70",
+    "seg2": "150",
+    "x": 730,
+    "y": 760,
+    "wires": []
+  },
+  {
+    "id": "ui_sys_status",
+    "type": "ui_text",
+    "group": "ui_grp_system",
+    "order": 2,
+    "width": "6",
+    "height": "1",
+    "name": "System status",
+    "label": "Plant status",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "x": 730,
+    "y": 800,
+    "wires": []
+  }
+]

@@ -1,0 +1,40 @@
+# CC-51 broadened ICS intelligence — Modbus DPI rule changes for /etc/snort/cars.rules (Dell#1).
+# Stateless content rules (no flow:), match the Modbus proto-id (00 00 @ offset 2) then the function-code byte @ offset 7.
+# msg naming CARS-MODBUS-<OP> so snort_bridge.py maps the alert to an operation label.
+
+# CHANGED (re-label): coil force = direct digital-output actuation = dangerous CONTROL (was WRITE).
+#   sid 1000020  FC5  (0x05 write single coil)   "CARS-MODBUS-WRITE-coil"  -> "CARS-MODBUS-CONTROL-coil"
+#   sid 1000022  FC15 (0x0F write multiple coils) "CARS-MODBUS-WRITE-coils" -> "CARS-MODBUS-CONTROL-coils"
+# UNCHANGED: FC6/16 register writes stay WRITE (sensitive); FC3 read stays READ; S7 unchanged.
+
+# NEW rules:
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-DIAG-diagnostics"; content:"|00 00|"; offset:2; depth:2; content:"|08|"; offset:7; depth:1; sid:1000025; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-PROGRAM-mei"; content:"|00 00|"; offset:2; depth:2; content:"|2B|"; offset:7; depth:1; sid:1000026; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-ILLEGAL-fc"; content:"|00 00|"; offset:2; depth:2; byte_test:1,>,43,7; sid:1000027; rev:1;)
+#   DIAG    = FC8  (0x08) diagnostics — can force listen-only / restart comms
+#   PROGRAM = FC43 (0x2B) encapsulated interface transport / device programming
+#   ILLEGAL = any request FC byte > 43 (0x2B) = above the standard public range = anomalous/probe
+#             (scope: catches the high-FC fuzz/probe range; mid-range undefined FCs 9,10,13,14,... not individually ruled)
+
+# PD-3 (2026-07-19): classic S7comm (0x32) Write-Var detection on the REAL PLC1 (.2.10:102) — grounded in a captured
+# snap7 write PDU (exploit_plc_conveyor/logic_flap). TCP-payload offsets: 0x32@7 (S7 proto), 0x01@8 (ROSCTR job),
+# 0x05@17 (function = Write Var), 0x82@27 (output area). msg CARS-S7-CONTROL-write -> bridge maps op=CONTROL -> FORBIDDEN.
+# NB: the legit HMI loop uses S7CommPlus (0x72), so this 0x32 write rule never fires on it. Reads (func 0x04) not flagged.
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|05|"; offset:17; depth:1; sid:1000041; rev:1;)
+
+# PD-7 (2026-07-19): classic S7comm PLC-CONTROL detection on real PLC1 — grounded in a captured snap7 plc_stop/
+# plc_hot_start PDU (func byte at TCP-payload offset 17, same slot as the write; STOP carries the "P_PROGRAM" param).
+# STOP=0x29, Control/start=0x28 -> msg CARS-S7-DIAG-* -> bridge op=DIAG -> FORBIDDEN. NB: this S7-1200 refuses the
+# classic stop (PUT/GET protection, error class=0x81 code=0x04) so it's detection+block of the ATTEMPT (defense-in-depth);
+# a vulnerable CPU would be halted and CARS is the protection.
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|29|"; offset:17; depth:1; sid:1000042; rev:1;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-control"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|28|"; offset:17; depth:1; sid:1000043; rev:1;)
+# S7 read (func 0x04) -> op=READ -> OPERATIONAL/ALLOW (contrast for the showcase: read permitted, write/stop forbidden).
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-READ-var"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|04|"; offset:17; depth:1; sid:1000044; rev:1;)
+
+# PLC2-2 (2026-07-19): SAME classic S7comm operation DPI for the CELL-2 target .3.10 (NAT front for PLC2). A Cell-1->PLC2
+# attack (.3.66 -> .3.10) crosses ovsgw's mirror, so Snort sees it here and the controller blocks it at the Cell-1 edge
+# before it reaches Dell#3. (Cell-2-INTERNAL attacks on ovs2 are not mirrored/inspected -> honest boundary, gap G6.)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|05|"; offset:17; depth:1; sid:1000045; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|29|"; offset:17; depth:1; sid:1000046; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-READ-var";     content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|04|"; offset:17; depth:1; sid:1000047; rev:1;)

@@ -1,0 +1,34 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Fig3-Deployment" id="fig03">
+    <mxGraphModel dx="1000" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- control-plane band -->
+        <mxCell id="cpband" value="control plane" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5eef7;strokeColor=#c9b3d6;verticalAlign=top;align=left;spacingLeft=6;spacingTop=4;fontSize=9;fontColor=#7a5c8c;" vertex="1" parent="1"><mxGeometry x="30" y="30" width="840" height="120" as="geometry" /></mxCell>
+
+        <mxCell id="d2" value="&lt;b&gt;Dell 2 &amp;#8212; CARS controller&lt;/b&gt;&#10;os-ken (OpenFlow 1.3), cars_engine.py&#10;decision logic, API :8080, OpenFlow :6653" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="320" y="55" width="270" height="80" as="geometry" /></mxCell>
+
+        <!-- data-plane band -->
+        <mxCell id="dpband" value="data plane and sensing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eef5ee;strokeColor=#a7c9a0;verticalAlign=top;align=left;spacingLeft=6;spacingTop=4;fontSize=9;fontColor=#4a6b45;" vertex="1" parent="1"><mxGeometry x="30" y="180" width="840" height="360" as="geometry" /></mxCell>
+
+        <mxCell id="d1" value="&lt;b&gt;Dell 1 &amp;#8212; SDN fabric and sensing&lt;/b&gt;&#10;Open vSwitch: ovs1 (dpid 1), ovsgw (dpid 3)&#10;Snort IDS (cars-snort) on the ovsgw mirror&#10;Snort&amp;#8594;CARS bridge (cars-bridge) &amp;#8594; /cars/respond&#10;flow-integrity checker (cars-flowaudit)&#10;remediation agent (cars-remediation, .2.45)&#10;dashboard&#10;namespaces: opns .2.31, remns .2.45,&#10;mbns .2.20, atkns .2.66, hpotns .3.99" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="60" y="210" width="330" height="200" as="geometry" /></mxCell>
+
+        <mxCell id="d3" value="&lt;b&gt;Dell 3 &amp;#8212; Cell-2&lt;/b&gt;&#10;Open vSwitch: ovs2 (dpid 2)&#10;NAT clone (cars-cell2): .3.10&amp;#8594;.2.10&#10;PLC2 and HMI2" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="620" y="210" width="230" height="110" as="geometry" /></mxCell>
+
+        <mxCell id="dw" value="&lt;b&gt;Windows Dell &amp;#8212; EWS (.2.55)&lt;/b&gt;&#10;TIA Portal + Factory IO&#10;engineering workstation and live process" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1"><mxGeometry x="620" y="360" width="230" height="80" as="geometry" /></mxCell>
+
+        <!-- control-plane links -->
+        <mxCell id="cp1" value="OpenFlow :6653" style="endArrow=none;html=1;dashed=1;strokeColor=#9673a6;fontSize=9;" edge="1" parent="1" source="d2" target="d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cp2" value="OpenFlow :6653" style="endArrow=none;html=1;dashed=1;strokeColor=#9673a6;fontSize=9;" edge="1" parent="1" source="d2" target="d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- data-plane links -->
+        <mxCell id="dp1" value="S7 (process)" style="endArrow=none;html=1;strokeColor=#333333;fontSize=9;" edge="1" parent="1" source="d1" target="dw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dp2" value="transit + NAT" style="endArrow=none;html=1;strokeColor=#333333;fontSize=9;" edge="1" parent="1" source="d1" target="d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="cap" value="Figure 3: Deployment. The controller (decision) on Dell 2 is separated from the switches (enforcement) on Dell 1 and Dell 3; detection and the supporting agents run alongside the fabric on Dell 1. Services and interfaces are the running units on the testbed." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#333333;" vertex="1" parent="1"><mxGeometry x="30" y="552" width="840" height="40" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

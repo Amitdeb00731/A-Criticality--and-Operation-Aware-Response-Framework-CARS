@@ -1,0 +1,29 @@
+digraph testbed {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Helvetica", fontsize=11, style="filled", penwidth=1.2];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+  labelloc="t";
+  label=<<b>Reactive SDN / ICS Testbed — Physical Topology (isolated lab LAN)</b>>;
+  fontname="Helvetica"; fontsize=14;
+
+  subgraph cluster_dell1 {
+    label=<<b>Dell #1 (Ubuntu) — Core SDN node</b>>; style="rounded,filled"; fillcolor="#EDF1F8"; color="#2E5496"; fontcolor="#1F3864";
+    ryu   [label="Ryu controller\n+ CARS policy engine\n+ Event API (REST/syslog)", fillcolor="#1F3864", fontcolor="white", shape=box];
+    ovs   [label="Open vSwitch (br0)\nOpenFlow 1.3 switch", fillcolor="#2E5496", fontcolor="white", shape=box];
+    ryu -> ovs [label="OpenFlow\n127.0.0.1:6653", dir=both, color="#1F3864", penwidth=1.6];
+  }
+
+  plc  [label="Siemens S7-1200/1500 PLC\nField device\nModbus TCP/502 · S7comm/102", fillcolor="#FDE9D9", color="#9C5700", shape=box3d];
+  hmi  [label="Asus Vivobook (Win 11)\nHMI / Engineering WS\nModbus master · TIA Portal", fillcolor="#E2EFDA", color="#1E7145", shape=box];
+  ids  [label="Dell #2 (Ubuntu)\nIDS: Suricata / Zeek+ICSNPP\n+ Attacker host", fillcolor="#FBE4E6", color="#9C1F2E", shape=box];
+
+  ovs -> plc [label="OVS port\n(USB-Eth)", dir=both];
+  ovs -> hmi [label="OVS port\n(USB-Eth)", dir=both];
+  ovs -> ids [label="mirror/SPAN\n+ OVS port", dir=both, style=dashed];
+
+  ids -> ryu [label="  alert  ", color="#9C1F2E", penwidth=1.8, constraint=false];
+  ryu -> ovs [label="flow-mod:\nblock/mirror/redirect", color="#1E7145", penwidth=1.6, style=bold, constraint=false];
+
+  { rank=same; plc; hmi; ids; }
+}

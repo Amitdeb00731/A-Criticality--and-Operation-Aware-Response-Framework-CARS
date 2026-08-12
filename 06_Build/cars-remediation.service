@@ -1,0 +1,15 @@
+[Unit]
+Description=CARS process-state remediation agent (.2.45, last-good substitution / P1 Rung B)
+After=network-online.target openvswitch-switch.service cars-seams.service
+Wants=openvswitch-switch.service
+
+[Service]
+Type=simple
+# (re)build the remns netns + .2.45 seam, then run the agent inside it
+ExecStartPre=/bin/bash /home/msclab/cars-remns.sh
+ExecStart=/usr/bin/ip netns exec remns /usr/bin/python3 /home/msclab/cars_remediation.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

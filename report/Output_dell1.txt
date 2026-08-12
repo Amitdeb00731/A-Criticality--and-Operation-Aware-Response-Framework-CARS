@@ -1,0 +1,77 @@
+=== running CARS services / processes (Dell#1) ===
+root 2285 0.0 0.0 34452 23384 ? Ss 15:02 0:02 /usr/bin/python3 /home/msclab/cars_flow_audit.py --watch 10 --bridges ovs1,ovsgw
+root 5212 0.6 0.5 209788 167168 ? Ssl 15:03 0:55 /usr/sbin/snort -q -A fast --daq afpacket -c /etc/snort/cars.conf -i snort0 -l /var/log/snort
+root 5221 0.6 0.0 33020 22488 ? Ss 15:03 0:53 /usr/bin/python3 -u /home/msclab/snort_bridge.py
+root 5380 0.1 0.0 39544 26740 ? Ss 15:03 0:14 /usr/bin/python3 /home/msclab/cars_remediation.py
+root 5392 0.2 0.0 8328 2132 ? S 15:03 0:22 tail -F -s 0.05 -n0 /var/log/snort/alert
+msclab 7258 1.0 0.0 524904 27556 pts/0 S+ 15:04 1:27 python3 cars_dashboard.py
+--- systemd cars units ---
+  cars-bridge.service                                   loaded active running CARS Snort->CARS bridge (alert file -> /cars/respond)
+  cars-flowaudit.service                                loaded active running CARS flow-integrity (policy) checker - watch daemon (#28)
+  cars-hpot.service                                     loaded active exited  CARS A1/P3 DEFLECT decoy (hpot .3.99 in hpotns netns on ovsgw)
+  cars-ins2.service                                     loaded active exited  CARS Cell-2 attacker vantage (ins2 .3.66 on ovsgw)
+  cars-modbus.service                                   loaded active running CARS A3 Modbus scenario (netns endpoints + simulated Modbus PLC on ovsgw)
+  cars-remediation.service                              loaded active running CARS process-state remediation agent (.2.45, last-good substitution / P1 Rung B)
+  cars-seams.service                                    loaded active exited  CARS OT seam interface IPs (sup0/att0) + link up
+  cars-snort.service                                    loaded active running CARS Snort IDS sensor (afpacket DAQ on snort0 SPAN mirror)
+
+=== namespaces + addresses ===
+atkns (id: 4)
+remns (id: 3)
+opns (id: 2)
+hpotns (id: 0)
+mbns (id: 1)
+--- atkns ---
+atk 192.168.2.66/24
+--- remns ---
+rem0 192.168.2.45/24
+--- opns ---
+opr 192.168.2.31/24
+--- hpotns ---
+hpot 192.168.3.99/24
+--- mbns ---
+mbplc 192.168.2.20/24
+
+=== Snort mirror (which bridge/ports feed snort0) ===
+name                : m0
+output_port         : ee5aad65-4c4b-44a6-920a-e8cab96d73da
+output_vlan         : []
+select_all          : true
+select_dst_port     : []
+select_src_port     : []
+select_vlan         : []
+
+=== Snort S7/Modbus rules (operation -> alert mapping) ===
+rules file: /etc/snort/cars.rules
+alert icmp any any -> 192.168.2.10 any (msg:"CARS-SUSPECT ICMP PLC1"; sid:1000001; rev:5;)
+alert icmp any any -> 192.168.2.9  any (msg:"CARS-SUSPECT ICMP HMI1"; sid:1000002; rev:2;)
+alert tcp  any any -> 192.168.2.10 any (msg:"CARS-SUSPECT TCP PLC1"; flags:S; sid:1000003; rev:1;)
+alert tcp  any any -> 192.168.2.9  any (msg:"CARS-SUSPECT TCP HMI1"; flags:S; sid:1000004; rev:1;)
+alert icmp any any -> 192.168.3.10 any (msg:"CARS Cell2 ICMP->PLC2"; sid:1000005; rev:1;)
+alert tcp  any any -> 192.168.3.10 any (msg:"CARS Cell2 TCP->PLC2";  sid:1000006; rev:1;)
+alert icmp any any -> 192.168.3.9  any (msg:"CARS Cell2 ICMP->HMI2"; sid:1000007; rev:1;)
+alert tcp  any any -> 192.168.3.9  any (msg:"CARS Cell2 TCP->HMI2";  sid:1000008; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-CONTROL-coil";  content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; sid:1000020; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-WRITE-reg";   content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; sid:1000021; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-CONTROL-coils"; content:"|00 00|"; offset:2; depth:2; content:"|0F|"; offset:7; depth:1; sid:1000022; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-WRITE-regs";  content:"|00 00|"; offset:2; depth:2; content:"|10|"; offset:7; depth:1; sid:1000023; rev:3;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-READ-holding"; content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; sid:1000024; rev:3;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7COMMPLUS-session-PLC1"; content:"|03 00|"; depth:2; content:"|72|"; offset:7; depth:1; sid:1000040; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-DIAG-diagnostics"; content:"|00 00|"; offset:2; depth:2; content:"|08|"; offset:7; depth:1; sid:1000025; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-PROGRAM-mei"; content:"|00 00|"; offset:2; depth:2; content:"|2B|"; offset:7; depth:1; sid:1000026; rev:1;)
+alert tcp any any -> 192.168.2.20 502 (msg:"CARS-MODBUS-ILLEGAL-fc"; content:"|00 00|"; offset:2; depth:2; byte_test:1,>,43,7; sid:1000027; rev:1;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|05|"; offset:17; depth:1; sid:1000041; rev:1;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|29|"; offset:17; depth:1; sid:1000042; rev:1;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-DIAG-control"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|28|"; offset:17; depth:1; sid:1000043; rev:1;)
+alert tcp any any -> 192.168.2.10 102 (msg:"CARS-S7-READ-var"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|04|"; offset:17; depth:1; sid:1000044; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-CONTROL-write"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|05|"; offset:17; depth:1; sid:1000045; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-DIAG-stop";    content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|29|"; offset:17; depth:1; sid:1000046; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-READ-var";     content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|04|"; offset:17; depth:1; sid:1000047; rev:1;)
+alert tcp any any -> 192.168.3.10 102 (msg:"CARS-S7-DIAG-control"; content:"|03 00|"; depth:2; content:"|32 01|"; offset:7; depth:2; content:"|28|"; offset:17; depth:1; sid:1000048; rev:1;)
+
+=== Snort conf nets + include ===
+var HOME_NET 192.168.2.0/24
+var EXTERNAL_NET any
+include /etc/snort/cars.rules
+
+

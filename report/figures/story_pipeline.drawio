@@ -1,0 +1,86 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="DecisionPipeline" id="storyPipeline">
+    <mxGraphModel dx="1000" dy="640" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1180" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="The CARS decision pipeline — where each attack class terminates" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="900" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- main pipeline -->
+        <mxCell id="src" value="packet from&#10;source" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2f7;strokeColor=#333333" vertex="1" parent="1">
+          <mxGeometry x="30" y="96" width="120" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="t0" value="Table 0 · GUARD&#10;identity ↔ port + MAC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="190" y="96" width="150" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t1" value="Table 1 · POLICY (first match)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;verticalAlign=top;spacingTop=6" vertex="1" parent="1">
+          <mxGeometry x="380" y="72" width="280" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" value="conntrack +established → pass" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="396" y="104" width="248" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" value="A2 allowlist (cookie 0xa2) → goto T2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="396" y="136" width="248" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" value="reactive block/isolate (0xca, P100–110)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="396" y="168" width="248" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" value="default-deny (P55) → drop" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#777777;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="396" y="200" width="248" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t2" value="Table 2 · SWITCH&#10;forward" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="96" width="140" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="plc" value="PLC1&#10;.2.10 CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="890" y="90" width="120" height="66" as="geometry" />
+        </mxCell>
+
+        <!-- DPI loop -->
+        <mxCell id="looplbl" value="Reactive loop (only for traffic that reaches the mirror)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;fontColor=#b03a2e" vertex="1" parent="1">
+          <mxGeometry x="30" y="312" width="500" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="mir" value="ovsgw mirror&#10;SPAN → snort0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="30" y="345" width="150" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="snort" value="Snort DPI&#10;S7/Modbus func → op class" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="230" y="345" width="190" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="bridge" value="bridge&#10;op + rate → /cars/respond" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="470" y="345" width="160" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="brain" value="brain: classify() + select_response()&#10;tier → response (REFUSE…ISOLATE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="680" y="345" width="220" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- outcome callouts -->
+        <mxCell id="oc1" value="spoofed protected identity&#10;→ dropped at T0 GUARD (never reaches policy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=8" vertex="1" parent="1">
+          <mxGeometry x="30" y="470" width="330" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="oc2" value="non-conduit source — Pivots A &amp; B&#10;→ default-deny; the TCP connect itself is FORBIDDEN → ISOLATE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=8" vertex="1" parent="1">
+          <mxGeometry x="380" y="470" width="380" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="oc3" value="allowlisted conduit + dangerous op — insider .2.31 (FDI)&#10;→ 1st packet delivered → DPI recovers op=CONTROL → FORBIDDEN → ISOLATE + remediation restores" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8" vertex="1" parent="1">
+          <mxGeometry x="30" y="524" width="870" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- main pipeline edges -->
+        <mxCell id="p1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block" edge="1" parent="1" source="src" target="t0"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block" edge="1" parent="1" source="t0" target="t1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block" edge="1" parent="1" source="t1" target="t2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p4" value="authorised + benign → delivered" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#1e8449" edge="1" parent="1" source="t2" target="plc"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- DPI loop edges -->
+        <mxCell id="d1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block" edge="1" parent="1" source="mir" target="snort"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block" edge="1" parent="1" source="snort" target="bridge"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block" edge="1" parent="1" source="bridge" target="brain"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="d4" value="install 0xca reactive flow (self-heal 75 s)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;dashed=1;endArrow=block;fontSize=10;fontColor=#b03a2e;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0" edge="1" parent="1" source="brain" target="r3"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,170 @@
+% CARS dissertation bibliography.
+% Discipline (REPORT_PLAN.md rule 5): every field below is read from the actual source PDF on disk or the uploaded document.
+% Where a field ran past the first page and has not yet been read out (full author list, exact page range, DOI), it is left
+% with an explicit "TODO-VERIFY" note rather than guessed. Complete these from the PDFs before final submission; never invent.
+% NOTE: "Reactive SDN for Securing ICS Environments.pdf" is Amit's OWN project proposal (the CARS brief), NOT a citable source.
+
+% ---------------------------------------------------------------------------
+% Anchor: the survey CARS positions against (uniform DROP/BLOCK gap)
+@article{etxezarreta2023survey,
+  author    = {Etxezarreta, Xabier and Garitano, I{\~n}aki and Iturbe, Mikel and Zurutuza, Urko},
+  title     = {Software-Defined Networking approaches for intrusion response in Industrial Control Systems: A survey},
+  journal   = {International Journal of Critical Infrastructure Protection},
+  volume    = {42},
+  pages     = {100615},
+  year      = {2023},
+  publisher = {Elsevier},
+  % TODO-VERIFY: DOI
+}
+
+% Threat model: controller compromise (supervisor's paper)
+@inproceedings{gardiner2021controller,
+  author    = {Gardiner, Joseph and Eiffert, Adam and Garraghan, Peter and Race, Nicholas and Nagaraja, Shishir and Rashid, Awais},
+  title     = {Controller-in-the-Middle: Attacks on Software Defined Networks in Industrial Control Systems},
+  booktitle = {Proceedings of the 2nd Workshop on CPS \& IoT Security and Privacy (CPSIoTSec '21)},
+  pages     = {1--6},
+  year      = {2021},
+  month     = nov,
+  address   = {Virtual Event, Republic of Korea},
+  publisher = {ACM},
+  doi       = {10.1145/3462633.3483979},
+}
+
+% Stateful data-plane security
+@inproceedings{shin2013avantguard,
+  author    = {Shin, Seungwon and Yegneswaran, Vinod and Porras, Phillip and Gu, Guofei},
+  title     = {{AVANT-GUARD}: Scalable and Vigilant Switch Flow Management in Software-Defined Networks},
+  booktitle = {Proceedings of the 2013 ACM SIGSAC Conference on Computer and Communications Security (CCS '13)},
+  year      = {2013},
+  publisher = {ACM},
+  % TODO-VERIFY: pages, DOI
+}
+
+% Flow-integrity / policy checking for industrial SDN (basis of cars_flow_audit.py)
+@inproceedings{melis2018policychecker,
+  author    = {Melis, Andrea and Berardi, Davide and Contoli, Chiara and others},
+  title     = {A Policy Checker Approach for Secure Industrial SDN},
+  booktitle = {2018 2nd Cyber Security in Networking Conference (CSNet)},
+  year      = {2018},
+  publisher = {IEEE},
+  % TODO-VERIFY: complete author list, pages, DOI
+}
+
+% Operation-aware DPI for industrial SDN
+@inproceedings{sainz2019dpi,
+  author    = {Sainz, Markel and Garitano, I{\~n}aki and Iturbe, Mikel and Zurutuza, Urko},
+  title     = {Deep Packet Inspection for intelligent Intrusion Detection in Software Defined industrial networks: A proof of concept},
+  year      = {2019},
+  % TODO-VERIFY: booktitle/venue and year (not on page 1), pages, DOI
+}
+
+% SDN + NFV for incident response in ICS
+@article{murillo2018leveraging,
+  author    = {Murillo Piedrahita, Andr{\'e}s F. and Gaur, Vikram and Giraldo, Jairo and C{\'a}rdenas, {\'A}lvaro A. and Rueda, Sandra Julieta},
+  title     = {Leveraging Software-Defined Networking for Incident Response in Industrial Control Systems},
+  journal   = {IEEE Software},
+  % TODO-VERIFY: year, volume, number, pages, DOI (page 1 shows IEEE Software focus section only)
+}
+
+% ICS testbed methodology
+@inproceedings{antonioli2015minicps,
+  author    = {Antonioli, Daniele and Tippenhauer, Nils Ole},
+  title     = {{MiniCPS}: A Toolkit for Security Research on {CPS} Networks},
+  booktitle = {Proceedings of the First ACM Workshop on Cyber-Physical Systems-Security and/or PrivaCy (CPS-SPC '15)},
+  year      = {2015},
+  month     = oct,
+  address   = {Denver, Colorado, USA},
+  publisher = {ACM},
+  note      = {ISBN 978-1-4503-3827-1},
+  % TODO-VERIFY: exact page range and DOI
+}
+
+@inproceedings{gardiner2019oops,
+  author    = {Gardiner, Joseph and Craggs, Barnaby and Green, Benjamin and Rashid, Awais},
+  title     = {Oops I Did It Again: Further Adventures in the Land of {ICS} Security Testbeds},
+  booktitle = {Proceedings of the ACM Workshop on Cyber-Physical Systems Security and PrivaCy (CPS-SPC '19)},
+  year      = {2019},
+  month     = nov,
+  address   = {London, UK},
+  publisher = {ACM},
+  doi       = {10.1145/3338499.3357355},
+}
+
+% Moving target defence vs False Data Injection in SD-ICS (FDI = our sensor-spoof; future-work comparison)
+@article{etxezarreta2026replica,
+  author    = {Etxezarreta, Xabier and Turrin, Federico and Garitano, I{\~n}aki and Iturbe, Mikel and Zurutuza, Urko and Conti, Mauro},
+  title     = {Replica-Based Moving Target Defense Against Injection Attacks in Software-Defined Industrial Control Systems},
+  journal   = {IEEE Transactions on Dependable and Secure Computing},
+  volume    = {23},
+  number    = {3},
+  year      = {2026},
+  publisher = {IEEE},
+  % TODO-VERIFY: page range (starts p.5163), DOI
+}
+
+% Related Bristol PhD: recon protection via MTD
+@phdthesis{samanis2025phd,
+  author = {Samanis, Emmanouil},
+  title  = {Protecting Against Reconnaissance Attacks on Industrial Control Systems: A Moving Target Defense Approach},
+  school = {University of Bristol},
+  year   = {2025},
+  % TODO-VERIFY: exact award/deposit year from the thesis front matter
+}
+
+% ICS asset discovery / recon taxonomy (supervisor + Samanis)
+@inproceedings{samanis2022sok,
+  author    = {Samanis, Emmanouil and Gardiner, Joseph and Rashid, Awais},
+  title     = {{SoK}: A Taxonomy for Contrasting Industrial Control Systems Asset Discovery Tools},
+  booktitle = {Proceedings of the 17th International Conference on Availability, Reliability and Security (ARES 2022)},
+  year      = {2022},
+  month     = aug,
+  address   = {Vienna, Austria},
+  publisher = {ACM},
+  % TODO-VERIFY: full DOI (prefix 10.1145/3538969) and page range
+}
+
+% SDN / OpenFlow foundations
+@article{lara2014openflow,
+  author  = {Lara, Adrian and Kolasani, Anisha and Ramamurthy, Byrav},
+  title   = {Network Innovation using OpenFlow: A Survey},
+  journal = {IEEE Communications Surveys \& Tutorials},
+  volume  = {16},
+  number  = {1},
+  pages   = {493--512},
+  year    = {2014},
+  doi     = {10.1109/SURV.2013.081313.00105},
+}
+
+% ---------------------------------------------------------------------------
+% Asset-criticality basis (uploaded, verified from the documents)
+@techreport{cisa2025assetinventory,
+  author      = {{Cybersecurity and Infrastructure Security Agency}},
+  title       = {Foundations for {OT} Cybersecurity: Asset Inventory Guidance for Owners and Operators},
+  institution = {U.S. Cybersecurity and Infrastructure Security Agency (CISA)},
+  year        = {2025},
+  month       = aug,
+  note        = {Joint guidance with U.S. EPA, NSA, FBI; ASD ACSC; Canadian Centre for Cyber Security; Germany's BSI; NCSC-NL; NCSC-NZ. Published 13 August 2025. TLP:CLEAR},
+}
+
+@techreport{inl2016cce,
+  author      = {{Idaho National Laboratory}},
+  title       = {Consequence-driven Cyber-informed Engineering ({CCE}): Mission Support Center Concept Paper},
+  institution = {Idaho National Laboratory, Mission Support Center, National and Homeland Security Directorate},
+  year        = {2016},
+  month       = oct,
+  % TODO-VERIFY: INL/EXT report number (title-page font not extractable; read off the cover)
+}
+
+% ---------------------------------------------------------------------------
+% Standard referenced by the project framing (NOT yet on disk)
+@techreport{nist80082,
+  author      = {Stouffer, Keith and Pease, Michael and Tang, CheeYee and Zimmerman, Timothy and Pillitteri, Victoria and Lightman, Suzanne and Hahn, Adam and Saravia, Stephanie and Sherule, Aslam and Thompson, Michael},
+  title       = {Guide to Operational Technology ({OT}) Security},
+  institution = {National Institute of Standards and Technology},
+  type        = {NIST Special Publication},
+  number      = {800-82r3},
+  year        = {2023},
+  month       = sep,
+  address     = {Gaithersburg, MD},
+  doi         = {10.6028/NIST.SP.800-82r3},
+}

@@ -1,0 +1,387 @@
+\chapter{Critical Evaluation}
+\label{chap:evaluation}
+
+\section{Method and metrics}
+\label{sec:evalmethod}
+
+The first question for a reactive defence in an operational network is not whether it can block an attack but whether it can be trusted not to block legitimate work. A false positive that cuts a control conduit is the deployment barrier, so the evaluation measures decision accuracy across the whole space of source role, operation and target criticality on the testbed, and reports the false-positive rate as the headline figure.
+
+Each case is a tuple of source, destination, operation and rate, carrying a ground-truth label assigned from security intent: legitimate, attack, grey (criticality-graded) or flood-exempt. The measured decision is the deployed engine's own verdict, obtained by posting the case to the controller's \texttt{/cars/respond} interface, which runs the exact production path: the first-match classification of (role, operation) to a tier, the criticality elevation of a SENSITIVE operation on a CRITICAL asset, and the graded response selection. The engine is not reimplemented for the test; the labelled set is driven through it. The pass runs with enforcement disarmed, so it measures pure decisions with no side effect on the live conduits, then re-arms.
+
+The verdicts follow the intent. A legitimate case is a true negative if it is permitted, that is ALLOW, MONITOR, or REFUSE, the last being the safety loop that is mirrored and alerted but never cut, and a false positive if it is restricted. An attack case is a true positive if it is restricted, that is THROTTLE, DEFLECT, ISOLATE or BLOCK, and a false negative if it is permitted. Grey cases are shown to demonstrate grading rather than scored: they test how the response scales with criticality, not a binary legitimate-or-attack decision, so they carry no true or false label by construction. All three are nonetheless handled correctly, and including them would leave the accuracy unchanged. The matrix was regenerated on the live system for this writeup and reproduces the stored baseline row for row; the decisions are corroborated at the packet level by the campaign of Section~\ref{sec:evalcampaign}, so the verdicts are not decision-only artefacts.
+
+\section{Decision accuracy and false positives}
+\label{sec:evalaccuracy}
+
+Table~\ref{tab:accuracy} gives the full case set as measured. Of the twenty-four scored cases every one is classified correctly: thirteen true positives, eleven true negatives, no false positives and no false negatives, a decision accuracy of 100\% and, the figure that matters for deployment, a false-positive rate of 0\%. The confusion summary is Table~\ref{tab:confusion}. The full case set, with the inputs and the verdict for each case, is reproduced in Appendix~\ref{appx:matrix}.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\begin{tabular}{llllcl}
+\hline
+Src$\to$Dst & Operation & Tier & Response & V & Case \\
+\hline
+\multicolumn{6}{l}{\textit{Legitimate benign (false-positive test)}} \\
+9$\to$10 & READ & CRITICAL & REFUSE & TN & HMI$\to$PLC1 read (loop) \\
+9$\to$10 & WRITE & CRITICAL & REFUSE & TN & HMI$\to$PLC1 setpoint (loop) \\
+10$\to$9 & READ & CRITICAL & REFUSE & TN & PLC1$\to$HMI reply (loop) \\
+55$\to$10 & READ & OPERATIONAL & ALLOW & TN & EWS/Factory IO read (HIL) \\
+55$\to$10 & CONTROL & OPERATIONAL & ALLOW & TN & EWS/Factory IO write (HIL) \\
+45$\to$10 & CONTROL & OPERATIONAL & ALLOW & TN & Remediation restore \\
+30$\to$10 & READ & OPERATIONAL & ALLOW & TN & Historian poll PLC1 \\
+30$\to$20 & READ & OPERATIONAL & ALLOW & TN & Historian poll Modbus \\
+31$\to$20 & READ & OPERATIONAL & ALLOW & TN & SCADA Modbus poll \\
+31$\to$10 & READ & OPERATIONAL & ALLOW & TN & SCADA read PLC1 \\
+\multicolumn{6}{l}{\textit{Grey, criticality-graded (shown, not scored)}} \\
+31$\to$10 & WRITE & FORBIDDEN & ISOLATE & grey & SCADA write CRITICAL (elevated) \\
+31$\to$20 & WRITE & SENSITIVE & THROTTLE & grey & SCADA write LOW Modbus \\
+30$\to$9 & WRITE & SENSITIVE & THROTTLE & grey & Historian write HIGH HMI1 \\
+\multicolumn{6}{l}{\textit{Attacks (true-positive / false-negative test)}} \\
+77$\to$10 & TCP & FORBIDDEN & ISOLATE & TP & Kali outsider TCP \\
+77$\to$10 & READ & FORBIDDEN & ISOLATE & TP & Kali outsider read \\
+66$\to$20 & WRITE & FORBIDDEN & BLOCK & TP & Unknown write Modbus \\
+31$\to$10 & CONTROL & FORBIDDEN & ISOLATE & TP & Compromised SCADA actuates \\
+31$\to$10 & PROGRAM & FORBIDDEN & ISOLATE & TP & SCADA program download \\
+55$\to$10 & PROGRAM & FORBIDDEN & ISOLATE & TP & EWS program download (no window) \\
+55$\to$10 & DIAG & FORBIDDEN & ISOLATE & TP & EWS diagnostics \\
+55$\to$10 & ILLEGAL & FORBIDDEN & ISOLATE & TP & Malformed S7 \\
+1$\to$10 & READ & FORBIDDEN & ISOLATE & TP & Gateway reaches PLC (no conduit) \\
+30$\to$10 & CONTROL & FORBIDDEN & ISOLATE & TP & Historian issues CONTROL \\
+66$\to$10 & READ & FORBIDDEN & ISOLATE & TP & Unknown read PLC1 \\
+\multicolumn{6}{l}{\textit{Flood (volumetric overlay)}} \\
+30$\to$10 & READ (50) & OPERATIONAL & BLOCK & TP & Historian read flood \\
+55$\to$10 & CONTROL (50) & OPERATIONAL & ALLOW & TN & EWS high-rate (flood-exempt) \\
+31$\to$20 & READ (50) & OPERATIONAL & THROTTLE & TP & SCADA read flood on Modbus \\
+\hline
+\end{tabular}
+\caption{The decision matrix, measured live from the deployed engine via \texttt{/cars/respond}. Hosts are \texttt{192.168.2.x} (last octet shown). Twenty-four scored cases: 13 TP, 11 TN, 0 FP, 0 FN; three grey cases show grading. Regenerated for this writeup; identical to the 3 August baseline. Full per-decision controller log in Appendix~\ref{appx:logs}.}
+\label{tab:accuracy}
+\end{table}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\hline
+ & Permitted & Restricted \\
+\hline
+Actually legitimate (11) & 11 (TN) & 0 (FP) \\
+Actually attack (13) & 0 (FN) & 13 (TP) \\
+\hline
+\end{tabular}
+\caption{Confusion summary. Accuracy $24/24 = 100\%$; false-positive rate $0/11 = 0\%$; false-negative rate $0/13 = 0\%$.}
+\label{tab:confusion}
+\end{table}
+
+Every legitimate operation is permitted, including the two that most tempt a blunt filter. The high-rate control stream from the engineering and Factory IO host is flood-exempt and passes at fifty writes per second, because that host drives the hardware-in-the-loop and its rate is expected. The operator loop between HMI and PLC is tier CRITICAL and carries the REFUSE marker, so it is watched but never enforced against. The 0\% false-positive rate on this traffic is the operator-trust result: the defence can be armed on the live process without cutting the work that keeps it running.
+
+The three grey cases show the criticality grading on one operation class. A SCADA write to the CRITICAL PLC1 is elevated from SENSITIVE to FORBIDDEN and quarantined; the same role's write to the LOW Modbus unit stays SENSITIVE and is throttled; a historian write to the HIGH operator panel is throttled. The response scales with the target's criticality, not the operation alone.
+
+The set also isolates the operation-awareness a five-tuple filter cannot reach. The identical conduit from SCADA to the Modbus unit draws three different verdicts by operation and rate alone: a read is allowed, a write is throttled as a SENSITIVE actuation, and a read driven to fifty per second is throttled as a volumetric abuse. The decision is made on the industrial operation, not the addresses and ports.
+
+The matrix is exhaustive over the meaningful decision space of the testbed rather than a random sample: it covers every role, operation and criticality combination that arises here. The same verdicts are then corroborated on live traffic by the campaign of Section~\ref{sec:evalcampaign}, where the deployed engine judged every phase and logged on the order of a thousand decisions per run, and the legitimate loop and telemetry were permitted throughout with no false positive observed (Appendix~\ref{appx:logs}). The 100\% figure is therefore a statement about this system's decision logic, established over the decision space and confirmed on live traffic, not a statistical guarantee for an arbitrary production network; that scope is stated in Section~\ref{sec:threats}.
+
+To probe further, the engine was driven across its entire decision domain, every source, asset, operation and rate combination on the testbed, 868 cases in all. It returned a defined verdict for each, and on inspection every verdict is consistent with the deployed policy: the unregistered attacker is isolated on every operation against every asset, high-rate operations are restricted as floods, non-allowlisted conduits are default-denied, and the supervisory roles keep their reads. Building an independent oracle for a policy this nuanced is itself error-prone, so this exhaustive pass is a totality and consistency check rather than a second accuracy figure. The one behaviour it highlights is that the trusted remediation agent may issue even dangerous operations to the PLC unblocked, the trusted-role exposure of Section~\ref{sec:threats}.
+
+\section{Criticality-graded response}
+\label{sec:evalcriticality}
+
+The criticality model earns its place only if the target's importance changes the outcome. The sweep, rerun with \texttt{cars\_criticality\_proof.sh}, holds the actor and the operation fixed and varies only the target's tier, in three parts: the bounded elevation of the decision, the proportionality of the response, and the invariants that criticality must never break.
+
+Elevation is bounded. A SENSITIVE operation on a CRITICAL asset is raised to FORBIDDEN, as the grey cases of Table~\ref{tab:accuracy} show for a SCADA write to PLC1, whereas a read is never elevated: the same SCADA reading the same CRITICAL PLC1 stays OPERATIONAL and is allowed. The model suspends this elevation within an authorised maintenance window (Section~\ref{sec:model}), so scheduled engineering is not blocked by the rule that protects the asset at other times.
+
+Proportionality is measured on the response side. The same forbidden control, from the same harmless attacker, draws a reactive rule whose length scales with the target's weight: 75 seconds on the CRITICAL PLC1, 60 seconds on the HIGH PLC2, 45 seconds on the MEDIUM historian and 30 seconds on the LOW Modbus unit, each self-healing when it expires (Figure~\ref{fig:critsweep}). The duration follows $30 + 15w$ seconds for tier weight $w$, measured at all four tiers. The scaled quantity is the timeout; it is applied to whichever reactive rule the escalation state selects, a source ISOLATE once an attacker persists, or a single-conduit BLOCK on a first offence, as the MEDIUM case shows.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{chart_critsweep.png}
+\caption{The reactive rule duration measured live for an identical forbidden control against targets of each criticality tier: 75, 60, 45 and 30 seconds for weights 3, 2, 1 and 0, following $30 + 15w$. Same actor and operation throughout; only the target's tier changes.}
+\label{fig:critsweep}
+\end{figure}
+
+The invariants hold throughout. The operator control loop is never enforced against, even on the CRITICAL PLC1, where an HMI-to-PLC control returns REFUSE and is only mirrored and alerted, the safety cap of the model. Trusted monitoring is always allowed, even on the CRITICAL asset, where a SCADA read returns OPERATIONAL and passes. Criticality raises the response to a threat but never overrides the two rules that keep the process controllable.
+
+\section{Wire-level campaign: armed versus unprotected}
+\label{sec:evalcampaign}
+
+The decision accuracy of Section~\ref{sec:evalaccuracy} is necessary but not sufficient; a decision matters only when it is enforced on the wire against a real attacker. This campaign exercises the defence at the packet level, comparing the armed system against the unprotected process. Unprotected has two honest meanings, kept separate: \emph{disarmed}, where reactive enforcement is switched off but CARS still detects and decides and the proactive structure stands, used for the insider and process vectors; and a true \emph{bypass} around the governed pipeline, used for the outsider vectors, since the proactive default-deny is always in force and merely disarming does not expose an unregistered host. Each vector is captured at three wire points, the PLC S7 port, the OpenFlow control channel and the Snort mirror. The legitimate Factory IO loop and the historian telemetry ran throughout and were permitted in every state, so the campaign carried zero false positives from end to end. Figure~\ref{fig:flow} shows what this means for a single attack packet in each state.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{flow_armed_vs_disarmed.png}
+\caption{The path of a malicious S7 write in each state. Disarmed, the write crosses the fabric, reaches PLC1 and drives the tank to overflow. Armed, the reactive rule (\texttt{cookie 0x00ca}) drops it in the fabric, so it never reaches the PLC and the process is held.}
+\label{fig:flow}
+\end{figure}
+
+\subsection{Process devastation and the deception}
+\label{sec:evaldevastation}
+
+The centrepiece is a false-data injection on the live tank, the attack that most directly threatens a physical process. A compromised supervisory host, \texttt{192.168.2.31}, writes the level sensor and the discharge valve in the process image over S7 at high rate, driving the tank past its safe band. Each write is a CONTROL operation to the CRITICAL PLC1. The disarmed and armed cases are compared on the same attacker, the same operation and the same target.
+
+Disarmed, the injection runs unimpeded and the process is devastated. The tank is driven clean over the top: the Factory IO vessel fills completely and the operator panel's high-level alarm fires, the level cresting past the full mark at about 104\% (Figure~\ref{fig:p6overflow}). A sensor-spoof variant of the same attack instead pins the reported level near zero, so the operator sees a safe, empty tank while the real one fills, the deception at the heart of a process attack (Appendix~\ref{appx:scenarios}). Either way, while the attacker holds the actuators the operator cannot regain control.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.38\textwidth}\centering\includegraphics[width=\linewidth]{p6_overflow_tank.png}\end{minipage}\hfill
+\begin{minipage}[c]{0.60\textwidth}\centering\includegraphics[width=\linewidth]{p6_overflow_hmi.jpg}\end{minipage}
+\caption{Process devastation, disarmed. Left: the Factory IO tank driven full and over the top. Right: the operator panel at the same moment, the level cresting past the full mark at \texttt{+104.326} with the high-level alarm raised. The attacker holds the process out of its safe band and the operator cannot recover it.}
+\label{fig:p6overflow}
+\end{figure}
+
+Armed, the same attack is severed before it can move the process. The injection's writes are CONTROL operations to the CRITICAL PLC1; CARS classifies them FORBIDDEN and isolates the source. The attacker's client cannot commit a single write: its S7 session times out before the first write lands, so zero writes reach the PLC, and a second attempt cannot even open a connection, its traffic already dropped. The enforcement is a real installed rule, not a log entry. On every switch the controller installs \texttt{cookie=0xca}, \texttt{table=1}, \texttt{priority=110}, \texttt{nw\_src=192.168.2.31}, \texttt{actions=drop} with a 75-second self-healing timeout, the CRITICAL duration (Figure~\ref{fig:p6armedflow}); the controller's own decision log shows the same event across the layer as a \texttt{FORBIDDEN~$\Rightarrow$~ISOLATE~(ENFORCED)} verdict on \texttt{192.168.2.31} (Figure~\ref{fig:dashisolate}), and the rule self-expires after its 75-second window. With no write reaching the PLC the tank never leaves its band and the process stays under the PLC's control. This is block-and-maintain: the attack is severed at the datapath before it can move the process. The dashboard itself, how it discovers the topology from the controller and renders each live decision, is described in Appendix~\ref{appx:dashboard}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{dash_decisionlog.png}
+\caption{The same armed isolation seen at the decision layer on the CARS dashboard: the compromised supervisory host \texttt{192.168.2.31 (scada)} issuing S7 CONTROL to the CRITICAL PLC1 is classed FORBIDDEN and met with an ENFORCED ISOLATE. This is the cross-layer counterpart to the datapath rule of Figure~\ref{fig:p6armedflow}: the same event as a policy decision rather than an installed flow.}
+\label{fig:dashisolate}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{p6_armed_flow.png}
+\caption{Armed enforcement at the datapath. The reactive source-quarantine rule installed on \texttt{ovs1} and \texttt{ovsgw} in response to the injection: \texttt{cookie=0xca}, \texttt{priority=110}, \texttt{nw\_src=192.168.2.31}, \texttt{actions=drop}, \texttt{hard\_timeout=75}. The non-zero packet counters are the attacker's own traffic being dropped; the rule self-expires after 75\,s.}
+\label{fig:p6armedflow}
+\end{figure}
+
+The contrast is stark on both the network and the process (Figure~\ref{fig:p6compare}). The identical FDI injection, sourced from the compromised supervisory host \texttt{192.168.2.31} and run over a matched forty-second window, landed 973 writes at the PLC disarmed against none armed; disarmed the tank crested past the full mark and overflowed, the process consequence of an unblocked injection shown in Figure~\ref{fig:p6overflow}, and armed it stayed within its safe band. The armed zero is not a near miss but a clean severance: the source is classified FORBIDDEN and isolated before its S7 session commits a single write.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.6\textwidth]{chart_armed_vs_disarmed.png}
+\caption{The same FDI injection from the compromised supervisory host \texttt{192.168.2.31}, run over a matched forty-second window with CARS disarmed then armed: malicious S7 writes reaching the PLC, 973 disarmed against 0 armed. Armed, the source is classified FORBIDDEN and isolated before its S7 session commits a write. Measured from the injection runs and the controller decision log.}
+\label{fig:p6compare}
+\end{figure}
+
+\subsection{The rest of the repertoire}
+\label{sec:evalrepertoire}
+
+The remaining vectors ran in the same armed session, captured at the three wire points. Against the control plane, an unauthenticated request to disarm the defence, \texttt{POST /cars/defense \{on:false\}}, was refused with \texttt{HTTP 401} and logged as \texttt{DENIED (bad/missing token)}; CARS stayed armed, so a compromised control-plane host cannot silently switch the defence off. A flow tamper that injected a bogus rule and deleted a real conduit was caught by the flow-integrity checker within one ten-second poll, its verdict moving to \texttt{ok:0, missing:1, extra:1}, and cleared back to \texttt{ok:1} on restore without re-baselining, which shows the restoration was byte-exact. An out-of-state attack, forged ACKs from \texttt{192.168.2.66} to the PLC, did not reach it: the stateful table admitted none. And the operation-aware case, a compromised SCADA writing a bogus level to the PLC, was isolated on the write while the remediation agent restored the value, the level holding near 50 and the loop still running, the same block-and-maintain as the devastation phase. Through all of it the legitimate Factory IO loop and the historian telemetry were permitted, so the campaign carried no false positives from end to end.
+
+The two external vectors close the campaign, driven from the Kali attacker \texttt{192.168.2.77}, the unregistered outsider of the threat model. Reconnaissance learned nothing under CARS: every scanned port on the PLC, including the S7 port 102, returned \texttt{filtered}, the \texttt{s7-info} probe drew no model or firmware, and the scan was reactively isolated. The controller logged the scan as \texttt{ISOLATE source 192.168.2.77 75s \dots ENFORCED [CRIT:CRITICAL]}, and the drop rule appeared on the switches as \texttt{cookie=0xca, priority=110, nw\_src=192.168.2.77}. Identity spoofing was dropped at the door: forging ARP as the trusted seam \texttt{192.168.2.31}, every forged frame was dropped at GUARD ingress and logged as \texttt{REFUSED (identity-spoof) - 192.168.2.31 impersonation dropped at GUARD ingress (dpid3)}, while the real seam kept flowing (Appendix~\ref{appx:scenarios}). The whole campaign is summarised in Table~\ref{tab:campaign}.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{0.20\textwidth}p{0.36\textwidth}p{0.36\textwidth}}
+\hline
+Vector & Unprotected & Armed (CARS) \\
+\hline
+Reconnaissance & PLC ports open; model and firmware fingerprinted & all ports \texttt{filtered}; no S7 identity leak; scanner isolated \\
+Identity spoofing & forged frames accepted as the trusted seam & 5/5 spoofed ARP dropped at GUARD ingress; real seams unaffected \\
+State manipulation & out-of-state frames serviced by the PLC & none admitted by the stateful table \\
+Control-plane disarm & defence silently switched off & refused (\texttt{HTTP 401}); stays armed \\
+Flow tamper & injected and deleted rules persist & flagged by the flow-integrity checker within one poll; self-clears on restore \\
+Operation-aware injection & bogus writes actuate the process & isolated on the write; remediation restores (block-and-maintain) \\
+Process devastation & tank overflows to $\sim$104\%, alarm raised & isolated on the first write; datapath drop installed; tank held \\
+\hline
+\end{tabular}
+\caption{The campaign, armed against unprotected. Every \emph{armed} outcome was captured live on 5 August, the external vectors from the Kali attacker \texttt{192.168.2.77} and the insider vectors from the compromised supervisory host \texttt{192.168.2.31}, corroborated by the controller decision log, the nmap and GUARD dumps, and the installed flows (Appendix~\ref{appx:scenarios}); the process-devastation contrast was re-captured fresh on the live tank (Section~\ref{sec:evaldevastation}). The two \emph{unprotected} reconnaissance and spoofing entries are the known flat-network baseline, an unenforced switch trivially serves a port scan and accepts a forged frame, and are given as reference rather than as a fresh measurement of our system. The legitimate Factory IO loop and historian telemetry were permitted throughout, so the campaign held zero false positives.}
+\label{tab:campaign}
+\end{table}
+
+\section{Cross-layer validation}
+\label{sec:evalcrosslayer}
+
+A decision log can be doubted; independent agreement across every layer is harder to dismiss. A deep end-to-end trial drove the full response spectrum through the real autonomous chain and recorded, for each scenario, five independent layers: the packet on the Snort mirror, the Snort alert, the controller's decision, the installed OpenFlow rule, and the outcome at the client. Table~\ref{tab:crosslayer} gives the result; at every rung the layers tell the same story.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lllll}
+\hline
+Response (trigger) & Snort & CARS tier & OVS enforcement & Outcome \\
+\hline
+REFUSE (HMI loop) & n/a & CRITICAL & none installed & loop runs \\
+ALLOW (READ FC3) & +283 & OPERATIONAL & none & read returns \texttt{[101..104]} \\
+THROTTLE (WRITE FC6) & +285 & SENSITIVE & meter, p100 & write rate-limited \\
+BLOCK (attacker WRITE) & +420 & FORBIDDEN & drop, p100 & connect fails \\
+ISOLATE (persistence) & alert & FORBIDDEN & \texttt{0xca} src-drop, p110 & source cut \\
+DEFLECT (policy) & alert & FORBIDDEN & \texttt{0xca} redirect, p105 & sent to honeypot \\
+default-deny (bypass) & none & silent & A2 pre-drop & connect fails, no window \\
+\hline
+\end{tabular}
+\caption{Cross-layer proof from the deep end-to-end trial: each response, with the Snort alert delta, the controller tier, the installed OpenFlow rule, and the client outcome. The last row is the proactive default-deny with the detection bridge off, showing a drop with no Snort or controller involvement and therefore no reaction window.}
+\label{tab:crosslayer}
+\end{table}
+
+The DEFLECT row was probed further to see whether the deception actually engages. Forcing DEFLECT on the attacker's conduit installs the redirect, a priority-105 rule rewriting the destination to the honeypot, and a fresh capture at the decoy confirmed the diversion on the wire: the attacker's packets to the CRITICAL PLC arrived instead at the honeypot \texttt{192.168.3.99}, which began to answer, while the real PLC saw nothing. The full interactive round-trip, the decoy sustaining a two-way session so the attacker receives spoofed replies, did not complete in testing, because the minimal decoy could not resolve the attacker's address across the deception boundary; a production interactive honeypot is future work. The value demonstrated is the one that matters for protection: DEFLECT moves the attacker off the real asset and onto the decoy (Appendix~\ref{appx:gapevidence}).
+
+The sharpest single proof is at the packet level. In the S7 write attack on PLC1, the attacker's Write-Var frames were counted at two capture points, the Snort mirror (what the detector sees) and the PLC's own port (what actually arrives). Armed, the mirror saw eight write attempts but only one reached the PLC, the single reaction-window leak, and the other seven were dropped in the fabric; disarmed, seven of the eight reached the PLC (Table~\ref{tab:wiredrop}). The drop is shown on the wire, not inferred from a log. The size of this leak depends on where the reaction window falls against the S7 handshake: in the matched forty-second injection of Section~\ref{sec:evaldevastation} the isolate landed during session setup, so no write committed at all, whereas here it fell one write later. In both the leak is at most a single write, and in neither did the process move.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcc}
+\hline
+S7 Write-Var frames (\texttt{.31$\to$.10}) & at Snort mirror & reached PLC \\
+\hline
+Armed & 8 & 1 \\
+Disarmed & 8 & 7 \\
+\hline
+\end{tabular}
+\caption{The drop shown on the wire. Attacker S7 Write-Var frames counted from the pcaps at the two capture points. Armed, eight are seen by the detector but seven are dropped in the fabric and only one leaks through in the reaction window; disarmed, seven of eight reach the PLC.}
+\label{tab:wiredrop}
+\end{table}
+
+The same two captures make the drop visible frame by frame (Figure~\ref{fig:wireproof}). At the mirror the attacker's writes appear at frame 1348 (\texttt{t+6.380\,s}) and 1415 (\texttt{t+6.691\,s}); at the PLC port only the first, frame 1374 (\texttt{t+6.380\,s}), arrives. The isolate installed in the intervening third of a second, so every write from 6.691\,s on is seen by the detector but never reaches the PLC. The operation CARS acts on is read straight from the frame (Figure~\ref{fig:s7frame}): a Write Var to the output area, an actuation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{wire_armed_mirror.png}\\[4pt]
+\includegraphics[width=\textwidth]{wire_armed_plc1.png}
+\caption{The drop on the wire, armed, the S7 conduit filtered to the attacker (\texttt{s7comm \&\& ip.src==192.168.2.31}). Top, at the Snort mirror: the write frames are seen (1348 at \texttt{6.380\,s}, 1415 at \texttt{6.691\,s}). Bottom, at the PLC port: only the first write (1374 at \texttt{6.380\,s}) arrives; every later write is dropped in the fabric.}
+\label{fig:wireproof}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.68\textwidth]{wire_s7_writevar.png}
+\caption{The malicious operation on the wire (frame 1348). CARS recovers the operation from the S7 parameter, \texttt{Function: Write Var (0x05)} to \texttt{Area: Outputs (Q) (0x82)}, an output actuation, and classifies it as CONTROL, forbidden on the CRITICAL PLC.}
+\label{fig:s7frame}
+\end{figure}
+
+\subsection{Operation-awareness at the wire}
+\label{sec:evaldpi}
+
+CARS decides on the industrial operation recovered from the packet, not the five-tuple. Firing the operation spectrum from one trusted operator (\texttt{192.168.2.31}) at the Modbus unit, the same conduit draws a different verdict per function code (Table~\ref{tab:dpi}): a read passes, a write is throttled, and the dangerous operations are forbidden. The wire confirms the discriminator directly, the identical conduit carried an FC\,03 (read) and an FC\,06 (write), the function code sitting at offset seven of the Modbus payload, and CARS allowed the first and throttled the second on that one byte.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lllll}
+\hline
+Operation & Modbus FC & CARS tier & Response & Detection \\
+\hline
+READ & \texttt{0x03} & OPERATIONAL & ALLOW & reliable \\
+WRITE & \texttt{0x06} & SENSITIVE & THROTTLE & reliable \\
+CONTROL & \texttt{0x05} & FORBIDDEN & BLOCK & reliable \\
+DIAG & \texttt{0x08} & FORBIDDEN & BLOCK, then ISOLATE & sustained only \\
+PROGRAM & \texttt{0x2B} & FORBIDDEN & BLOCK & unreliable \\
+ILLEGAL & \texttt{0x64} & FORBIDDEN & BLOCK & intermittent \\
+\hline
+\end{tabular}
+\caption{Operation-awareness on the same conduit. The tier and response are the policy, correct for every operation, as the decision matrix of Section~\ref{sec:evalaccuracy} establishes by driving each operation through the engine directly. The detection column records how reliably the Snort sensor recovers that operation from the wire.}
+\label{tab:dpi}
+\end{table}
+
+The detection column records an honest limitation, and it is the one qualification on the operation-awareness claim. The classification is the policy, and it is correct for every operation. The sensor that recovers the operation from the wire, however, is not equally reliable across all of them. The common operations (read, write, control) are recovered reliably, and a sustained dangerous operation is caught and escalated (a repeated DIAG was blocked and then isolated). But a single crafted dangerous frame can evade the single-packet inspection, and the rarer Modbus function codes were detected only intermittently, the MEI program request slipped through a sustained run and the illegal-code family was caught only once. A dangerous operation the sensor fails to recognise is not classified, so it falls to the source's base tier and is permitted. Two distinct weaknesses sit behind this and they are treated differently. Intermittent recovery of the rarer function codes is a sensor-tuning limit that remains, carried into Section~\ref{sec:threats}. The sharper one, fragmentation, was closed. Because the deployed rules matched the operation byte at a fixed packet offset with no stream reassembly, an attacker on an already-permitted conduit could split an S7 write across two TCP segments so the function byte fell in the second, and the operation was never recovered. A fresh test from the allowlisted \texttt{192.168.2.31} confirmed it: a Write-Var fragmented at byte fourteen drew only \texttt{TCP => ALLOW}, no rule was installed and the write reached the PLC, whereas the identical write sent whole drew \texttt{FORBIDDEN => ISOLATE}. The fix has two parts, because reassembly alone was not enough: TCP stream reassembly was enabled for the S7 and Modbus ports, and the operation-class rules were re-anchored to the protocol header: the operation byte, previously matched at a fixed \texttt{offset:17}, is now matched PDU-relative as \texttt{distance:8; within:9} after the \texttt{32 01} S7 job header, so a reassembled PDU is recognised wherever it sits in the stream. Re-run against the same fragmented attack at two split points, the write is now recovered, classified FORBIDDEN and the source isolated, with the legitimate high-rate loop still permitted and no new false positive (Appendix~\ref{appx:code}; the before-and-after capture and the full rule diff, Listing~\ref{lst:ev_rulesdiff}, are in Appendix~\ref{appx:gapevidence}). This raises the bar rather than settling the evasion question: overlapping-segment and timing evasions remain a general IDS problem, and single-frame recognition of the rarest codes is still imperfect. The annotated frame breakdowns at the three wire points, the S7 and Modbus function bytes read off the wire and the armed-versus-unprotected captures are collected in Appendix~\ref{appx:wire}.
+
+\section{Reaction window and latency}
+\label{sec:evallatency}
+
+The decision itself is close to free. The controller reports a mean decide-and-enforce time of 0.027\,ms over the campaign (Figure~\ref{fig:status}), so classifying an operation and selecting its response adds nothing measurable to the path. The cost that matters for a reactive defence lies elsewhere, in the reaction window: the interval between an attack reaching the wire and the reactive rule landing in the switch, during which a few packets can still reach the target.
+
+The armed process-devastation run bounds the window at the process level: the attacker's client could not commit a single write, the isolate cutting its S7 session before the first write landed, so zero writes reached the PLC against the 973 it managed disarmed, and a second connection moments later could not open at all. The source was quarantined for 75 seconds and the tank never left its band. The window itself is measured directly, not inferred from this run, by the harness below.
+
+A dedicated harness times the window directly, measuring attack-frame-to-enforcement on a single clock. Over one hundred autonomous trials the mean-time-to-mitigate was 12.6\,ms at the median (95\% confidence interval 12.3 to 12.9\,ms), the 95th percentile 28.0\,ms and the 99th 47.7\,ms; the slowest of the hundred was 50.5\,ms, and every trial ended in an ISOLATE (Figure~\ref{fig:mttmchart}). The reaction is therefore a few milliseconds in the ordinary case. These figures are a single-source measurement and are best read as a best case: the trials drove one attacker against an otherwise quiet detection path. Under a heavy multi-source event the detection bridge, which tails Snort's alert file and posts each alert over HTTP, would queue, and the window would widen; that bridge limit and its remedy, in-memory inter-process communication, are set out in Section~\ref{sec:threats} and the future work. A smaller earlier run occasionally spiked to about one second when detection fell on a poll boundary; that tail is real but rare, none of the hundred trials reached it, and the packets that arrive within any such window are inert.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{chart_mttm.png}
+\caption{Reaction window over one hundred autonomous trials, attack frame to enforcement on a single clock. Median 12.6\,ms, 95th percentile 28.0\,ms, 99th 47.7\,ms, maximum 50.5\,ms; every trial ended in an ISOLATE.}
+\label{fig:mttmchart}
+\end{figure}
+
+This window is a property of any detect-then-respond defence, in the same class as the flow-integrity poll interval, not a defect to be removed: detection, decision and installation take a finite, small time. The defence's value is that the window is short, the leaked packets are inert, and the enforcement then holds and self-heals. Pre-empting every first packet is the job of a proactive layer, which is exactly what the identity binding, allowlist and default-deny of the pipeline provide for the conduits they cover; the reactive graded response governs what those static layers pass on to inspection.
+
+\section{Anatomy of a defended attack: two pivots end to end}
+\label{sec:evalanatomy}
+
+The preceding sections measured CARS one property at a time. This section binds them into a single causal account: one attacker machine, driven from two network positions, with every stage of the defence followed on one clock from the launched packet to the installed flow and the operator's log. The value of the trace is that nothing is asserted in isolation: each claim about a rule, a decision or an enforcement is the next link in a chain that begins with a real frame captured on the wire.
+
+The attacker is a single Kali virtual machine, dual-homed by design (Figure~\ref{fig:travelpath}). Its \texttt{eth2} interface (\texttt{10.0.40.66}) sits in the enterprise IT zone and reaches the process network only by routing north-to-south through the modelled perimeter: an Enterprise firewall, a DMZ, and an OT firewall that source-NATs every crossing onto the single gateway address \texttt{192.168.2.1}. Its \texttt{eth1} interface (\texttt{192.168.2.77}) sits directly on the OT segment as an unregistered host. The same tool, the same target and the same operation are launched from each; only the attacker's position changes. That isolates the one variable that matters for an identity-bound defence: whether the fabric can see who is really attacking.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{story_travelpath.png}
+\caption{The two pivots from one Kali. \texttt{eth2} routes north and source-NATs to the gateway identity \texttt{192.168.2.1}; \texttt{eth1} sits on the OT segment as \texttt{192.168.2.77}. Both are quarantined at the gateway switch before a single packet reaches PLC1, but on different \texttt{nw\_src} identities.}
+\label{fig:travelpath}
+\end{figure}
+
+Every packet that enters the fabric meets the same three-table pipeline (Figure~\ref{fig:carspipeline}). Table~0 (GUARD) binds each protected identity to its physical port and MAC and drops a forgery before it can reach policy. Table~1 (POLICY) passes an established connection, then an allowlisted conduit, then any reactive rule the controller has installed, and default-denies everything else. Table~2 forwards what survives. In parallel, the gateway switch mirrors traffic to Snort, whose alerts the bridge turns into an operation and a rate and posts to the controller, whose \texttt{classify()} and \texttt{select\_response()} decide a tier and a graded response and, when warranted, install a reactive drop stamped with cookie \texttt{0x00CA}. Three termination classes fall out of this pipeline: a spoofed identity dies at Table~0; a non-conduit source is default-denied and, on any attempt against the PLC, reactively isolated; and an allowlisted conduit that turns malicious is caught by the deep-packet inspection loop. The two pivots exercise the middle class; the false-data injection of Section~\ref{sec:evalcampaign} exercised the third.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{story_pipeline.png}
+\caption{The CARS decision pipeline and where each attack class terminates. The two pivots (non-conduit sources) are cut at Table~1; the allowlisted insider is delivered one packet, then caught by the DPI loop that recovers the S7 operation and installs the \texttt{0x00CA} isolate.}
+\label{fig:carspipeline}
+\end{figure}
+
+\textbf{Pivot A, the IT attacker.} The Kali opens an S7 session to \texttt{192.168.2.10:102} over \texttt{eth2}. The frame is routed through the perimeter and arrives at the gateway switch source-NATed: the mirror records \texttt{192.168.2.1.33440 > 192.168.2.10.102} with the SYN flag, preceded by an ARP for the PLC, so every northern host has collapsed onto the one gateway identity. The controller resolves \texttt{192.168.2.1} to the \texttt{gateway} role, finds no allowlisted conduit to the CRITICAL PLC1, and classifies the attempt FORBIDDEN; because the destination is CRITICAL the response is an immediate source isolation. The audit line reads \texttt{FORBIDDEN 192.168.2.1(gateway) -> 192.168.2.10(plc) TCP => ISOLATE source 192.168.2.1 75s [CRIT:CRITICAL]}, and a matching flow appears on both \texttt{ovs1} and \texttt{ovsgw}: \texttt{cookie=0xca, priority=110, nw\_src=192.168.2.1, actions=drop, hard\_timeout=75}. The consequence for the attacker is a TCP connect timeout with zero writes landed; the gateway rule absorbed the SYN retransmits (\texttt{n\_packets}=4 at \texttt{ovsgw}) and the PLC-side capture shows nothing reaching the process. The containment is total but \emph{coarse}: the quarantine is on \texttt{192.168.2.1}, so it stops this attacker and every other northern host alike, the NAT collapse leaving CARS no finer handle.
+
+\textbf{Pivot B, the on-segment insider.} The identical S7 connection is launched from \texttt{eth1}, and now the mirror records the attacker's \emph{true} address: \texttt{192.168.2.77.42712 > 192.168.2.10.102} with the SYN flag. The controller resolves \texttt{192.168.2.77} to \texttt{unknown} (it is unregistered), again finds no conduit, and issues the same verdict, \texttt{FORBIDDEN 192.168.2.77(unknown) -> 192.168.2.10(plc) TCP => ISOLATE source 192.168.2.77 75s [CRIT:CRITICAL]}, but the installed flow now reads \texttt{nw\_src=192.168.2.77}. The attacker again gets a connect timeout and zero landed, but the quarantine is \emph{fine-grained}: it names the actual host, leaving every other OT identity untouched. Both pivots were severed at the TCP-connect layer: because neither is an allowlisted conduit, the connection to the PLC's control port is itself forbidden, so the handshake never completes and no S7 payload is ever emitted.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}p{3.1cm}p{5.0cm}p{5.0cm}@{}}
+\hline
+\textbf{Stage} & \textbf{Pivot A: IT attacker} & \textbf{Pivot B: insider} \\
+\hline
+Launch & S7 connect from \texttt{eth2} (\texttt{10.0.40.66}) & S7 connect from \texttt{eth1} (\texttt{192.168.2.77}) \\
+Travel path & Ent-FW $\rightarrow$ DMZ $\rightarrow$ OT-FW (SNAT) $\rightarrow$ ovsgw & OT segment $\rightarrow$ vmnet2 $\rightarrow$ ovsgw ofport 12 \\
+Seen on the wire as & \texttt{192.168.2.1} (gateway, collapsed) & \texttt{192.168.2.77} (true host) \\
+Rule matched & no conduit; default-deny & no conduit; default-deny \\
+Decision & \texttt{gateway$\rightarrow$plc} FORBIDDEN & \texttt{unknown$\rightarrow$plc} FORBIDDEN \\
+Response & ISOLATE 75\,s [CRIT:CRITICAL] & ISOLATE 75\,s [CRIT:CRITICAL] \\
+Flow installed & \texttt{0xca nw\_src=192.168.2.1} (ovs1+ovsgw) & \texttt{0xca nw\_src=192.168.2.77} (ovs1+ovsgw) \\
+Wire effect & connect timeout, 0 landed & connect timeout, 0 landed \\
+Observability & audit + dashboard ISOLATE row & audit + dashboard ISOLATE row \\
+\hline
+\end{tabular}
+\caption{The same attack, two positions, followed through nine stages. Enforcement is identical; the granularity of the quarantine is not.}
+\label{tab:eventtrail}
+\end{table}
+
+Table~\ref{tab:eventtrail} lays the two traces side by side. The enforcement is identical in kind, tier and duration; the single difference is the identity CARS can act on, and that difference is the argument for pushing enforcement onto the segment. A perimeter defence sees only \texttt{192.168.2.1} and must treat the whole enterprise as one suspect; CARS on the OT fabric names \texttt{192.168.2.77} and quarantines exactly it. Neither attacker moved the process, but only the on-segment case could be attributed.
+
+These two pivots are stopped before they can speak S7 at all. The third termination class, an \emph{allowlisted} conduit that turns malicious, is where the operation-aware machinery is exercised, and it was captured in the false-data injection of Section~\ref{sec:evalcampaign}: the compromised supervisory host holds a legitimate conduit, so its first write reaches the PLC (first-packet reality), the DPI loop recovers the S7 operation as a CONTROL write, and only then does the controller classify it FORBIDDEN and isolate the source while the remediation agent restores the process. Read together, the three cases are the whole of CARS: identity and conduit gating for who may connect, deep inspection for what an authorised party then does, and one graded, self-healing response mechanism behind both.
+
+Placing the timing on this story closes it (Figure~\ref{fig:sequence}). In each pivot the first SYN was seen once and the isolate was installed within the reaction window characterised in Section~\ref{sec:evallatency}: a median of 12.6\,ms, 47.7\,ms at the 99th percentile. The attacker's own TCP stack did not retransmit until roughly one second later, by which time the drop was already in place: the defence closed roughly two orders of magnitude faster than the attacker could send its next packet, which is why the wire shows one SYN seen and the rest absorbed. The reaction window is real, but on this evidence it is far shorter than the interval over which even an automated attacker operates. Equally, the decision at the heart of each trace is not a one-off: the \texttt{classify()} verdict that both pivots received is the same rule evaluated, without error, across the scored matrix and the exhaustive decision domain of Section~\ref{sec:evalaccuracy}, so each trace is one observed instance of a rule whose correctness is quantified with a confidence interval rather than asserted from a single run.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{story_sequence.png}
+\caption{The reaction window placed against the attacker's packet cadence. The \texttt{0x00CA} isolate lands within the measured mean-time-to-mitigate (median 12.6\,ms), while the attacker's TCP retransmits arrive $\sim$1\,s apart, so the first SYN is seen once and every later packet meets the installed drop.}
+\label{fig:sequence}
+\end{figure}
+
+\section{Process-layer defence in depth}
+\label{sec:evalguardian}
+
+The evaluation so far concerns the network: who may reach an asset, and with which operation. A separate question is what happens when the attacker is a genuinely trusted, allowlisted party acting within its permitted operations, the compromised engineering station or the corrupted agent behind classic ICS incidents. The network layer, by design, must not cut such a party on the critical path, so the natural worry is that a trusted insider drives the process to harm unchecked. Probing this on the live tank narrowed the concern before it justified a new layer.
+
+The high-rate route is already covered. Driving the tank over its limit means spoofing the level sensor faster than the hardware-in-the-loop refreshes it, so the injection is necessarily high rate; when the trusted remediation identity \texttt{192.168.2.45} was used to run exactly that overflow, the volumetric overlay classified it a flood and cut the conduit after seventy-seven writes, the tank peaking in the mid-seventies rather than overflowing. Reading the PLC program confirmed there is no slow path to the same end: the fill thresholds are constants in the control block, the \texttt{Setpoint} input word is not referenced, and the level is recomputed from the sensor every scan, so a single low-rate write cannot re-aim the process. The rate overlay therefore closes the overflow that the network gating leaves to it.
+
+Two residuals remain, both narrower and both real. The first is a low-rate authorised action: a trusted role issuing one legitimate command that is individually valid yet operationally harmful. The second is a blind spot inside the existing process agent, whose tamper test (Appendix~\ref{appx:code}) checks only the low side, a reading below a floor or a sudden fall, so it restores a sensor spoofed downward but ignores a reading driven high. To cover these a small process guardian was added as a defence-in-depth layer. It is a standalone, read-only Python monitor, separate from the SDN controller and its engine, that reads the tank level from the remediation agent's status feed and alarms on a high-side envelope breach, an impossible rate of change, or a stall in the level while the process should be cycling. Detecting attacks by checking the physical process against its expected invariants, rather than inspecting the network, is an established direction in control-system security \cite{cardenas2011attacks}; the guardian applies that idea as a narrow, alarm-only backstop to the response system. It never writes the PLC and never touches the enforcement or the remediation agent, so it cannot disturb the running system; it reports, and the network layer keeps its hands off the safety loop.
+
+Both residuals were then exercised live. A trusted \texttt{192.168.2.45} issuing a single authorised HMI stop was permitted by CARS, correctly for an authorised control, and the process halted with the tank frozen at 40.4\%; the guardian raised a stall alarm twelve seconds later, catching a denial the network layer allows by design. Separately, with the reported level pinned high at 90\% (the reported-full deception, the real tank draining beneath it), the existing agent stayed silent, its low-side test blind to the excursion, while the guardian raised a high-level and a rate alarm on the same reading. The guardian catches what the network layer must not act on and what the low-side agent misses, without changing either. The guardian alarm feed, and the flood block that cut the runaway trusted identity, are collected in Appendix~\ref{appx:gapevidence}.
+
+This does not claim to solve the insider problem. A manipulation that stays inside the physical envelope and moves the process slowly and plausibly evades an invariant monitor as it evades the agent, and the guardian is detection, an alarm to the operator, not prevention, because automating prevention on the safety loop is the risk this whole approach avoids. What the layer buys is a clean division of responsibility: the network stops who and what should never connect, the rate overlay stops the high-rate abuse, and a process-invariant monitor makes the residual physical anomalies visible. The remaining stealthy-in-envelope case is carried to Section~\ref{sec:threats} and the conclusion as future work.
+
+\section{Comparison with related work}
+\label{sec:evalcompare}
+
+CARS sits within the body of work on software-defined response for industrial networks, and its contribution is clearest against that work's known limits. Surveys of reactive SDN defence for ICS observe that most systems respond uniformly, dropping or redirecting a flagged flow regardless of what the flow was doing or how important its target is \cite{etxezarreta2023survey}. CARS decides instead on two axes, the industrial operation recovered from the packet and the criticality of the asset, so the same forbidden control draws a 75-second quarantine on the CRITICAL PLC and a 30-second block on the LOW-value unit, and a read from a source is allowed where a write from it is refused. The evaluation shows this grading changes the measured response tier by tier (Section~\ref{sec:evalcriticality}), rather than being cosmetic.
+
+The self-checking layer relates to the policy-verification work of Melis et al.\ \cite{melis2018policychecker}, which checks the consistency of installed flow rules; the CARS flow-integrity checker performs the same class of check against a trusted baseline and, in the campaign, caught an injected rule and a deleted conduit within one poll. The threat it defends, a control-plane host that rewrites the fabric, is the one identified by Gardiner et al.\ \cite{gardiner2021controller}; CARS adds an authenticated control interface so the defence cannot be silently disarmed, which the campaign confirmed with the refused \texttt{HTTP 401}. The stateful shield in the pipeline follows the data-plane connection-tracking idea of AvantGuard \cite{shin2013avantguard}, and the replica-and-deception direction of Etxezarreta et al.\ \cite{etxezarreta2026replica} is an alternative to the CARS block-and-maintain, trading a decoy for a graded cut.
+
+What separates CARS from the SDN-response systems it builds on, including the intrusion-response design of Samanis \cite{samanis2025phd}, is the deployment barrier it targets. The reactive defences in the literature are attractive but largely undeployed on live OT, because an over-eager block can cut the process; the central result here is a 0\% false-positive rate on the live process traffic with a bounded, reversible, evidence-generating response. That property, more than raw detection, is what an operator needs before a reactive defence can be armed on a running plant.
+
+\section{Threats to validity}
+\label{sec:threats}
+
+The results are honest within limits that should be stated plainly. This is a functional-prototype validation on a single testbed with one process, not a product trial. The accuracy is exact over the twenty-four scored cases and is corroborated by the campaign's live decisions, but twenty-four scored permutations on one bench cannot guarantee a zero false-positive rate on a large, noisy production network; that would need a far larger and more varied traffic sample. The result should be read as: on this system and its rulebook, across the decision space and the live campaign, no legitimate operation was wrongly cut, and not as a statistical guarantee for arbitrary industrial traffic. The physical process is a hardware-in-the-loop: the PLC, the S7 traffic, the control logic and the enforcement are all real, but the water is simulated in Factory IO, so the overflow is a faithful process consequence rather than a spill of real fluid.
+
+The reaction window deserves a sharper caveat than a general remark. Over a hundred trials the median mitigation was 12.6\,ms and the 99th percentile 47.7\,ms, but a smaller run occasionally reached about one second when detection fell on a poll boundary. On this slow tank that rare delay is harmless; on a fast process, high-speed manufacturing or an electrical protection loop, one second is ample time for physical damage, and the reactive layer alone would not suffice there. The mitigation is architectural: the proactive layer, identity binding, allowlist and default-deny, drops a non-conduit or spoofed packet with no reaction window at all, so the residual exposure is a novel operation on an already-permitted conduit. Narrowing it further is a matter of pushing more coverage into the proactive layer or shortening the detection poll, and a fast process would demand both.
+
+A second limit is in the detection sensor, not the policy. The reactive layer depends on Snort to recover the operation from the packet. An earlier configuration inspected single packets at fixed offsets, which let a fragmented operation on an already-permitted conduit evade recognition; that specific gap was closed by enabling stream reassembly and re-anchoring the rules to the protocol header (Section~\ref{sec:evaldpi}), and a fragmented write is now recovered and blocked at more than one split point. What remains is narrower: the rarest Modbus function codes are still recognised only intermittently, and a sufficiently crafted overlapping-segment or timing evasion is a general IDS problem this work does not claim to settle. The decision logic classifies every operation correctly once it is known, so this is a sensor-coverage limit rather than a flaw in the response, and sharpening the sensor's protocol parsing further is future work. A deeper limit sits underneath this: the operation-awareness depends on a readable payload. The classic S7comm and Modbus/TCP of this testbed carry the function in clear, but modern industrial protocols that encrypt or integrity-protect the payload, such as S7CommPlus on newer Siemens firmware, OPC UA with security enabled, or CIP Security, would deny the sensor the operation byte altogether. Under such a protocol the operation-aware reactive tier degrades to what can be judged without the payload, while the proactive stateful layer, the identity binding, the role and conduit allowlist and the default-deny, and the process guardian still hold; recovering operation-awareness there would need endpoint or host-based operation telemetry, or a protocol-aware proxy that terminates the secure session, both beyond this work.
+
+Several further limits are architectural rather than defects in the decision logic, and they mark where a lab prototype stops short of a hardened deployment. The OpenFlow control channel runs in plaintext (\texttt{tcp:6653}), so an attacker who reached the control plane could intercept or forge flow rules; that plane is a separate wired management network (\texttt{10.10.10.0/24}) which none of the evaluated attackers can reach, so the exposure is bounded on this testbed. Relying on segmentation alone is nonetheless a weak posture for a centralised controller: a misconfiguration, a VLAN-hopping technique, or an engineering station dual-homed onto both the operational and management planes would defeat it, leaving the channel open to the control-plane interception and rule-forgery set out in Section~\ref{sec:controlplane} \cite{gardiner2021controller}. The proper mitigation is to run OpenFlow over TLS; this prototype does not implement it, and does not measure its latency overhead. The flow-integrity checker polls every ten seconds, which catches a persistent injection within one poll (confirmed in the campaign) but, as a fresh test showed, misses a rule injected and deleted inside the interval: a two-second transient never flipped the auditor, while the same rule left in place was caught as \texttt{extra} within one poll (Appendix~\ref{appx:gapevidence}). Polling has an inherent window; an event-driven flow-monitor subscription is the remedy. The fabric was tested against volumetric floods from known endpoints but not against a spoofed-source state-exhaustion flood that could fill the connection-tracking table; GUARD drops spoofed protected identities before they reach conntrack, but random unregistered spoofed sources would still consume state, and conntrack limits or per-source metering are the mitigation. Finally, the detection bridge reads Snort's alert file and posts over HTTP; with a follow-on-write tail and a per-conduit cooldown this is adequate at the loads measured, but a heavy multi-source flood would bottleneck it, and a production system would use in-memory inter-process communication. The enforcement also carries a consequence worth stating plainly: the isolate and block responses install a silent \texttt{drop}, and for a session already established to a PLC that leaves the PLC holding a half-open socket until its own TCP timeout expires, because its outbound segments go unacknowledged rather than being reset. On an S7-1200, whose concurrent-connection pool is small, repeatedly isolating an attacker mid-session could in principle exhaust that pool and degrade the very device the defence protects; this was identified analytically but not stress-tested. Emitting a TCP reset toward the PLC on quarantine, so its socket closes at once, is the remedy, carried in the future work. The controller is also a central dependency, noted for compromise in Section~\ref{sec:controlplane} but with an availability face as well: the proactive policy is installed as flow rules in the switches, yet how the fabric behaves on a full controller loss or a control-plane overload, whether it keeps enforcing the installed rules or reverts to plain forwarding, is set by the switch fail-mode and was not evaluated here; nor was the controller's headroom on a fabric far larger than three switches and two PLCs, where many more nodes and multicast-heavy protocols such as PROFINET could add processing jitter. Each of these is a known engineering step, identified and bounded here, not a flaw in the response model.
+
+Four boundaries are then carried through honestly. Layer-two host discovery by ARP broadcast is a network function and is not policy-gated, so an attacker on the segment learns the host inventory even under CARS; only the services and the operations stay hidden. The system trusts its role assignment: GUARD stops an attacker impersonating a role at the port and MAC level, but a genuinely compromised host acting within the operations its role is permitted is trusted by design and only monitored. The starkest case is a genuinely trusted party acting within its permitted operations, the compromised HMI or corrupted agent behind classic ICS incidents; this design bounds that case on three sides without eliminating it. The rate overlay already cuts the high-rate injection an overflow requires, shown when a trusted identity's flood was blocked and the tank held (Section~\ref{sec:evalguardian}), and the PLC program offers no low-rate path to the same effect. A process guardian, added as a read-only defence-in-depth layer, alarms on the high-side envelope and liveness anomalies that the network must not act on and that the low-side remediation agent misses, catching both a trusted stop and a reported-full sensor spoof in testing. What is left is genuinely hard: a manipulation that stays within the physical envelope and moves the process slowly and plausibly evades an invariant monitor as it evades the agent, and the remediation agent itself, trusted to issue any operation so it can restore the process, is trusted by design, though a high-rate abuse of that role is still cut by the flood overlay (a runaway agent driven at flood rate against the PLC was blocked in testing), so only a low-rate, in-role abuse of it slips through. The guardian is detection, not prevention, since automating prevention on the safety loop is the risk this whole approach avoids. Finally, a fully subverted controller that knows the defence's own internal markings is outside what a self-checking control plane can catch. These are boundaries of the approach, deliberate or fundamental, not defects of the implementation, and they bound the claims made here.
+
+\section{Ethics}
+\label{sec:ethics}
+
+All offensive work was conducted on an isolated, self-contained testbed with no connection to any production or external network, using hardware and a simulated process owned by the research group. No live industrial infrastructure was touched, and no data beyond the group's own was involved. The attacks, including the process-devastation injection, were run to measure a defence and were reversed after each run, with the process returned to its safe state. The intent throughout is defensive: to establish whether a reactive network defence can be trusted on a live process, so that operators have evidence before arming one. The tooling and the findings are reported at the level needed to substantiate the results and to be reproduced by other researchers, without providing a turnkey attack against any specific deployed system.

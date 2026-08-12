@@ -1,0 +1,19 @@
+[Unit]
+Description=CARS Snort IDS sensor (afpacket DAQ on snort0 SPAN mirror)
+After=openvswitch-switch.service network-online.target
+Wants=network-online.target
+Conflicts=snort.service
+
+[Service]
+Type=simple
+# stop the distro's default snort so it can't fight us on snort0
+ExecStartPre=-/usr/bin/systemctl stop snort.service
+ExecStartPre=-/usr/bin/pkill -f /etc/snort/snort.conf
+# wait for the mirror output port to exist (up to ~30s)
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 30); do ip link show snort0 >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'
+ExecStart=/usr/sbin/snort -q -A fast --daq afpacket -c /etc/snort/cars.conf -i snort0 -l /var/log/snort
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

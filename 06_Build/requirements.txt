@@ -1,0 +1,13 @@
+# Python dependencies for the CARS system (06_Build).
+# Verified from the imports in the controller, sensors and agents.
+# Install into a virtual environment on the controller/fabric node.
+
+os-ken            # OpenFlow 1.3 controller framework (hosts cars_engine.py)
+python-snap7      # S7 client used by the process, remediation and attack tools
+pymodbus          # Modbus scenario client/server
+eventlet          # async networking used by the os-ken application
+
+# Notes:
+#  - Snort (2.9.x) is a system package, not a pip dependency.
+#  - Open vSwitch is a system package providing the OpenFlow data plane.
+#  - The dashboard serves over HTTP from the Python standard library.

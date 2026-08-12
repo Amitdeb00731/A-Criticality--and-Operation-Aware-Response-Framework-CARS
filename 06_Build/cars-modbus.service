@@ -1,0 +1,15 @@
+[Unit]
+Description=CARS A3 Modbus scenario (netns endpoints + simulated Modbus PLC on ovsgw)
+After=openvswitch-switch.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# wait for ovsgw, (re)build the mbns/opns/atkns namespaces, then run the simulated PLC in foreground
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 20); do ovs-vsctl br-exists ovsgw && exit 0; sleep 1; done; exit 1'
+ExecStartPre=/usr/local/sbin/cars-modbus-setup.sh
+ExecStart=/usr/bin/ip netns exec mbns python3 /home/msclab/mb_server.py 192.168.2.20
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

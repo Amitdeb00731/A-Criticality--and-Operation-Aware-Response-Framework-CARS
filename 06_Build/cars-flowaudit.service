@@ -1,0 +1,17 @@
+[Unit]
+Description=CARS flow-integrity (policy) checker - watch daemon (#28, CC-93)
+Documentation=DECISION_LOG.md CC-93
+After=network.target
+
+[Service]
+# Watches the immutable security policy (GUARD + A2 cookie-0xa2) on ovs1+ovsgw against the TRUSTED baseline every 10s.
+# On drift (bogus-injected / removed / action-modified) it writes /tmp/cars_flowaudit.jsonl + posts to /cars/flowaudit.
+# IMPORTANT: the baseline (~/cars/flow_baseline.json) must be RE-CAPTURED after each trusted bring-up, then restart this
+# service, so it watches against the current-boot policy (ofports/flows are re-installed each boot).
+Type=simple
+ExecStart=/usr/bin/python3 /home/msclab/cars_flow_audit.py --watch 10 --bridges ovs1,ovsgw
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

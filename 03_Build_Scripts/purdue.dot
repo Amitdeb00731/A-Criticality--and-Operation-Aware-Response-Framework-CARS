@@ -1,0 +1,22 @@
+digraph purdue {
+  rankdir=TB; bgcolor="white";
+  node [fontname="Helvetica", fontsize=11, shape=box, style="filled", penwidth=1.1, width=5.2, height=0.55, fixedsize=false];
+  edge [color="#888888", arrowsize=0.7];
+  labelloc="t"; fontname="Helvetica"; fontsize=15;
+  label=<<b>ICS Reference (Purdue) Model mapped to your testbed</b>>;
+
+  L5 [label="Level 4–5 · Enterprise IT\nEnterprise host / attacker pivot  →  VM on Dell #2", fillcolor="#DCE6F1", color="#2E5496"];
+  L35 [label="Level 3.5 · Industrial DMZ\nHistorian replica · Jump host · IDS collector  →  VMs (dual-firewall/pfSense)", fillcolor="#E9EEF6", color="#2E5496"];
+  L3 [label="Level 3 · Operations\nHistorian (InfluxDB+Grafana) · (MES optional)  →  Dell #1 / VM", fillcolor="#E2EFDA", color="#1E7145"];
+  L2 [label="Level 2 · Supervisory\nSCADA/HMI (Ignition Maker / ScadaBR / Node-RED) · EWS (TIA Portal)  →  Asus", fillcolor="#E2EFDA", color="#1E7145"];
+  L1 [label="Level 1 · Basic Control\nReal Siemens S7-1200/1500  +  soft-PLC #2 (OpenPLC)  →  PLC + Dell", fillcolor="#FDE9D9", color="#9C5700"];
+  L0 [label="Level 0 · Physical Process\nProcess simulation (Factory I/O / Simulink / Python)  +  safe real I/O (LEDs)", fillcolor="#FBE4D5", color="#9C5700"];
+
+  L5 -> L35 -> L3 -> L2 -> L1 -> L0;
+
+  fabric [label="SDN network fabric\nOpen vSwitch + Ryu (CARS)\nzone segmentation via VLANs/bridges\n— IDS on mirror port —", shape=box, style="filled,rounded", fillcolor="#1F3864", fontcolor="white", width=2.6];
+  fabric -> L2 [style=dashed, color="#1F3864", constraint=false];
+  fabric -> L1 [style=dashed, color="#1F3864", constraint=false];
+  fabric -> L3 [style=dashed, color="#1F3864", constraint=false];
+  { rank=same; fabric; L1; }
+}

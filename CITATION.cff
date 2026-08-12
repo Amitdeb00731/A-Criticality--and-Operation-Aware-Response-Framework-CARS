@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use or refer to this work, please cite it as below."
+title: "CARS: Reactive SDN for Securing ICS Environments — A Criticality- and Operation-Aware Response Framework"
+abstract: >-
+  An SDN intrusion-response system for industrial control systems whose response
+  is conditioned on asset criticality and the industrial operation recovered from
+  the traffic, so that automated response can be enabled without risking the
+  physical process. Built and validated on a hardware testbed with real Siemens
+  S7-1212C PLCs and a live tank process.
+type: software
+authors:
+  - family-names: Deb
+    given-names: Amit Kiran
+    affiliation: "University of Bristol"
+year: 2026
+license: MIT
+keywords:
+  - software-defined networking
+  - industrial control systems
+  - intrusion response
+  - OpenFlow
+  - OT security
+  - deep packet inspection

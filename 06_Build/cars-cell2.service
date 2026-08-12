@@ -1,0 +1,12 @@
+[Unit]
+Description=CARS Cell-2 NAT gateway (transit .3.x + DNAT/MASQUERADE)
+After=openvswitch-switch.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cars-cell2.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

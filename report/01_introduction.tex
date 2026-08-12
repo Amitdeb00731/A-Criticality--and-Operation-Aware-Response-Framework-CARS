@@ -1,0 +1,36 @@
+\chapter{Introduction}
+\label{chap:introduction}
+
+\noindent
+Industrial control systems (ICS) run the physical processes behind electricity generation, water treatment, gas distribution and manufacturing. They differ from ordinary information technology in one respect that shapes every security decision: safety and the continuity of the process come first. The NIST guide to operational-technology security states that OT security objectives typically prioritise integrity and availability, followed by confidentiality, and must treat safety as an overarching priority \cite{nist80082}. A controller that stops driving its process can therefore cause a physical hazard rather than only a loss of data. A programmable logic controller (PLC) that loses contact with its sensors part way through a cycle may overfill a tank or trip a turbine. Any defensive measure placed in front of such a device therefore carries a risk of its own.
+
+Software-defined networking (SDN) separates the control of a network from the switches that forward its traffic, so a central controller can install or withdraw forwarding rules as conditions change. This makes SDN an attractive base for reactive intrusion response in ICS: when a threat is detected, the controller can act on the offending traffic across the whole network in a coordinated way. The open question is what that action should be. A survey of SDN-based intrusion-response systems for ICS organises the field into three families of response strategy, of which the most direct, dynamic traffic filtering, acts by dropping packets or blocking flows \cite{etxezarreta2023survey}. None of these strategies conditions its response on the criticality of the device being protected. Cutting traffic to a safety-critical PLC in the middle of its control loop can be as harmful as the attack it is meant to stop. This is why automated response is still rarely enabled in operational technology. The barrier is not detection accuracy but trust: an operator will not switch on a defence that might trip the process itself.
+
+The threats such a defence must answer are well documented and physical in their consequences. An attacker who reaches the control network can enumerate the PLCs, impersonate a trusted engineering station, or inject false sensor data so that the controller drives the process to an unsafe state while its own readings appear normal \cite{etxezarreta2026replica}. Because the SDN controller holds the forwarding policy for the whole network, a compromise of the control plane is itself a recognised attack, able to insert or remove rules silently \cite{gardiner2021controller}. A response system that reacts to these threats with a single blunt action inherits the trust problem described above; one that reacts without regard to which asset it is protecting cannot claim to be safe for the process.
+
+This project addresses that gap with CARS, a criticality- and operation-aware SDN intrusion-response system for ICS. The central idea is to condition the response on two properties that uniform blocking ignores: the criticality of the asset being protected, and the nature of the operation being attempted. Criticality follows a consequence-based tiering drawn from established guidance, in which each asset is rated by the physical and operational consequence of its compromise \cite{inl2016cce, cisa2025assetinventory}. The operation is recovered from the traffic itself, so that reading a value from a PLC is treated differently from writing one, and an engineering download is treated differently again. Responses are graded rather than binary, and each is designed to be bounded in time, reversible, and to leave an audit record. The intent is a defence an operator can enable, because it will refuse an unsafe action on a critical asset before it will ever interrupt the process that keeps that asset running.
+
+The work is grounded in a hardware testbed rather than a simulation. Two real Siemens S7-1212C PLCs (model 6ES7~212-1BE40-0XB0, firmware 4.2.3, confirmed by scanning the device during evaluation) drive a live tank-level process through the SDN fabric, with an operator panel and an engineering workstation present as they would be in a small plant. The physical process allows a response to be judged against its real consequence: whether the tank stays within its safe band, or overflows. The central challenges the project had to resolve were to define a criticality and operation model that is precise enough to enforce, to realise it as an OpenFlow pipeline that does not add meaningful latency to the control path, and to show, at the level of individual packets, both that the defence stops the attacks and that it never blocks the legitimate process.
+
+\section*{Aims, objectives and achievements}
+
+\noindent
+The aim of the project was to design, build and evaluate an SDN intrusion-response system for ICS whose response is conditioned on asset criticality and operation, so that automated response can be enabled without risking the physical process. This was pursued through the following objectives:
+
+\begin{itemize}
+\item Build a representative hardware testbed comprising an SDN fabric, real PLCs, an operator panel and a live physical process.
+\item Design a response model that grades enforcement by asset criticality and operation class, and that is bounded, reversible and evidence-generating.
+\item Implement the model as an OpenFlow controller with a layered pipeline, together with the integrity checks needed to remain trustworthy under control-plane compromise.
+\item Integrate a hardware-in-the-loop process so that responses can be tested against real physical consequences.
+\item Evaluate decision accuracy and false positives, and validate each capability at the packet level against realistic attacks, comparing protected with unprotected operation.
+\end{itemize}
+
+\noindent
+The main achievements of the project, each evidenced in the chapters that follow, are:
+
+\begin{itemize}
+\item A working three-node SDN-ICS testbed with two real S7-1212C PLCs and a live hardware-in-the-loop tank process driven through the controlled fabric.
+\item An implementation of CARS as a three-table OpenFlow pipeline: identity binding against spoofing, a stateful policy stage carrying a criticality- and operation-aware rulebook, and a graded seven-level response ladder, supported by a flow-integrity checker and an authenticated control interface.
+\item A decision evaluation across the range of role, operation class and asset criticality in which every legitimate operation was permitted and every illegitimate one was refused, with no false positives against the live process traffic.
+\item A packet-level validation of each capability, protected against unprotected, spanning reconnaissance, identity spoofing, out-of-state traffic, control-plane and flow tampering, operation-aware commands, and a false-data injection that overflowed the tank when unprotected yet was severed on its first write when the defence was enabled.
+\end{itemize}

@@ -1,0 +1,9 @@
+--- /home/msclab/cars_backup_2026-08-07_1715/cars.conf	2026-08-07 17:15:51.404757857 +0100
++++ /etc/snort/cars.conf	2026-08-07 18:57:12.948533211 +0100
+@@ -2,4 +2,6 @@
+ var EXTERNAL_NET any
+ config checksum_mode: none
+ config event_queue: max_queue 10 log 5 order_events content_length
++preprocessor stream5_global: track_tcp yes, track_udp no, max_tcp 8192
++preprocessor stream5_tcp: policy linux, timeout 60, ports both 102 502
+ include /etc/snort/cars.rules

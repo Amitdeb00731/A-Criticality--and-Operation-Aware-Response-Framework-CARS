@@ -1,0 +1,45 @@
+### ovs2 table=0
+ cookie=0x0, duration=20884.122s, table=0, n_packets=8353, n_bytes=2330534, priority=65535,dl_dst=01:80:c2:00:00:0e,dl_type=0x88cc actions=CONTROLLER:65535
+ cookie=0x0, duration=20884.124s, table=0, n_packets=37677, n_bytes=6254142, priority=200,ip,in_port=enx9c69d3413f16,dl_src=e0:dc:a0:46:ff:ce,nw_src=192.168.2.10 actions=goto_table:1
+ cookie=0x0, duration=20884.124s, table=0, n_packets=48038, n_bytes=7138971, priority=200,ip,in_port=enx9c69d3283cf9,dl_src=e0:dc:a0:5c:60:44,nw_src=192.168.2.9 actions=goto_table:1
+ cookie=0x0, duration=20884.124s, table=0, n_packets=947, n_bytes=56820, priority=200,arp,in_port=enx9c69d3413f16,arp_spa=192.168.2.10,arp_sha=e0:dc:a0:46:ff:ce actions=goto_table:1
+ cookie=0x0, duration=20884.124s, table=0, n_packets=341, n_bytes=20460, priority=200,arp,in_port=enx9c69d3283cf9,arp_spa=192.168.2.9,arp_sha=e0:dc:a0:5c:60:44 actions=goto_table:1
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.10 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.20 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.30 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.31 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.45 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.55 actions=drop
+ cookie=0x0, duration=20884.124s, table=0, n_packets=0, n_bytes=0, priority=100,ip,nw_src=192.168.2.9 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.10 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.20 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.30 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.31 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.45 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.55 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=0, n_bytes=0, priority=100,arp,arp_spa=192.168.2.9 actions=drop
+ cookie=0x0, duration=20884.123s, table=0, n_packets=19718, n_bytes=1488405, priority=50,ip actions=goto_table:1
+ cookie=0x0, duration=20884.123s, table=0, n_packets=622, n_bytes=26868, priority=0 actions=goto_table:1
+### ovs2 table=1
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=85715, n_bytes=13393113, priority=90,ct_state=-trk,ip actions=ct(table=1)
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=105419, n_bytes=14713428, priority=85,ct_state=+est+trk,ip actions=goto_table:2
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.31,nw_dst=192.168.2.20,tp_dst=502 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=1, n_bytes=74, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.9,nw_dst=192.168.2.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.31,nw_dst=192.168.2.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.3.66,nw_dst=192.168.3.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.141s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.55,nw_dst=192.168.2.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.45,nw_dst=192.168.2.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.30,nw_dst=192.168.2.10,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.30,nw_dst=192.168.2.20,tp_dst=502 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.55,nw_dst=192.168.2.9,tp_dst=102 actions=ct(commit),goto_table:2
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=55,ct_state=+new+trk,ip,nw_dst=192.168.2.20 actions=drop
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=0, n_bytes=0, priority=55,ct_state=+new+trk,ip,nw_dst=192.168.2.9 actions=drop
+ cookie=0xa2, duration=20884.140s, table=1, n_packets=13, n_bytes=1066, priority=10,ct_state=+new+trk,ip actions=ct(commit),goto_table:2
+ cookie=0x0, duration=20884.142s, table=1, n_packets=1910, n_bytes=104148, priority=0 actions=goto_table:2
+### ovs2 table=2
+ cookie=0x0, duration=20884.160s, table=2, n_packets=342, n_bytes=20502, priority=2,dl_dst=ff:ff:ff:ff:ff:ff actions=FLOOD
+ cookie=0x0, duration=20883.742s, table=2, n_packets=48377, n_bytes=7002655, priority=1,in_port=enx9c69d3283cf9,dl_src=e0:dc:a0:5c:60:44,dl_dst=e0:dc:a0:46:ff:ce actions=output:enx9c69d3413f16
+ cookie=0x0, duration=20883.735s, table=2, n_packets=27217, n_bytes=5334395, priority=1,in_port=enx9c69d3413f16,dl_src=e0:dc:a0:46:ff:ce,dl_dst=e0:dc:a0:5c:60:44 actions=output:enx9c69d3283cf9
+ cookie=0x0, duration=20879.689s, table=2, n_packets=20314, n_bytes=1513045, priority=1,in_port=cell2gw,dl_src=9e:e4:8a:2b:46:5d,dl_dst=e0:dc:a0:46:ff:ce actions=output:enx9c69d3413f16
+ cookie=0x0, duration=20879.684s, table=2, n_packets=11063, n_bytes=945623, priority=1,in_port=enx9c69d3413f16,dl_src=e0:dc:a0:46:ff:ce,dl_dst=9e:e4:8a:2b:46:5d actions=output:cell2gw
+ cookie=0x0, duration=20884.160s, table=2, n_packets=30, n_bytes=2496, priority=0 actions=CONTROLLER:65535

@@ -1,0 +1,59 @@
+digraph tier3 {
+  rankdir=TB; bgcolor="white"; compound=true;
+  node [fontname="Helvetica", fontsize=10, shape=box, style="filled", penwidth=1.0];
+  edge [color="#777777", fontname="Helvetica", fontsize=8];
+  labelloc="t"; fontname="Helvetica"; fontsize=14;
+  label=<<b>Tier 3 Testbed — Purdue-zoned architecture (CARS)</b>>;
+
+  subgraph cluster_ent {
+    label="Enterprise IT  (L4/5)  VLAN 40"; style="rounded,filled"; fillcolor="#DCE6F1"; color="#2E5496"; fontsize=10;
+    corp [label="Corporate host +\nAttacker pivot (Kali)\nVM · Dell #1", fillcolor="#FBE4E6", color="#9C1F2E"];
+  }
+  fw_it [label="IT-side firewall\n(pfSense VM)", shape=box, fillcolor="#F2DCDB", color="#9C1F2E"];
+
+  subgraph cluster_dmz {
+    label="Industrial DMZ  (L3.5)  VLAN 35"; style="rounded,filled"; fillcolor="#E9EEF6"; color="#2E5496"; fontsize=10;
+    hist_r [label="Historian replica", fillcolor="#EDF1F8", color="#2E5496"];
+    jump [label="Jump host\n(logged access)", fillcolor="#EDF1F8", color="#2E5496"];
+  }
+  fw_ot [label="OT-side firewall\n(pfSense VM)", shape=box, fillcolor="#F2DCDB", color="#9C1F2E"];
+
+  subgraph cluster_ops {
+    label="Operations  (L3)  VLAN 30"; style="rounded,filled"; fillcolor="#E2EFDA"; color="#1E7145"; fontsize=10;
+    hist [label="Historian\nInfluxDB + Grafana\ncontainer · Dell #1", fillcolor="#EAF3E1", color="#1E7145"];
+  }
+
+  subgraph cluster_sup {
+    label="Supervisory  (L2)  VLAN 20"; style="rounded,filled"; fillcolor="#E2EFDA"; color="#1E7145"; fontsize=10;
+    hmi [label="HMI/SCADA\nIgnition Maker\n· Asus", fillcolor="#EAF3E1", color="#1E7145"];
+    ews [label="EWS\nTIA Portal · Asus", fillcolor="#EAF3E1", color="#1E7145"];
+    opc [label="OPC UA server\n+ MQTT broker", fillcolor="#EAF3E1", color="#1E7145"];
+  }
+
+  subgraph cluster_ctl {
+    label="Basic Control  (L1)  VLAN 10"; style="rounded,filled"; fillcolor="#FDE9D9"; color="#9C5700"; fontsize=10;
+    plc [label="Siemens S7-1200/1500\nREAL PLC\nModbus/502 · S7/102", shape=box3d, fillcolor="#FCE4D0", color="#9C5700"];
+    splc [label="Soft-PLC #2\nOpenPLC container", fillcolor="#FCE4D0", color="#9C5700"];
+    sis [label="SIS interlock\n(ladder)", fillcolor="#FCE4D0", color="#9C5700"];
+  }
+
+  subgraph cluster_proc {
+    label="Physical Process  (L0)"; style="rounded,filled"; fillcolor="#FBE4D5"; color="#9C5700"; fontsize=10;
+    fio [label="Factory I/O (3D process)\nWindows · Dell #2\n(S7 driver to PLC)", fillcolor="#FCE4D0", color="#9C5700"];
+  }
+
+  corp -> fw_it -> hist_r [lhead=cluster_dmz];
+  jump -> fw_ot -> hist [lhead=cluster_ops];
+  hist -> hmi [lhead=cluster_sup, ltail=cluster_ops];
+  hmi -> plc [lhead=cluster_ctl, ltail=cluster_sup];
+  plc -> fio [lhead=cluster_proc, ltail=cluster_ctl, label="S7 I/O"];
+
+  fabric [label="SDN FABRIC\nOpen vSwitch + Ryu (CARS)\nVLAN segmentation\n= programmable Purdue zones", shape=box, style="filled,rounded", fillcolor="#1F3864", fontcolor="white"];
+  ids [label="IDS\nSuricata + Zeek/ICSNPP\n(OVS mirror)", shape=box, fillcolor="#F2DCDB", color="#9C1F2E"];
+  fabric -> ids [dir=both, style=dashed, color="#1F3864"];
+  ids -> fabric [label="alert", color="#9C1F2E", style=bold];
+  fabric -> plc [style=dashed, color="#1F3864", constraint=false, label="flow-mod"];
+
+  { rank=same; fabric; hmi; }
+  { rank=same; ids; opc; }
+}

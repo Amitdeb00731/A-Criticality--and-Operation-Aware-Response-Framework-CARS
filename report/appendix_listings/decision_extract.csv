@@ -1,0 +1,8 @@
+time,src,srole,dst,drole,proto,op,tier,resp,mode,action
+08-05T21:01:49,192.168.2.77,unknown,192.168.2.10,plc,TCP,,FORBIDDEN,ISOLATE,ENFORCED,"ISOLATE source 192.168.2.77 75s (quarantine all conduits, self-healing) [CRIT:CRITICAL]"
+08-05T21:03:14,192.168.2.31,SPOOFED,0.0.0.0,guard,ARP,SPOOF,FORBIDDEN,REFUSE,ENFORCED,"REFUSED (identity-spoof) - 192.168.2.31 impersonation dropped at GUARD ingress (dpid3) [x2, total 10]"
+08-05T21:05:02,192.168.2.66,unknown,192.168.2.10,plc,ICMP,,FORBIDDEN,ISOLATE,ENFORCED,"ISOLATE source 192.168.2.66 75s (quarantine all conduits, self-healing) [CRIT:CRITICAL]"
+08-05T21:05:11,192.168.2.55,ews,192.168.2.10,plc,S7,CONTROL,OPERATIONAL,ALLOW,ENFORCED,ALLOW (operational) - monitor only [CRIT:CRITICAL]
+08-05T21:04:59,192.168.2.30,historian,192.168.2.10,plc,S7,READ,OPERATIONAL,ALLOW,ENFORCED,ALLOW (operational) - monitor only [CRIT:CRITICAL]
+08-05T19:15:38,192.168.2.31,scada,192.168.2.10,plc,S7,CONTROL,FORBIDDEN,ISOLATE,ENFORCED,"ISOLATE source 192.168.2.31 75s (quarantine all conduits, self-healing) [CRIT:CRITICAL]"
+08-05T18:21:49,0.0.0.0,flowaudit,0.0.0.0,policy,OF,DRIFT,FORBIDDEN,REFUSE,ENFORCED,"REFUSED (flow-integrity:policy-removed) - ovs1|t1|p80|c0xa2|priority=80,ct_state=+new+trk,tcp,nw_src=192.168.2.31,nw_dst=192.168.2.20,tp_dst=502"

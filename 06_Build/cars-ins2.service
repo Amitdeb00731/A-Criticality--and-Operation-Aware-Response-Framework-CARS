@@ -1,0 +1,14 @@
+[Unit]
+Description=CARS Cell-2 attacker vantage (ins2 .3.66 on ovsgw)
+After=openvswitch-switch.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# wait for ovsgw to exist in the OVS DB (~20s max)
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 20); do ovs-vsctl br-exists ovsgw && exit 0; sleep 1; done; exit 1'
+ExecStart=/bin/bash -c 'ovs-vsctl --may-exist add-port ovsgw ins2 -- set interface ins2 type=internal; ip addr replace 192.168.3.66/24 dev ins2; ip link set ins2 up'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

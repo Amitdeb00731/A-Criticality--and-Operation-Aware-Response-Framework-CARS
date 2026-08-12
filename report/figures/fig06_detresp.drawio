@@ -1,0 +1,40 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Fig6-DetectionResponse" id="fig06">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="820" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="n1" value="Mirrored packet&#10;(ovsgw SPAN mirror &amp;#8594; snort0)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="&lt;b&gt;Snort DPI&lt;/b&gt;&#10;match the protocol function field&#10;(S7comm / Modbus) &amp;#8594; operation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="55" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="Alert file&#10;/var/log/snort/alert" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="590" y="60" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="&lt;b&gt;Bridge&lt;/b&gt; (snort_bridge.py)&#10;POST source, destination, operation&#10;to /cars/respond" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="560" y="230" width="240" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" value="&lt;b&gt;CARS controller&lt;/b&gt;&#10;classify against the rulebook and&#10;asset criticality &amp;#8594; select a response" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="290" y="230" width="250" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" value="&lt;b&gt;Install flow rule&lt;/b&gt;&#10;enforce the response at the switch&#10;(cookie 0x00ca, criticality-scaled timeout)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="230" width="230" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="n1" target="n2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="n2" target="n3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="n3" target="n4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="n4" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="n5" target="n6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" value="enforced flow" style="endArrow=classic;html=1;dashed=1;strokeColor=#d79b00;fontSize=9;" edge="1" parent="1" source="n6" target="n1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="cap" value="Figure 6: The detection-to-response path (services and interface names from the running system)." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="360" width="760" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

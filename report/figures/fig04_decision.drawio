@@ -1,0 +1,44 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Fig4-Decision" id="fig04">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="760" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="in" value="Input:  source role &amp;#183; operation &amp;#183; destination asset (criticality tier)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="190" y="30" width="360" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rb" value="&lt;b&gt;Rulebook&lt;/b&gt; (first match wins)&#10;(source role, destination role, operation)  &amp;#8594;  tier" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="180" y="115" width="380" height="54" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tier" value="Tier:   CRITICAL  |  OPERATIONAL  |  SENSITIVE  |  FORBIDDEN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="190" y="210" width="360" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="elev" value="&lt;b&gt;Criticality elevation&lt;/b&gt;&#10;SENSITIVE operation on a CRITICAL asset,&#10;outside a maintenance window  &amp;#8594;  FORBIDDEN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="180" y="295" width="380" height="66" as="geometry" />
+        </mxCell>
+
+        <mxCell id="resp" value="&lt;b&gt;Response selection&lt;/b&gt;&#10;tier + observed rate  &amp;#8594;  graded response (ALLOW &amp;#8230; REFUSE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="180" y="410" width="380" height="54" as="geometry" />
+        </mxCell>
+
+        <mxCell id="safety" value="CRITICAL = the HMI&amp;#8596;PLC loop&#10;REFUSE: never enforced&#10;(safety invariant)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="200" width="150" height="66" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="in" target="rb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="rb" target="tier"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="tier" target="elev"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="endArrow=classic;html=1;strokeColor=#333333;" edge="1" parent="1" source="elev" target="resp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" value="the loop" style="endArrow=classic;html=1;dashed=1;strokeColor=#b85450;fontSize=9;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="tier" target="safety"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="cap" value="Figure 4: The CARS operation decision, from the deployed rulebook and elevation rule." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="30" y="490" width="700" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

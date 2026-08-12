@@ -1,0 +1,80 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="TravelPath" id="storyTravelPath">
+    <mxGraphModel dx="1000" dy="640" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="End-to-end travel path: one Kali, two positions — both quarantined at the OT boundary" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="1000" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Kali -->
+        <mxCell id="kaliT" value="Kali VM&#10;(VMware, dual-homed)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2f7;strokeColor=#333333;fontStyle=1;verticalAlign=middle" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="170" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="eth2" value="eth2 · 10.0.40.66" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="258" width="170" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="eth1" value="eth1 · 192.168.2.77" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="296" width="170" height="34" as="geometry" />
+        </mxCell>
+
+        <!-- North chain -->
+        <mxCell id="entfw" value="Ent-FW&#10;10.0.40.1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333" vertex="1" parent="1">
+          <mxGeometry x="300" y="70" width="130" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="otfw" value="OT-FW (SNAT)&#10;masquerade → .2.1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333" vertex="1" parent="1">
+          <mxGeometry x="480" y="70" width="150" height="54" as="geometry" />
+        </mxCell>
+
+        <!-- ovsgw -->
+        <mxCell id="ovsgw" value="ovsgw (dpid 3)&#10;GUARD · POLICY · Snort mirror" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;verticalAlign=top;spacingTop=8" vertex="1" parent="1">
+          <mxGeometry x="700" y="160" width="210" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="badgeA" value="✕ 0xca ISOLATE&#10;nw_src = 192.168.2.1&#10;coarse — whole gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="720" y="210" width="170" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="badgeB" value="✕ 0xca ISOLATE&#10;nw_src = 192.168.2.77&#10;fine — the real host" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="720" y="300" width="170" height="66" as="geometry" />
+        </mxCell>
+
+        <!-- downstream (faded) -->
+        <mxCell id="ovs1" value="ovs1&#10;(dpid 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontColor=#666666" vertex="1" parent="1">
+          <mxGeometry x="960" y="250" width="90" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="plc1" value="PLC1&#10;.2.10&#10;CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1080" y="244" width="70" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="landed" value="0 attacker packets landed" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontStyle=1;fontColor=#1e8449" vertex="1" parent="1">
+          <mxGeometry x="955" y="316" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Pivot A edges (red) -->
+        <mxCell id="eA1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block;fontColor=#b03a2e" edge="1" parent="1" source="eth2" target="entfw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eA2" value="DMZ 172.16.35.0/24" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#b03a2e" edge="1" parent="1" source="entfw" target="otfw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eA3" value="Pivot A: arrives as .2.1 (all IT hosts collapse here)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#b03a2e" edge="1" parent="1" source="otfw" target="badgeA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Pivot B edge (orange) -->
+        <mxCell id="eB1" value="Pivot B: on-segment via vmnet2 → ofport 12, arrives as .2.77 (true identity)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d79b00;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#b9770e" edge="1" parent="1" source="eth1" target="badgeB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- downstream faded edges -->
+        <mxCell id="eD1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b3b3b3;strokeWidth=2;dashed=1;endArrow=block" edge="1" parent="1" source="ovsgw" target="ovs1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eD2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b3b3b3;strokeWidth=2;dashed=1;endArrow=block" edge="1" parent="1" source="ovs1" target="plc1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

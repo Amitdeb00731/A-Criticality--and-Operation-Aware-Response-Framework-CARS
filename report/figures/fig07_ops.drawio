@@ -1,0 +1,38 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Fig7-OperationClasses" id="fig07">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="820" pageHeight="520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="s7" value="S7comm to PLC (TCP 102)&#10;function byte after the 32 01 header" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="290" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="mb" value="Modbus to unit (TCP 502)&#10;function code at offset 7" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="470" y="40" width="290" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dpi" value="&lt;b&gt;Snort DPI&lt;/b&gt;: match the function field" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="120" width="260" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="read"  value="READ&#10;S7 0x04  |  Modbus 0x03" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="40" y="220" width="140" height="54" as="geometry" /></mxCell>
+        <mxCell id="write" value="WRITE / CONTROL&#10;S7 0x05  |  Modbus 0x05, 0x06, 0x0F, 0x10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="200" y="220" width="180" height="54" as="geometry" /></mxCell>
+        <mxCell id="diag"  value="DIAG&#10;S7 0x28, 0x29  |  Modbus 0x08" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="400" y="220" width="150" height="54" as="geometry" /></mxCell>
+        <mxCell id="prog"  value="PROGRAM&#10;Modbus 0x2B (MEI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1"><mxGeometry x="570" y="220" width="120" height="54" as="geometry" /></mxCell>
+        <mxCell id="ill"   value="ILLEGAL&#10;Modbus function &amp;gt; 0x2B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1"><mxGeometry x="700" y="220" width="120" height="54" as="geometry" /></mxCell>
+
+        <mxCell id="a1" style="endArrow=classic;html=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="s7" target="dpi"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a2" style="endArrow=classic;html=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="mb" target="dpi"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a3" style="endArrow=classic;html=1;strokeColor=#82b366;" edge="1" parent="1" source="dpi" target="read"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a4" style="endArrow=classic;html=1;strokeColor=#82b366;" edge="1" parent="1" source="dpi" target="write"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a5" style="endArrow=classic;html=1;strokeColor=#82b366;" edge="1" parent="1" source="dpi" target="diag"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a6" style="endArrow=classic;html=1;strokeColor=#82b366;" edge="1" parent="1" source="dpi" target="prog"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a7" style="endArrow=classic;html=1;strokeColor=#82b366;" edge="1" parent="1" source="dpi" target="ill"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="cap" value="Figure 7: Operation classes recovered by DPI from the S7comm and Modbus function fields (from the deployed cars.rules). The connection setup (S7CommPlus session, marker 0x72) is treated as a separate, benign event." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=9;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="780" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
