@@ -41,7 +41,7 @@ The complete three-table pipeline of Section~\ref{sec:pipeline}, dumped from eac
 \section{Deployed decision logic}
 \label{appx:logic}
 
-The rulebook as it is defined in the running \texttt{cars\_engine.py}, backing Table~\ref{tab:rulebook}. The ordering is significant: the engineering and remediation rows precede the dangerous-operations block, so their pre-authorised control of the PLC classifies as OPERATIONAL. This is the current deployed rulebook, in which \texttt{ews->plc} is OPERATIONAL.
+The rulebook as it is defined in the running \href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}, backing Table~\ref{tab:rulebook}. The ordering is significant: the engineering and remediation rows precede the dangerous-operations block, so their pre-authorised control of the PLC classifies as OPERATIONAL. This is the current deployed rulebook, in which \texttt{ews->plc} is OPERATIONAL.
 
 \lstinputlisting[style=carssrc,caption={The deployed \texttt{RULEBOOK} (first match wins).},label={lst:rulebook}]{appendix_listings/rulebook_src.txt}
 
@@ -183,9 +183,9 @@ The external vectors were driven from the Kali attacker \texttt{192.168.2.77}. R
 \section{Scripts and code}
 \label{appx:code}
 
-Each script is presented as its role plus its load-bearing snippet. The lead is the controller, \texttt{cars\_engine.py}: the whole evaluation drives its decision path, whose core is \texttt{classify()}, mapping a (source, destination, operation) to a tier by walking the rulebook first-match-wins.
+Each script is presented as its role plus its load-bearing snippet. The lead is the controller, \href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}: the whole evaluation drives its decision path, whose core is \texttt{classify()}, mapping a (source, destination, operation) to a tier by walking the rulebook first-match-wins.
 
-\begin{lstlisting}[style=carssrc,caption={The controller decision path (\texttt{cars\_engine.py}): first-match rulebook classification.},label={lst:classify}]
+\begin{lstlisting}[style=carssrc,caption={The controller decision path (\href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}): first-match rulebook classification.},label={lst:classify}]
 def classify(src_ip, dst_ip, op=None):
     s, d = role_of(src_ip), role_of(dst_ip)      # map IP -> role from the REGISTRY
     for rsrc, rdst, rop, tier in RULEBOOK:        # rules in priority order
@@ -267,7 +267,7 @@ if path in _CONTROL and environ.get('HTTP_X_CARS_TOKEN','') != self.api_token:
 
 \subsection*{The supporting scripts}
 
-\noindent \textbf{Detection bridge (\texttt{snort\_bridge.py}).} Snort raises the alerts; the bridge recovers the ICS operation from the alert text, measures its arrival rate, and posts the source, destination, operation and rate to the controller, which alone decides. The brain, not the sensor, holds the policy.
+\noindent \textbf{Detection bridge (\href{\repourl/blob/main/06_Build/snort_bridge.py}{\texttt{snort\_bridge.py}}).} Snort raises the alerts; the bridge recovers the ICS operation from the alert text, measures its arrival rate, and posts the source, destination, operation and rate to the controller, which alone decides. The brain, not the sensor, holds the policy.
 
 \begin{lstlisting}[style=carssrc,caption={Operation recovery from the Snort alert, forwarded to the controller.},label={lst:bridge}]
 API = "http://10.10.10.1:8080/cars/respond"     # the brain decides; bridge only reports
@@ -277,7 +277,7 @@ key = (src, dst, op)                             # keep read vs write distinct
 # rate of this (src,dst,op) measured, then POSTed with op+rate to API
 \end{lstlisting}
 
-\noindent \textbf{Flow-integrity self-check (\texttt{cars\_flow\_audit.py}).} A trusted baseline of the immutable policy (Table~0 GUARD and the Table~1 A2 allowlist, cookie \texttt{0xa2}) is captured at a clean start; the only additions permitted at runtime are the reactive rules (cookie \texttt{0xca}). Anything else appearing on a switch is flagged as drift and surfaced into the controller's decision log.
+\noindent \textbf{Flow-integrity self-check (\href{\repourl/blob/main/06_Build/cars_flow_audit.py}{\texttt{cars\_flow\_audit.py}}).} A trusted baseline of the immutable policy (Table~0 GUARD and the Table~1 A2 allowlist, cookie \texttt{0xa2}) is captured at a clean start; the only additions permitted at runtime are the reactive rules (cookie \texttt{0xca}). Anything else appearing on a switch is flagged as drift and surfaced into the controller's decision log.
 
 \begin{lstlisting}[style=carssrc,caption={Flow identity and the drift model.},label={lst:flowaudit}]
 # identity = bridge,table,priority,cookie,MATCH (not actions): a tampered action on a
@@ -287,7 +287,7 @@ def key_of(br, s): return "%s|t%s|p%s|c%s|%s" % (br, s[0], s[1], s[2], s[3])
 # additions carry the reactive cookie 0xca. Anything else later -> drift -> audit.
 \end{lstlisting}
 
-\noindent \textbf{Process-state remediation (\texttt{cars\_remediation.py}).} The novel maintain half of block-and-maintain: it detects sensor tampering by process anomaly (a level the bang-bang control law physically cannot produce) and writes the last-good value back over S7, holding the process while the source is quarantined.
+\noindent \textbf{Process-state remediation (\href{\repourl/blob/main/06_Build/cars_remediation.py}{\texttt{cars\_remediation.py}}).} The novel maintain half of block-and-maintain: it detects sensor tampering by process anomaly (a level the bang-bang control law physically cannot produce) and writes the last-good value back over S7, holding the process while the source is quarantined.
 
 \begin{lstlisting}[style=carssrc,caption={Anomaly-triggered last-good restore over S7.},label={lst:remediation}]
 last_good = SEED
@@ -300,7 +300,7 @@ while True:
         last_good = lvl                       # healthy -> advance last-good
 \end{lstlisting}
 
-\noindent \textbf{Latency harness (\texttt{cars2\_mttm.py}).} Times the reaction window on a single clock: start the attack, poll for the isolate to appear in the controller's block set, and record attack-frame-to-enforcement.
+\noindent \textbf{Latency harness (\href{\repourl/blob/main/07_Evaluation/cars2_mttm.py}{\texttt{cars2\_mttm.py}}).} Times the reaction window on a single clock: start the attack, poll for the isolate to appear in the controller's block set, and record attack-frame-to-enforcement.
 
 \begin{lstlisting}[style=carssrc,caption={Single-clock mean-time-to-mitigate measurement.},label={lst:mttm}]
 t0 = time.time()
@@ -321,7 +321,7 @@ while time.time() < end:
 
 \subsection*{Evaluation and proof harnesses}
 
-\noindent \textbf{Accuracy harness (\texttt{cars\_eval.py}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
+\noindent \textbf{Accuracy harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
 
 \begin{lstlisting}[style=carssrc,caption={Driving each case through the engine and scoring it against intent.},label={lst:eval}]
 def respond(src,dst,op,rate=0,dpid=1):            # one case -> the deployed decision path
@@ -334,7 +334,7 @@ def verdict(label,resp):
 post("/cars/defense",{"on":False},auth=True)      # decision-only pass; re-armed at the end
 \end{lstlisting}
 
-\noindent \textbf{Criticality sweep (\texttt{cars\_criticality\_proof.sh}).} Holds the actor and operation fixed and varies only the target's tier. Part~1 runs disarmed to show the bounded elevation as a pure decision; Part~2 runs armed to measure the tier-scaled quarantine ($30 + 15w$ seconds), healing the reactive rule after each fire.
+\noindent \textbf{Criticality sweep (\href{\repourl/blob/main/06_Build/cars_criticality_proof.sh}{\texttt{cars\_criticality\_proof.sh}}).} Holds the actor and operation fixed and varies only the target's tier. Part~1 runs disarmed to show the bounded elevation as a pure decision; Part~2 runs armed to measure the tier-scaled quarantine ($30 + 15w$ seconds), healing the reactive rule after each fire.
 
 \begin{lstlisting}[style=carssrc,caption={Fire a controlled case, and heal the tier-scaled reactive rule between fires.},label={lst:critproof}]
 fire(){ curl -s -XPOST $API/respond -H 'Content-Type: application/json' \
@@ -344,7 +344,7 @@ arm false     # PART 1 - decision side: bounded elevation, nothing enforced
 arm true      # PART 2 - response side: real quarantine, hard_timeout = 30 + cw*15 s
 \end{lstlisting}
 
-\noindent \textbf{Campaign library (\texttt{cars\_campaign\_lib.sh}).} The shared helpers every campaign and pivot run sources: arm/disarm through the authenticated API, a cross-layer \texttt{snap} of the live state, and \texttt{capstart} which opens the three synchronised wire captures.
+\noindent \textbf{Campaign library (\href{\repourl/blob/main/06_Build/cars_campaign_lib.sh}{\texttt{cars\_campaign\_lib.sh}}).} The shared helpers every campaign and pivot run sources: arm/disarm through the authenticated API, a cross-layer \texttt{snap} of the live state, and \texttt{capstart} which opens the three synchronised wire captures.
 
 \begin{lstlisting}[style=carssrc,caption={Arm/disarm and the three-point capture used across the campaign.},label={lst:camplib}]
 arm(){    curl -s -X POST $API/cars/defense -H "X-CARS-Token: $TOKEN" -d '{"on":true}';  }
@@ -354,7 +354,7 @@ capstart(){ sudo tcpdump -i "$PLCIF" -w "$d/plc1_wire.pcap" $filt &     # what r
             sudo tcpdump -i snort0  -w "$d/dpi_mirror.pcap" & }          # what the detector sees
 \end{lstlisting}
 
-\noindent \textbf{Wire campaign (\texttt{cars\_wire\_campaign.sh}, \texttt{cars\_wire\_campaign\_disarmed.sh}).} Runs each attack vector against the armed system (and its disarmed twin), capturing the three wire points and timestamp-aligned state from every layer. The first vector is the control-plane disarm attempt.
+\noindent \textbf{Wire campaign (\href{\repourl/blob/main/06_Build/cars_wire_campaign.sh}{\texttt{cars\_wire\_campaign.sh}}, \href{\repourl/blob/main/06_Build/cars_wire_campaign_disarmed.sh}{\texttt{cars\_wire\_campaign\_disarmed.sh}}).} Runs each attack vector against the armed system (and its disarmed twin), capturing the three wire points and timestamp-aligned state from every layer. The first vector is the control-plane disarm attempt.
 
 \begin{lstlisting}[style=carssrc,caption={The three capture points and the control-plane vector.},label={lst:wirecamp}]
 sudo timeout 240 tcpdump -i "$PLCIF" -w "$D/plc1_wire.pcap" 'host 192.168.2.10 and tcp port 102' &
@@ -363,7 +363,7 @@ sudo timeout 240 tcpdump -i snort0  -w "$D/dpi_mirror.pcap" &
 # V1 CONTROL-PLANE: unauth POST /cars/defense {on:false}  -> expect HTTP 401 + DENIED audit
 \end{lstlisting}
 
-\noindent \textbf{Deep end-to-end trial (\texttt{cars\_e2e.sh}).} Drives the full response spectrum through the real autonomous chain and records, per scenario, the four independent proofs behind Table~\ref{tab:crosslayer}: the frame on the mirror, the Snort alert, the controller decision, and the datapath enforcement.
+\noindent \textbf{Deep end-to-end trial (\href{\repourl/blob/main/06_Build/cars_e2e.sh}{\texttt{cars\_e2e.sh}}).} Drives the full response spectrum through the real autonomous chain and records, per scenario, the four independent proofs behind Table~\ref{tab:crosslayer}: the frame on the mirror, the Snort alert, the controller decision, and the datapath enforcement.
 
 \begin{lstlisting}[style=carssrc,caption={The four independent ground-truth layers per scenario.},label={lst:e2e}]
 wirecount(){ tshark -r "$OUT/pcap/e2e_full.pcap" -Y "$1" | wc -l; }        # WIRE   : frames on the mirror
@@ -372,7 +372,7 @@ pkts(){ ovs-ofctl -O OpenFlow13 dump-flows "$1" table=1 | grep -m1 "$2" \
 # SNORT : delta on /var/log/snort/alert ;  CARS : tier+response in /cars/audit
 \end{lstlisting}
 
-\noindent \textbf{Packet-drop proof (\texttt{cars\_packet\_proof.sh}).} Captures the attacker's S7 frames at two synchronised points, the Snort mirror and the PLC's physical port, armed then disarmed, giving the drop-on-the-wire counts of Table~\ref{tab:wiredrop}.
+\noindent \textbf{Packet-drop proof (\href{\repourl/blob/main/06_Build/cars_packet_proof.sh}{\texttt{cars\_packet\_proof.sh}}).} Captures the attacker's S7 frames at two synchronised points, the Snort mirror and the PLC's physical port, armed then disarmed, giving the drop-on-the-wire counts of Table~\ref{tab:wiredrop}.
 
 \begin{lstlisting}[style=carssrc,caption={Two synchronised capture points: what the detector sees versus what reaches the PLC.},label={lst:pktproof}]
 capture(){   # tag seconds
@@ -381,7 +381,7 @@ capture(){   # tag seconds
 arm true; heal; capture armed 15      # then: arm false; capture disarmed 15
 \end{lstlisting}
 
-\noindent \textbf{ICS operation battery (\texttt{cars\_ics\_battery.sh}).} Fires the full ICS operation spectrum from one trusted operator (\texttt{.31}) at the Modbus unit (\texttt{.20}) and shows the three verdicts the one conduit draws, backing Table~\ref{tab:dpi}.
+\noindent \textbf{ICS operation battery (\href{\repourl/blob/main/06_Build/cars_ics_battery.sh}{\texttt{cars\_ics\_battery.sh}}).} Fires the full ICS operation spectrum from one trusted operator (\texttt{.31}) at the Modbus unit (\texttt{.20}) and shows the three verdicts the one conduit draws, backing Table~\ref{tab:dpi}.
 
 \begin{lstlisting}[style=carssrc,caption={Fire each operation on the same conduit and await the new decision.},label={lst:battery}]
 probe(){ restore; b=$(alast); ip netns exec opns "$@" >/dev/null 2>&1; wait_dec "$b"; }
@@ -390,7 +390,7 @@ probe(){ restore; b=$(alast); ip netns exec opns "$@" >/dev/null 2>&1; wait_dec 
 
 \subsection*{Attack clients and the process model}
 
-\noindent \textbf{S7 attack client (\texttt{s7\_write.py}).} The S7 tool used across the evaluation. Its output-area write is an actuation CARS classifies as CONTROL; the \texttt{-{}-dbspoof} mode pins a false level (the sensor-spoof deception), and further modes cover monitoring, volumetric read floods and a PLC stop.
+\noindent \textbf{S7 attack client (\href{\repourl/blob/main/06_Build/s7_write.py}{\texttt{s7\_write.py}}).} The S7 tool used across the evaluation. Its output-area write is an actuation CARS classifies as CONTROL; the \texttt{-{}-dbspoof} mode pins a false level (the sensor-spoof deception), and further modes cover monitoring, volumetric read floods and a PLC stop.
 
 \begin{lstlisting}[style=carssrc,caption={The output-area write (actuation) and the sensor-spoof variant.},label={lst:s7write}]
 def w(v): c.write_area(PA, 0, 0, bytearray([v & 0xFF]))    # write Q0.x output image (area 0x82) = actuation
@@ -399,7 +399,7 @@ payload = struct.pack('>f', a.spoofval)                    # S7 REAL = big-endia
 c.db_write(a.db, a.offset, payload)                        # write-var 0x05 -> CARS classifies CONTROL
 \end{lstlisting}
 
-\noindent \textbf{Modbus attack client (\texttt{mb\_attack.py}).} Crafts arbitrary Modbus/TCP function codes, including dangerous and illegal ones, to prove CARS decides on the operation and not the five-tuple. The function code sits at offset seven, exactly where the Snort DPI anchors.
+\noindent \textbf{Modbus attack client (\href{\repourl/blob/main/06_Build/mb_attack.py}{\texttt{mb\_attack.py}}).} Crafts arbitrary Modbus/TCP function codes, including dangerous and illegal ones, to prove CARS decides on the operation and not the five-tuple. The function code sits at offset seven, exactly where the Snort DPI anchors.
 
 \begin{lstlisting}[style=carssrc,caption={Crafting an arbitrary Modbus function code (FC at offset 7).},label={lst:mbattack}]
 def frame(fc, data=b'', tid=1, unit=1):
@@ -409,7 +409,7 @@ def frame(fc, data=b'', tid=1, unit=1):
 ATTACKS = {'coil':0x05, 'diag':0x08, 'program':0x2B, 'illegal':0x64}  # CONTROL / DIAG / PROGRAM / ILLEGAL
 \end{lstlisting}
 
-\noindent \textbf{Process model (\texttt{cars\_process.py}).} The soft co-simulation of the water-tank bang-bang loop, driving the real Q0.3 relay on PLC1 over S7 from the authorised controller identity. It reasserts the actuator every cycle and reports readback-versus-intent mismatches, which are the moments an attacker's write momentarily reached the relay.
+\noindent \textbf{Process model (\href{\repourl/blob/main/06_Build/cars_process.py}{\texttt{cars\_process.py}}).} The soft co-simulation of the water-tank bang-bang loop, driving the real Q0.3 relay on PLC1 over S7 from the authorised controller identity. It reasserts the actuator every cycle and reports readback-versus-intent mismatches, which are the moments an attacker's write momentarily reached the relay.
 
 \begin{lstlisting}[style=carssrc,caption={The bang-bang control law, the dynamics, and the interference health metric.},label={lst:process}]
 if   level <= LOW:  pump = True                 # control law (eq.1)
@@ -432,7 +432,7 @@ preprocessor stream5_tcp:    policy linux, timeout 60, ports both 102 502
 #  after : content:"|03 00|"; content:"|32 01|"; distance:5; within:7; content:"|05|"; distance:8; within:9;
 \end{lstlisting}
 
-\noindent \textbf{Fragmentation harness (\texttt{frag\_s7\_write.py}).} Opens a real allowlisted S7 session and sends a Write-Var either whole or split across TCP segments so the function byte falls in the second, the test behind the before/after of Section~\ref{sec:evaldpi}.
+\noindent \textbf{Fragmentation harness (\href{\repourl/blob/main/report/gap_evidence/gap_evidence/scripts/frag_s7_write.py}{\texttt{frag\_s7\_write.py}}).} Opens a real allowlisted S7 session and sends a Write-Var either whole or split across TCP segments so the function byte falls in the second, the test behind the before/after of Section~\ref{sec:evaldpi}.
 
 \begin{lstlisting}[style=carssrc,caption={Sending the Write-Var whole or split at byte N (0x05 pushed into the second segment).},label={lst:frag}]
 s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)   # Nagle off: each send() is its own segment
@@ -441,7 +441,7 @@ if split <= 0: s.send(WRITEVAR)                            # whole  -> detected 
 else:          s.send(WRITEVAR[:split]); time.sleep(gap); s.send(WRITEVAR[split:])  # fragmented
 \end{lstlisting}
 
-\noindent \textbf{Low-rate insider tools (\texttt{hmi\_cmd.py}, \texttt{spoof\_high.py}).} A single authorised HMI command, and a sustained high sensor spoof: the two residual insider actions of Section~\ref{sec:evalguardian}.
+\noindent \textbf{Low-rate insider tools (\href{\repourl/blob/main/report/gap_evidence/gap_evidence/scripts/hmi_cmd.py}{\texttt{hmi\_cmd.py}}, \href{\repourl/blob/main/report/gap_evidence/gap_evidence/scripts/spoof_high.py}{\texttt{spoof\_high.py}}).} A single authorised HMI command, and a sustained high sensor spoof: the two residual insider actions of Section~\ref{sec:evalguardian}.
 
 \begin{lstlisting}[style=carssrc,caption={One authorised HMI stop; and pinning the level sensor high.},label={lst:insider}]
 # hmi_cmd.py: one authorised write of the command merker %MB0 (bit 2 = HMI_Stop)
@@ -450,7 +450,7 @@ c.write_area(MK, 0, 0, bytearray([0x04]))                       # CARS classifie
 c.write_area(PE, 0, 100, bytearray(struct.pack('>f', 4.5)))    # reported ~90 while the real tank drains
 \end{lstlisting}
 
-\noindent \textbf{Process guardian (\texttt{cars\_process\_guardian.py}).} The defence-in-depth layer of Section~\ref{sec:evalguardian}: an independent, read-only monitor that adds the high-side envelope, symmetric rate and liveness checks the low-side remediation agent lacks, and raises alarms only. It never writes the PLC and never touches enforcement or the remediation agent.
+\noindent \textbf{Process guardian (\href{\repourl/blob/main/report/gap_evidence/gap_evidence/scripts/cars_process_guardian.py}{\texttt{cars\_process\_guardian.py}}).} The defence-in-depth layer of Section~\ref{sec:evalguardian}: an independent, read-only monitor that adds the high-side envelope, symmetric rate and liveness checks the low-side remediation agent lacks, and raises alarms only. It never writes the PLC and never touches enforcement or the remediation agent.
 
 \begin{lstlisting}[style=carssrc,caption={The high-side envelope, rate and liveness checks (alarm-only).},label={lst:guardian}]
 if lvl > CEIL:    alarm("HIGH_LEVEL", level=lvl, ceiling=CEIL)   # the excursion the low-side agent MISSES
@@ -464,7 +464,7 @@ if abs(lvl - last_val) <= 0.6 and now - last_change > STALL_S:
 \section{The CARS intelligence dashboard}
 \label{appx:dashboard}
 
-The dashboard (\texttt{cars\_dashboard.py}) is a live operator view of the defence rather than a static diagram. It is discovery-driven: a few times a second it polls the controller's REST interface (\texttt{/cars/status}, \texttt{/cars/hosts}, \texttt{/cars/ports}, \texttt{/cars/links}, \texttt{/cars/guard}, \texttt{/cars/audit}) and renders whatever the controller currently knows. The nodes (switches, hosts, the controller, and the modelled north side of IT, DMZ, firewall and Snort), together with their port bindings, link health, the anti-spoof GUARD drop counters and the engine's own decisions, are all pulled from the running system, so the picture is the live state and not a description of it. A separate pane reads the remediation agent's status and event feed from its local files, because that agent runs inside the OT namespace and cannot reach the control plane.
+The dashboard (\href{\repourl/blob/main/06_Build/cars_dashboard.py}{\texttt{cars\_dashboard.py}}) is a live operator view of the defence rather than a static diagram. It is discovery-driven: a few times a second it polls the controller's REST interface (\texttt{/cars/status}, \texttt{/cars/hosts}, \texttt{/cars/ports}, \texttt{/cars/links}, \texttt{/cars/guard}, \texttt{/cars/audit}) and renders whatever the controller currently knows. The nodes (switches, hosts, the controller, and the modelled north side of IT, DMZ, firewall and Snort), together with their port bindings, link health, the anti-spoof GUARD drop counters and the engine's own decisions, are all pulled from the running system, so the picture is the live state and not a description of it. A separate pane reads the remediation agent's status and event feed from its local files, because that agent runs inside the OT namespace and cannot reach the control plane.
 
 \begin{figure}[t]
 \centering
