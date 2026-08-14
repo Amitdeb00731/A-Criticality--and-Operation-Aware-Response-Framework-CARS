@@ -57,6 +57,7 @@ BLOCK_TIMEOUT = 30          # A1/P1: conduit blocks auto-expire (self-heal); ren
 THROTTLE_RATE = 20
 THROTTLE_BURST = 10
 RESPONSES = ("ALLOW", "MONITOR", "THROTTLE", "DEFLECT", "ISOLATE", "BLOCK", "REFUSE")
+SHARED_ROLES = {"gateway"}   # Gap-2: NAT/collapse points -> conduit BLOCK, never whole-source ISOLATE
 ESCALATE = 3
 RATE_WINDOW = 3.0           # A5: sensor-side window (s) over which an op's burst is counted (in snort_bridge)
 FLOOD_RATE  = 5.0           # A5: op rate (ops/s) above which a source is treated as FLOODING -> graded/accelerated response
@@ -397,9 +398,16 @@ class CARSEngine(app_manager.OSKenApp):
             if dcw >= 3: return "BLOCK"                           # CRITICAL asset: skip THROTTLE, cut now
             return "THROTTLE" if c < esc else "BLOCK"             #   -> cut on sustained abuse
         # FORBIDDEN: one command can harm -> block now; isolate the source on persistence.
+        # Gap-2: a SHARED / NAT-collapsed identity (the IT gateway) must NOT be
+        # source-isolated -- that quarantines every host behind the NAT. Cut only
+        # the offending conduit (BLOCK); a true single host still gets ISOLATE.
+        shared = s_role in SHARED_ROLES
         if flood:
-            return "ISOLATE"
-        if dcw >= 3: return "ISOLATE"                             # CRITICAL asset: isolate the source immediately
+            return "BLOCK" if shared else "ISOLATE"
+        if dcw >= 3:
+            return "BLOCK" if shared else "ISOLATE"               # CRITICAL asset
+        if shared:
+            return "BLOCK"
         return "BLOCK" if src_count < esc else "ISOLATE"
 
     def enforce_response(self, action, dpid, src_ip, dst_ip, timeout=BLOCK_TIMEOUT):

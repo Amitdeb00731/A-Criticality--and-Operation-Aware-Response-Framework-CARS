@@ -1,0 +1,4 @@
+Gap 4 event-driven flow-integrity monitor - transient (2s inject/delete) test
+detected: 30/30 (100%)
+detect latency ms: median 270.9 mean 273.8 min 260.3 max 335.2 p95 282.0
+baseline (10s poll, results/flowint/transient.csv): 5/30 caught, median 8.5s when caught

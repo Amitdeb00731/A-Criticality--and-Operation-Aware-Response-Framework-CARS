@@ -3,6 +3,29 @@
 
 This appendix reproduces the full captures that back the diagrams, tables and claims of the Design and Implementation chapter (Chapter~\ref{chap:execution}) and the Critical Evaluation chapter (Chapter~\ref{chap:evaluation}). The configuration and pipeline captures of Sections~\ref{appx:flows} to~\ref{appx:runtime} are from the stable baseline of 3 August 2026; the evaluation artefacts of Sections~\ref{appx:matrix} onward are from the dedicated fresh runs of 5 to 7 August 2026 that produced Chapter~\ref{chap:evaluation}. All were taken from the running testbed with the defence armed except where a disarmed contrast is stated. The short outputs appear inline in the chapters; the long ones are collected here in full.
 
+\paragraph{Code and data availability.} The complete system, every evaluation harness and the raw result files are published at \href{\repourl}{the project GitHub repository}. The excerpts reproduced in this appendix are the load-bearing lines of larger files; the full versions, and the captured data behind every chart and table, are in the repository at the paths given in Table~\ref{tab:repomap}. Each path below is a live link to its file in the repository.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.34\textwidth}p{0.58\textwidth}}
+\hline
+Repository path & Role in this dissertation \\
+\hline
+\href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{06\_Build/cars\_engine.py}} & The controller: \texttt{classify()}, criticality elevation, \texttt{select\_response()}, GUARD binding, reactive install (cookie \texttt{0x00CA}, \texttt{30+15w}), authenticated API \\
+\href{\repourl/blob/main/06_Build/snort_bridge.py}{\texttt{06\_Build/snort\_bridge.py}} & Snort alert to \texttt{/cars/respond} detection bridge \\
+\href{\repourl/blob/main/06_Build/cars_flow_audit.py}{\texttt{06\_Build/cars\_flow\_audit.py}} & Flow-integrity poll against the trusted baseline \\
+\href{\repourl/blob/main/06_Build/cars_remediation.py}{\texttt{06\_Build/cars\_remediation.py}} & Process last-good restore agent \\
+\href{\repourl/blob/main/06_Build/cars_process.py}{\texttt{06\_Build/cars\_process.py}} & Process / control-law reference model \\
+\href{\repourl/tree/main/07_Evaluation/overnight}{\texttt{07\_Evaluation/overnight/}} & Accuracy-at-scale, criticality behaviour, flow-integrity, jitter and the Gap 1/2/4 harnesses, with raw data under \texttt{results/} \\
+\href{\repourl/blob/main/07_Evaluation/overnight/gap4_flowmonitor/cars_flowmonitor.py}{\texttt{gap4\_flowmonitor/cars\_flowmonitor.py}} & Event-driven flow-integrity monitor (Section~\ref{sec:threats}) \\
+\href{\repourl/tree/main/report}{\texttt{report/}} & This dissertation, its figures and its \texttt{appendix\_listings/} data files \\
+\hline
+\end{tabular}
+\caption{Map from the report to the published repository (\href{\repourl}{github.com/USERNAME/Reactive\_SDN\_ICS}).}
+\label{tab:repomap}
+\end{table}
+
 \lstdefinestyle{carsdump}{basicstyle=\ttfamily\tiny,breaklines=true,breakatwhitespace=false,columns=fullflexible,frame=single,captionpos=b,showstringspaces=false,keepspaces=true,xleftmargin=3pt,xrightmargin=3pt}
 \lstdefinestyle{carssrc}{basicstyle=\ttfamily\scriptsize,breaklines=true,breakatwhitespace=false,columns=fullflexible,frame=single,captionpos=b,showstringspaces=false,keepspaces=true}
 
@@ -153,7 +176,7 @@ The external vectors were driven from the Kali attacker \texttt{192.168.2.77}. R
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.9\textwidth]{p2_mttm.png}
-\caption{Reaction window (mean-time-to-mitigate) over one hundred autonomous trials, attack-frame to enforcement on a single clock: median 12.6\,ms, mean 14.3\,ms, standard deviation 7.4\,ms, minimum 8.5\,ms, maximum 50.5\,ms, every trial ending in ISOLATE.}
+\caption{Reaction window (mean-time-to-mitigate) over one hundred autonomous trials, attack-frame to enforcement on a single clock: median 7.6\,ms, mean 11.2\,ms, standard deviation 11.8\,ms, minimum 5.5\,ms, maximum 72.9\,ms, every trial ending in ISOLATE.}
 \label{fig:mttm}
 \end{figure}
 
@@ -487,15 +510,32 @@ DEMO 2 - spoof-to-high (reported level pinned at 90, real tank drains):
   guardian: [GUARDIAN] ALARM HIGH_LEVEL {level: 90.0, ceiling: 78.0}  +  ALARM RATE        [high-side caught]
 \end{lstlisting}
 
-The guardian writes each alarm to a read-only feed; the stall record from the fresh run is the raw line in Listing~\ref{lst:ev_guardianfeed}.
+The guardian writes each alarm to a read-only feed; the stall record from the fresh run is the raw line in Listing~\ref{lst:ev_guardianfeed}. This is a crafted scenario that demonstrates the mechanism rather than broad operational resilience: the flood, envelope and rate thresholds are tuned to this tank and its loop rate, and would need re-tuning for a different plant, loop cadence or operator profile.
 \lstinputlisting[style=carsdump,caption={Gap B: the guardian alarm feed (\texttt{cars\_guardian.jsonl}), stall record from the fresh run.},label={lst:ev_guardianfeed}]{appendix_listings/gapB_guardian.jsonl}
 
-\noindent\textbf{Gap C: flow-integrity poll window.} A rule injected and deleted inside the ten-second poll evades the auditor; a persistent one is caught within one poll.
-\begin{lstlisting}[style=carsdump,caption={Gap C: transient (missed) versus persistent (caught) flow-integrity status.},label={lst:ev_poll}]
+\noindent\textbf{Gap C: flow-integrity poll window.} A rule injected and deleted inside the ten-second poll evades the auditor; a persistent one is caught within one poll. The single traces below were then repeated thirty times each to quantify the window: the persistent case was caught on every trial at a median of 8.5\,seconds, the two-second transient on only five of thirty (the runs whose life straddled a poll boundary). The per-trial values are in \texttt{gap\_evidence/flowint/persistent.csv} and \texttt{transient.csv}.
+\begin{lstlisting}[style=carsdump,caption={Gap C: transient (mostly missed) versus persistent (always caught) flow-integrity status, with the thirty-trial totals.},label={lst:ev_poll}]
 baseline:                     {"ok": 1, "extra": 0}
 2 s transient inject+delete:  t+7s ok:1 | t+14s ok:1 | t+21s ok:1     [MISSED - never flipped]
 persistent inject (left):     {"ok": 0, "extra": 1}                   [CAUGHT within one poll]
 after cleanup:                {"ok": 1, "extra": 0}
+30-trial totals:  persistent 30/30 caught, median 8.5 s | transient 5/30 caught, 25/30 evaded
+\end{lstlisting}
+
+The event-driven flow-monitor of Section~\ref{sec:threats} was then run against the identical thirty-trial transient test. It subscribes to the switch's Nicira flow-monitor (\texttt{ovs-ofctl monitor <br> watch:}) and, on any change to the policy tables that is not a cookie-\texttt{0xca} reactive rule, re-runs the deployed auditor's trusted check at once, so the sub-poll window closes without changing the verdict logic. Every one of the thirty two-second injections was caught, at a median of 0.27\,seconds, against five of thirty for the ten-second poll; the per-trial values are in \texttt{gap\_evidence/flowint/transient\_eventdriven.csv}.
+\begin{lstlisting}[style=carsdump,caption={Gap C remedy: event-driven monitor on the same transient test.},label={lst:ev_poll_fix}]
+10 s poll (baseline):     transient  5/30 caught, 25/30 evaded (median 8.5 s when caught)
+event-driven monitor:     transient 30/30 caught, median 0.27 s   [sub-poll gap closed]
+mechanism: NXST_FLOW_MONITOR watch -> immediate trusted re-check on any non-0xca policy-table change
+\end{lstlisting}
+
+\noindent\textbf{Gap 2: conduit block at a shared / NAT-collapsed identity.} An IT attacker source-NATed onto the gateway identity \texttt{192.168.2.1} was originally cut by a source isolation, which quarantines every host behind the NAT (Section~\ref{sec:evalanatomy}). The response selection was refined so a shared identity is cut at the conduit instead. Verified on the deployed engine: the same forbidden attempt from \texttt{192.168.2.1} now returns \texttt{BLOCK} and installs a conduit drop, while a true single host is still source-isolated.
+\begin{lstlisting}[style=carsdump,caption={Gap 2: shared-identity conduit BLOCK versus single-host source ISOLATE, deployed engine.},label={lst:ev_natblock}]
+gateway .1 (NAT-collapsed) -> CONTROL -> PLC1:  response=BLOCK
+  flow: cookie=0xca priority=100,ip,nw_src=192.168.2.1,nw_dst=192.168.2.10 actions=drop   [conduit: only .1->PLC]
+unknown .77 (true host)   -> CONTROL -> PLC1:  response=ISOLATE
+  flow: cookie=0xca priority=110,ip,nw_src=192.168.2.77 actions=drop                       [source: whole host]
+both land zero writes on the PLC; the gateway's non-PLC traffic is untouched by the conduit match.
 \end{lstlisting}
 
 \noindent\textbf{Gap D: DEFLECT diverts to the honeypot.} Forcing DEFLECT installs the redirect and the attacker's PLC-bound traffic arrives at the decoy while the real PLC sees nothing.
@@ -507,4 +547,32 @@ honeypot capture:      IP 192.168.2.66 > 192.168.3.99: ICMP echo request        
                        ARP, who-has 192.168.2.66 tell 192.168.3.99                      [decoy engaging]
 \end{lstlisting}
 
+\noindent This is a proof of concept for the redirect path, not evidence of robustness. A determined adversary who notices the diversion, fingerprints the decoy or changes tactics is outside what this test exercises; sustaining a convincing interactive decoy is carried as future work in Section~\ref{sec:futurework}.
+
 \noindent The plaintext control channel (G1), state-exhaustion resilience (G3) and the file-based detection bridge under heavy load (G4) are verified but framed as bounded limitations in Section~\ref{sec:threats} rather than tested, for the reasons given there.
+
+\section{Process-transparency and availability runs}
+\label{appx:availability}
+
+This section holds the raw artefacts behind the process-transparency claim of Section~\ref{sec:evalprocessrisk} and the reconnection test of Section~\ref{sec:threats}, captured on the armed testbed on 7 August 2026 and returned to green after each run.
+
+\noindent\textbf{Transparency: armed against disarmed under matched load.} The two states were interleaved in short blocks over two hours so that any drift in the hardware-in-the-loop simulation fell on both equally. The per-second tank level, phase label, online flag and restore count are in \texttt{availability/interleaved.csv} (7{,}060 samples); the online-only summary is below. The means and spreads coincide and neither state left the control band, so arming the defence has no measurable effect on the process. As Section~\ref{sec:evalprocessrisk} states, this is strong evidence for the testbed and its hardware-in-the-loop tank rather than a universal guarantee for all industrial processes.
+\begin{lstlisting}[style=carsdump,caption={Transparency: online-only level statistics per phase, from \texttt{interleaved.csv}.},label={lst:ev_transparency}]
+disarmed:  n=3528  mean=51.5%  sd=12.8  min=25.5  max=71.3   (band 20-78, no excursion)
+armed:     n=3530  mean=50.7%  sd=13.2  min=25.6  max=71.3   (band 20-78, no excursion)
+EWS/SCADA legitimate throughput unchanged across both phases.
+\end{lstlisting}
+
+\noindent\textbf{Block-and-maintain and self-heal, measured at the process.} An allowlisted supervisory host launched a false-data injection at the CRITICAL PLC under the armed defence. The write was classified FORBIDDEN and the source isolated after nine packets with the criticality-scaled seventy-five-second timeout; the tank stayed within band for the whole block, the legitimate conduits kept flowing, and the restoration agent was never called. The rule then expired and the source returned to service with no operator action, the install-to-withdrawal spanning seventy-six seconds.
+\begin{lstlisting}[style=carsdump,caption={Block-and-maintain under attack, then self-heal, from the armed run.},label={lst:ev_selfheal}]
+t+0.0s   FDI write from 192.168.2.31(scada) -> 192.168.2.10(plc, CRITICAL) => FORBIDDEN
+t+~0s    ISOLATE source 192.168.2.31 (cookie 0xca, hard_timeout=75s, both switches)
+block    tank level held within band; legit EWS/HMI conduits uninterrupted; restore agent NOT called
+t+76s    rule expired (SEND_FLOW_REM); source restored, no operator action; table back to baseline
+\end{lstlisting}
+
+\noindent\textbf{Reconnection jitter, two planes.} Restarting the passive Snort sensor left the live conduit's inter-frame timing indistinguishable from baseline; forcing a controller reconnection by delete-and-re-add opened a roughly twenty-second window with multi-second forwarding stalls and dropped the synchronous S7 session. The per-second timeline (level, legitimate packets per second, controller-attached flag, event marks) is in \texttt{availability/jitter\_timeline.csv} with the accompanying \texttt{hil.pcap}. As Section~\ref{sec:threats} sets out, that window largely reflects the heavy re-add and pipeline re-sync rather than a faithful crash against the \texttt{fail\_mode=secure} switches, so it is reported as an upper bound and the clean crash-transparency figure is left as future work. This measurement should not be read as a crash-resilience proof or a production-availability guarantee: a fail-secure switch under a forced delete-and-re-add is not the same as a real controller crash, and the deployment implication is left deliberately cautious.
+\begin{lstlisting}[style=carsdump,caption={Reconnection jitter: the two planes contrasted.},label={lst:ev_jitter}]
+Snort restart (passive, out-of-band):  inter-frame mean 4.90 ms vs 4.91 ms baseline, worst gap 33 ms vs 42 ms  [TRANSPARENT]
+Controller del/re-add (forced):         ~20 s window, worst forwarding gap 4.2 s, S7 session dropped, manual reconnect  [UPPER BOUND, not a faithful crash]
+\end{lstlisting}

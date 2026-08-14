@@ -1,0 +1,20 @@
+Gap 1 (rig) - probe reaction window vs benign background decision load (Dell hardware).
+Measured as the synchronous /cars/respond round-trip (decision+enforce+HTTP); excludes the
+fixed Snort/mirror detection latency, same scope as the off-rig decision-stage bench.
+
+workers  bg_rate/s  probe_mttm_ms
+  0        0         18.5   (cold first-request outlier - warmup, ignore)
+  4      473          8.6
+  8      779         10.1
+ 16      856         15.1
+ 32      988         73.2   (concurrency head-of-line, not throughput saturation)
+
+Read: reaction window stays ~8-15 ms while background climbs to ~850/s; the 73 ms at 32
+concurrent workers is single-threaded head-of-line blocking (achieved rate barely moved
+856->988), a pessimistic concurrency bound, not the serial operating point of the real
+dedup'd detection bridge. The bash/curl harness caps ~1k/s; the off-rig bench on the real
+decision code (gap1_alert_stress/RESULT.txt) extends to a ~16-18k/s single-core ceiling with
+~0.08 ms added queue wait at 10k/s. Identical-alert floods are capped by COOLDOWN=3s dedup.
+Together: the reaction window is bounded across any rate a real (dedup'd) attacker can offer,
+rising only as the single-threaded controller nears saturation - which the future-work
+in-memory-IPC/concurrency item addresses.

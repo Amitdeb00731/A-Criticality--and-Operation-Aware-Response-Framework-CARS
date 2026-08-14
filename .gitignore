@@ -40,10 +40,12 @@ venv/
 
 # ---- Heavy artefacts (kept locally, not committed) ----
 # 23 MB raw Snort journal (supporting evidence bundle; the vital slices are in the report)
-report/gap_evidence/**/snort_bridge.journal.txt
+report/gap_evidence/**/*.journal.txt
 # Unused high-resolution figure originals (the report uses the .jpg versions)
 report/figures/Factory_io_scene.png
 report/figures/Teaching_box_panel.jpg
+# Raw overnight capture pcaps (heavy; keep the analysed summaries, not the raw captures)
+07_Evaluation/overnight/results/**/*.pcap
 
 # ---- Editor / OS junk ----
 .DS_Store

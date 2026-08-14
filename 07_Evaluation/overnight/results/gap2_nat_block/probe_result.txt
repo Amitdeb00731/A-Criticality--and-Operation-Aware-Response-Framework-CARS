@@ -1,0 +1,14 @@
+Gap 2 - conduit-BLOCK-at-shared-identity, verified on the deployed engine (patched cars_engine.py).
+Fired via /cars/respond, armed; both rules installed on ovs1 AND ovsgw.
+
+=== gateway .1 (NAT-collapsed identity) ===
+response: BLOCK  | action: "BLOCK conduit 75s" | tier FORBIDDEN, crit CRITICAL | cars_ms 0.676
+installed flow: cookie=0xca priority=100,ip,nw_src=192.168.2.1,nw_dst=192.168.2.10 actions=drop  (CONDUIT: only .1->PLC)
+
+=== unknown .77 (true single host) ===
+response: ISOLATE | action: "ISOLATE source 192.168.2.77 75s" | tier FORBIDDEN, crit CRITICAL | cars_ms 0.365
+installed flow: cookie=0xca priority=110,ip,nw_src=192.168.2.77 actions=drop  (SOURCE: whole host)
+
+Before patch: .1 -> ISOLATE source 192.168.2.1 (all north-south gateway traffic cut 75s = self-inflicted DoS).
+After patch:  .1 -> BLOCK conduit .1->.10 only; the gateway's other traffic is untouched by construction
+              (rule matches nw_dst=192.168.2.10). .77 behaviour unchanged. Both land zero writes on the PLC.

@@ -1,0 +1,18 @@
+fidelity fix: historian->hmi1 WRITE first-offence => SENSITIVE THROTTLE 60 (expect SENSITIVE THROTTLE 60)
+
+=== DECISION COMPUTE (per alert), N=200000 ===
+median 4.25 us | p95 7.17 | p99 11.78 | max 10648.14 us
+=> compute ceiling ~ 193 k decisions/s on one core
+
+=== DECISION + AUDIT WRITE, M=100000 ===
+elapsed 5.728s | sustained 17459 alerts/s (one core, decision+log)
+
+=== WHAT AN ATTACKER CAN ACTUALLY OFFER ===
+identical-alert flood: capped by COOLDOWN=3s dedup -> <= 1 POST / (src,dst,op) / 3s
+diverse-alert flood: offered load hits the decision+log stage; service rate ~17459/s
+  offered    100/s: rho=0.01 -> mean added queue wait ~0.00 ms
+  offered   1000/s: rho=0.06 -> mean added queue wait ~0.00 ms
+  offered   5000/s: rho=0.29 -> mean added queue wait ~0.02 ms
+  offered  10000/s: rho=0.57 -> mean added queue wait ~0.08 ms
+  offered  15712/s: rho=0.90 -> mean added queue wait ~0.52 ms
+  offered  26187/s: rho=1.50 -> UNSTABLE (queue grows without bound; backlog)

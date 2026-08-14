@@ -15,11 +15,12 @@ Detection is delegated to a deep-packet-inspection sensor (Snort); the software-
 
 ### Headline results (from the live testbed)
 
-- **100%** decision accuracy and **0%** false positives on the live process, across the tested space of source role, operation class and asset criticality.
+- **100%** decision accuracy and **0%** false positives on the live process, across the tested space of source role, operation class and asset criticality; the accuracy result holds over a **2,078-case** labelled corpus (95% Wilson lower bound **0.9982**).
 - Enforcement shown **on the wire**, not inferred from a log: an armed false-data injection was severed before its first write reached the PLC (0 writes versus 973 unprotected).
-- Reaction window: median **12.6 ms** (95th percentile 28.0 ms, 99th 47.7 ms) over 100 autonomous trials, every trial ending in an ISOLATE.
+- Reaction window: median **7.6 ms** (95th percentile 38.4 ms, 99th 67.9 ms) over 100 autonomous trials, every trial ending in an ISOLATE.
+- Late-stage hardening, all validated on the live testbed: an **event-driven flow-integrity monitor** that catches a sub-poll rule injection **30/30** at median 0.27 s (versus 5/30 for the 10 s poll); a **conduit-level cut** for NAT-collapsed identities so a shared gateway is no longer quarantined wholesale; and a read-only **process guardian** for the trusted-insider envelope.
 
-The evaluation carries its boundaries honestly, including the trusted-insider case a network layer must not act on, and the late-stage defence-in-depth work that addresses part of it.
+The evaluation carries its boundaries honestly, including the trusted-insider case a network layer must not act on, and the late-stage defence-in-depth work that addresses part of it. A full independent audit of the report against its governing plan is in `report/AUDIT_REPORT.md`.
 
 ---
 
@@ -47,6 +48,9 @@ Reactive_SDN_ICS/
 │   ├── *.rules               Snort detection rules
 │   └── *.md                  Build logs, as-built topology, cold-start notes
 ├── 07_Evaluation/           Evaluation harnesses and results (MTTM, response spectrum)
+│   └── overnight/           Extended campaign: accuracy-at-scale, criticality behaviour,
+│                            flow-integrity, reconnection jitter, and the Gap 1/2/4 fixes
+│                            (harnesses under gap*/, raw data under results/)
 ├── 04_Testbed/              Testbed architecture, component list, Purdue mapping
 ├── 05_Execution/            Execution plan and tracker
 ├── 01_Literature_Review/    Literature review and reading list
