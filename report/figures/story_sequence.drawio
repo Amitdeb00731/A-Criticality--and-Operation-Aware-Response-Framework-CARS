@@ -5,7 +5,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="title" value="Reaction window on one clock — the isolate lands ~80× before the attacker's next packet" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;fontStyle=1" vertex="1" parent="1">
+        <mxCell id="title" value="Reaction window on one clock — the isolate lands ~130× before the attacker's next packet" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="30" y="20" width="1000" height="30" as="geometry" />
         </mxCell>
 
@@ -33,10 +33,10 @@
         <mxCell id="m1" value="SYN #1  →  192.168.2.10:102   (t = 0)" style="html=1;endArrow=block;strokeColor=#b85450;strokeWidth=2;fontSize=11;fontColor=#b03a2e" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="145" y="160" as="sourcePoint"/><mxPoint x="405" y="160" as="targetPoint"/></mxGeometry></mxCell>
         <mxCell id="m2" value="mirrored → DPI: op / conduit → /cars/respond" style="html=1;endArrow=block;strokeColor=#b85450;strokeWidth=2;fontSize=11;fontColor=#b03a2e" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="405" y="205" as="sourcePoint"/><mxPoint x="685" y="205" as="targetPoint"/></mxGeometry></mxCell>
         <mxCell id="m3" value="classify FORBIDDEN → ISOLATE" style="html=1;endArrow=block;strokeColor=#b85450;strokeWidth=2;rounded=1;fontSize=11;fontColor=#b03a2e" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="685" y="250" as="sourcePoint"/><mxPoint x="685" y="290" as="targetPoint"/><Array as="points"><mxPoint x="770" y="250"/><mxPoint x="770" y="290"/></Array></mxGeometry></mxCell>
-        <mxCell id="m4" value="install 0xca drop (nw_src)   —   t ≈ 12.6 ms (median)" style="html=1;endArrow=block;strokeColor=#3b5b86;strokeWidth=2;fontSize=11;fontStyle=1;fontColor=#274a73" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="685" y="305" as="sourcePoint"/><mxPoint x="970" y="305" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m4" value="install 0xca drop (nw_src)   —   t ≈ 7.6 ms (median)" style="html=1;endArrow=block;strokeColor=#3b5b86;strokeWidth=2;fontSize=11;fontStyle=1;fontColor=#274a73" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="685" y="305" as="sourcePoint"/><mxPoint x="970" y="305" as="targetPoint"/></mxGeometry></mxCell>
 
         <!-- reaction window band -->
-        <mxCell id="win" value="reaction window ≈ 12.6 ms  (p95 28 · p99 47.7 · max 50.5 ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=60;fontSize=10;fontColor=#3a5a2a" vertex="1" parent="1">
+        <mxCell id="win" value="reaction window ≈ 7.6 ms  (p95 38.4 · p99 67.9 · max 72.9 ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=60;fontSize=10;fontColor=#3a5a2a" vertex="1" parent="1">
           <mxGeometry x="145" y="330" width="560" height="26" as="geometry" />
         </mxCell>
 
@@ -49,7 +49,7 @@
         <mxCell id="res" value="result: TCP connect timeout · 0 writes landed at PLC1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eafaf1;strokeColor=#1e8449;fontStyle=1;fontSize=11;fontColor=#1e8449" vertex="1" parent="1">
           <mxGeometry x="720" y="480" width="330" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="mttm" value="MTTM (n = 100): median 12.6 · p95 28.0 · p99 47.7 · max 50.5 ms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2f7;strokeColor=#6c8ebf;fontSize=11" vertex="1" parent="1">
+        <mxCell id="mttm" value="MTTM (n = 100): median 7.6 · p95 38.4 · p99 67.9 · max 72.9 ms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2f7;strokeColor=#6c8ebf;fontSize=11" vertex="1" parent="1">
           <mxGeometry x="80" y="480" width="420" height="34" as="geometry" />
         </mxCell>
 
