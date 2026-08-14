@@ -26,7 +26,6 @@
 *.run.xml
 
 # Built dissertation PDF (regenerate with pdflatex)
-report/main.pdf
 
 # ---- Python ----
 __pycache__/
