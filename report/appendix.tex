@@ -309,7 +309,7 @@ while not blocked() and time.time() - t0 < 15: time.sleep(0.02)  # poll for isol
 mttm = time.time() - t0                       # attack-frame -> enforcement
 \end{lstlisting}
 
-\noindent \textbf{Attack tool (\texttt{cars\_fdi\_overflow.py}).} The false-data injection used in Section~\ref{sec:evalcampaign}: a compromised host opens an S7 session to the PLC and writes the output area at high rate, blinding the level sensor and jamming the discharge valve. Each write is a CONTROL operation to the output area, which CARS recovers and forbids.
+\noindent \textbf{Attack tool (\href{\repourl/blob/main/06_Build/cars_fdi_overflow.py}{\texttt{cars\_fdi\_overflow.py}}).} The false-data injection used in Section~\ref{sec:evalcampaign}: a compromised host opens an S7 session to the PLC and writes the output area at high rate, blinding the level sensor and jamming the discharge valve. Each write is a CONTROL operation to the output area, which CARS recovers and forbids.
 
 \begin{lstlisting}[style=carssrc,caption={The FDI overflow injection (writes to the S7 output area).},label={lst:fdi}]
 c = snap7.client.Client(); c.connect(HOST, 0, 1)   # HOST = PLC 192.168.2.10
