@@ -1,0 +1,21 @@
+# Treat these as binary: never apply end-of-line or text conversion (prevents
+# corruption of binaries when checked out on Windows/macOS/Linux).
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.eps   binary
+*.pcap  binary
+*.xlsx  binary
+*.docx  binary
+*.pptx  binary
+*.zip   binary
+
+# Source stays as text with normalised line endings.
+*.tex   text
+*.py    text
+*.sh    text eol=lf
+*.md    text
+*.bib   text
+*.cls   text
