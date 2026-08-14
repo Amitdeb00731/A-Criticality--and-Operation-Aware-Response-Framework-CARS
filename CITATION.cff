@@ -8,6 +8,8 @@ abstract: >-
   physical process. Built and validated on a hardware testbed with real Siemens
   S7-1212C PLCs and a live tank process.
 type: software
+repository-code: "https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS"
+url: "https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS"
 authors:
   - family-names: Deb
     given-names: Amit Kiran

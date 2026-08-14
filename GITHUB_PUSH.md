@@ -1,55 +1,35 @@
 # Publishing this repository to GitHub
 
-The repository is already a git repo, reconciled to the final state and committed
-locally. Follow these steps to publish it and make the report's links resolve.
+The repository is a git repo, reconciled to the final state and committed locally, and
+the report's links are already set to your repository:
+`https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS`.
+Your GitHub repo already exists and is public, so you only need to add the remote and
+push.
 
-Replace `USERNAME` with your GitHub username throughout. The suggested repo name is
-`Reactive_SDN_ICS` (keep it consistent with the report links).
-
-## 1. Point the report at your repository (one line)
-
-Set the URL the report links to. Edit `report/main.tex`, line with `\repourl`:
-
-```latex
-\newcommand{\repourl}{https://github.com/USERNAME/Reactive_SDN_ICS}
-```
-
-Change `USERNAME` (and the repo name if you use a different one) to your real URL.
-This single line drives every "Code and data availability" link and the file-map
-table in the appendix. Then rebuild the report so the links bake in
-(`latexmk -pdf main.tex`).
-
-## 2. Create the GitHub repository and push
-
-### Option A — GitHub CLI (fastest)
+## Push (your repo already exists on GitHub)
 
 ```bash
 cd /path/to/Reactive_SDN_ICS
-gh auth login                       # once, if not already authenticated
-gh repo create Reactive_SDN_ICS --private --source=. --remote=origin --push
-```
-
-`--private` is recommended until after your submission/marking; switch to `--public`
-later with `gh repo edit --visibility public` if you wish.
-
-### Option B — manual (create on github.com first)
-
-1. On github.com: New repository, name it `Reactive_SDN_ICS`, do **not** add a
-   README/.gitignore/licence (the repo already has them).
-2. Then:
-
-```bash
-cd /path/to/Reactive_SDN_ICS
-git remote add origin https://github.com/USERNAME/Reactive_SDN_ICS.git
-git branch -M main
+git remote add origin https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS.git
 git push -u origin main
 ```
 
-If you set `\repourl` in step 1 after committing, commit that change too:
+If GitHub rejects the push because the repo was created with a README or licence
+(non-fast-forward), merge those in once, then push:
 
 ```bash
-git add report/main.tex && git commit -m "Set repository URL for report links" && git push
+git pull origin main --allow-unrelated-histories --no-edit
+git push -u origin main
 ```
+
+Or, if you don't need GitHub's auto-created files, overwrite them:
+
+```bash
+git push -u origin main --force
+```
+
+Authentication: if prompted, use a GitHub personal access token as the password, or
+`gh auth login` first if you have the GitHub CLI.
 
 ## 3. What is and isn't tracked
 
