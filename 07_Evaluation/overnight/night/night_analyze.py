@@ -53,9 +53,16 @@ if lad:
     print("\nRESPONSE-LADDER COVERAGE (decision + installed rule per response)")
     for r in lad: print(f"  {r['response_tested']:9} {r['src']}->{r['dst']:14} verdict={r['verdict']:16} rule={r['rule']}")
 
+tl = rd("tierladder.csv")
+if tl:
+    print("\nCRITICALITY -> HARD_TIMEOUT LADDER (real installed rule per tier)")
+    for r in tl:
+        print(f"  {r['dst']:14} crit={r['crit']:9} response={r['response']:8} "
+              f"hard_timeout={r['hard_timeout_installed']}s  (engine decide {r['cars_ms']} ms)")
+
 cp = rd("controlplane.csv")
 if cp:
-    print("\nCONTROL-PLANE / GUARD / AUTH PROBES")
+    print("\nCONTROL-PLANE / GUARD / AUTH / SEGMENTATION PROBES")
     for r in cp: print(f"  [{r['probe']}] {r['detail']} -> {r['outcome']}")
 
 fps = rd("fpstress.csv")

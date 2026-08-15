@@ -30,18 +30,38 @@ echo "$(TS),DEFLECT,192.168.2.66,192.168.2.10,$v,$drule" >> "$LC"; clean_src 192
 # ISOLATE + BLOCK are exercised at scale by the attack battery; MONITOR is the ALLOW-with-record case.
 log "  ladder: ALLOW/REFUSE/THROTTLE/DEFLECT recorded; ISOLATE/BLOCK from the battery"
 
-# ---- (B) four-tier + Cell-2 sweep (identical forbidden control per tier) -----
-# expect hard_timeout ladder 75/60/45/30 and every tier cut
-sweep(){ local dst="$1" ns="$2" atk="$3"; MEAS_LEAK=0 measure_attack "tier_$dst" "$atk" "$ns" \
-  sudo ip netns exec "$ns" python3 "$S7" --host "$dst" --storm --secs 2 --hz 8; sleep 4; }
-sweep 192.168.2.10 "$NS_ATK" "$IP_ATK"    # CRITICAL PLC1 (Cell-1)
-sweep 192.168.3.10 "$NS_ATK" "$IP_ATK"    # HIGH PLC2 (Cell-2, via NAT)
-sweep 192.168.2.30 "$NS_ATK" "$IP_ATK"    # MEDIUM historian
-sweep 192.168.2.20 "$NS_ATK" "$IP_ATK"    # LOW Modbus
-log "  tier sweep done (hard_timeout ladder in mttm_all.csv label tier_*)"
+# ---- (B) four-tier ladder via the enforcement API -------------------------
+# The unregistered vantage is segmented off the LOW Modbus unit and Cell-2 (confirmed in
+# the dry-run: .2.20 and .3.10 are unreachable, a positive result), and only PLC1 exposes
+# S7 - so a physical storm cannot reach every tier. The criticality->hard_timeout ladder is
+# a controller policy, so we drive the enforcement API per tier and read back the REAL
+# installed rule's hard_timeout (respond installs the same rule the snort bridge would).
+TL="$NIGHT_ROOT/logs/tierladder.csv"; [ -f "$TL" ] || echo "ts,dst,crit,response,hard_timeout_installed,cars_ms" > "$TL"
+tier_probe(){ local dst="$1"
+  local r; r=$(respond "{\"src\":\"$IP_ATK\",\"dst\":\"$dst\",\"op\":\"CONTROL\",\"proto\":\"S7\",\"dpid\":3}")
+  local crit resp cms
+  crit=$(echo "$r"|python3 -c 'import sys,json;print(json.load(sys.stdin).get("crit"))' 2>/dev/null)
+  resp=$(echo "$r"|python3 -c 'import sys,json;print(json.load(sys.stdin).get("response"))' 2>/dev/null)
+  cms=$(echo "$r"|python3 -c 'import sys,json;print(json.load(sys.stdin).get("cars_ms"))' 2>/dev/null)
+  sleep 0.5
+  local hto; hto=$(sudo ovs-ofctl -O OpenFlow13 dump-flows ovsgw 2>/dev/null|grep -m1 "0xca.*nw_src=$IP_ATK"|grep -oE 'hard_timeout=[0-9]+'|cut -d= -f2)
+  echo "$(TS),$dst,${crit},${resp},${hto:-NA},${cms}" >> "$TL"
+  log "  tier $dst crit=$crit resp=$resp hto_installed=${hto:-NA}s"
+  clean_src "$IP_ATK"; sleep 1
+}
+tier_probe 192.168.2.10   # CRITICAL PLC1     -> expect 75
+tier_probe 192.168.3.10   # HIGH PLC2         -> expect 60
+tier_probe 192.168.2.30   # MEDIUM historian  -> expect 45
+tier_probe 192.168.2.20   # LOW Modbus        -> expect 30
+# segmentation positive control: the unregistered vantage must NOT reach the low tiers
+for d in 192.168.2.20 192.168.3.10; do
+  sudo ip netns exec "$NS_ATK" ping -c1 -W1 "$d" >/dev/null 2>&1 && seg=REACHABLE_investigate || seg=segmented_ok
+  echo "$(TS),segmentation,atk_to_$d,$seg" >> "$CC"
+done
+log "  tier ladder done (crit->hard_timeout in tierladder.csv); segmentation recorded"
 
 # ---- (C) GUARD anti-spoof probe --------------------------------------------
-g0=$(curl -s -m4 "$API/cars/guard" 2>/dev/null | python3 -c 'import sys,json;print(sum(int(x.get("drops",0)) for x in json.load(sys.stdin).get("bindings",[])))' 2>/dev/null || echo NA)
+g0=$(curl -s -m4 "$API/cars/guard" 2>/dev/null | python3 -c 'import sys,json;print(sum(json.load(sys.stdin).get("drops",{}).values()))' 2>/dev/null || echo NA)
 # spoof a protected identity (.55 EWS and .10 PLC) from the attacker port -> GUARD drop
 sudo ip netns exec "$NS_ATK" python3 - <<'PY' 2>/dev/null
 try:
@@ -52,7 +72,7 @@ try:
 except Exception as e: print("guard-probe",e)
 PY
 sleep 3
-g1=$(curl -s -m4 "$API/cars/guard" 2>/dev/null | python3 -c 'import sys,json;print(sum(int(x.get("drops",0)) for x in json.load(sys.stdin).get("bindings",[])))' 2>/dev/null || echo NA)
+g1=$(curl -s -m4 "$API/cars/guard" 2>/dev/null | python3 -c 'import sys,json;print(sum(json.load(sys.stdin).get("drops",{}).values()))' 2>/dev/null || echo NA)
 echo "$(TS),guard_antispoof,drops_before=$g0 after=$g1,$([ "$g1" != "$g0" ] && echo SPOOF_DROPPED || echo check_counter)" >> "$CC"
 log "  GUARD anti-spoof: drops $g0 -> $g1"
 
