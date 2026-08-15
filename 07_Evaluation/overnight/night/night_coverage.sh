@@ -65,10 +65,10 @@ g0=$(curl -s -m4 "$API/cars/guard" 2>/dev/null | python3 -c 'import sys,json;pri
 # spoof a protected identity (.55 EWS and .10 PLC) from the attacker port -> GUARD drop
 sudo ip netns exec "$NS_ATK" python3 - <<'PY' 2>/dev/null
 try:
-  from scapy.all import Ether,ARP,IP,ICMP,sendp,conf; conf.verb=0
+  from scapy.all import Ether,ARP,IP,ICMP,sendp,send,conf; conf.verb=0
   for spoof in ("192.168.2.55","192.168.2.10","192.168.2.9"):
     sendp(Ether()/ARP(op=2,psrc=spoof,pdst="192.168.2.10"),count=5)
-    sendp(Ether()/IP(src=spoof,dst="192.168.2.10")/ICMP(),count=5)
+    send(IP(src=spoof,dst="192.168.2.10")/ICMP(),count=5)   # L3 send: GUARD ip-binding registers the drop
 except Exception as e: print("guard-probe",e)
 PY
 sleep 3
