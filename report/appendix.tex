@@ -576,3 +576,57 @@ t+76s    rule expired (SEND_FLOW_REM); source restored, no operator action; tabl
 Snort restart (passive, out-of-band):  inter-frame mean 4.90 ms vs 4.91 ms baseline, worst gap 33 ms vs 42 ms  [TRANSPARENT]
 Controller del/re-add (forced):         ~20 s window, worst forwarding gap 4.2 s, S7 session dropped, manual reconnect  [UPPER BOUND, not a faithful crash]
 \end{lstlisting}
+
+\section{Statistical visualisations of the evaluation}
+\label{appx:stats}
+
+The figures below plot the measured data behind the Critical Evaluation. Each is generated directly from a captured result file, named in its caption, with no smoothing or illustrative curves; log axes are used where a range spans orders of magnitude.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{stat_traffic_baseline.png}
+\caption{Normal OT traffic baseline: per-conduit mean packets/s and the protocol mix, from a 31-second steady-state capture (6{,}490 packets, 9 conduits). The cyclic engineering-to-PLC S7 flow dominates; the remainder is PLC replies and background multicast. Source: \texttt{results/b1/baseline.pcap} via \href{\repourl/blob/main/07_Evaluation/overnight/b1_analyze.py}{\texttt{b1\_analyze.py}}.}
+\label{fig:stattraffic}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.62\textwidth]{stat_confusion.png}
+\caption{Decision accuracy at scale, confusion matrix over the 2{,}078-case labelled corpus: 2{,}040 true positives, 38 true negatives, no false positives or negatives, 100\% accuracy with a 95\% Wilson confidence interval of $[0.9982, 1.0000]$. Source: \texttt{results/vast/vast.csv}.}
+\label{fig:statconfusion}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\textwidth]{stat_criticality_surface.png}
+\caption{Operation- and source-graded response over 240 live judgements. The trusted host keeps its reads (with a small tail of persistence-escalated cuts as its offence count rises across the sequence) and is cut on the operations its role must not perform, whereas the unregistered attacker is cut on every operation. Source: \texttt{results/critbeh/judgements.csv}.}
+\label{fig:statcrit}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{stat_flowintegrity.png}
+\caption{Flow-integrity, ten-second poll versus the event-driven monitor. Left: a two-second transient injection is missed by the poll on 25 of 30 trials but caught on all 30 by the event-driven monitor; a persistent injection is caught by both. Right: median detection latency, 8.5\,s for the poll against 0.27\,s for the monitor (log axis). Sources: \texttt{results/flowint/\{persistent,transient\}.csv}, \texttt{results/gap4\_flowmonitor/transient\_eventdriven.csv}.}
+\label{fig:statflowint}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{stat_transparency.png}
+\caption{Process transparency: the tank-level distribution armed against disarmed, over roughly seven thousand interleaved, load-matched per-second samples. The two distributions coincide (means 51.5 against 50.7\%) and neither leaves the control band, so arming the defence has no measurable effect on the process. Source: \texttt{results/e2/interleaved.csv}.}
+\label{fig:stattransparency}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{stat_mttm_load.png}
+\caption{Reaction window against background decision load on the live testbed: the window holds in the tens of milliseconds up to about a thousand operations a second, rising only as the single-threaded controller nears the decision-and-log bench ceiling of sixteen to eighteen thousand a second. Source: \texttt{results/gap1\_live/curve.csv}.}
+\label{fig:statload}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\textwidth]{stat_jitter.png}
+\caption{Reconnection jitter on the legitimate conduit: restarting the passive Snort sensor is transparent (no dip), whereas a forced controller reconnection stalls forwarding. Source: \texttt{results/jitter/timeline.csv} (one spurious counter sample removed).}
+\label{fig:statjitter}
+\end{figure}
