@@ -34,8 +34,12 @@ while [ "$(date +%s)" -lt "$END" ]; do
     continue
   fi
   fails=0
-  # attack battery every cycle
+  # attack battery every cycle (Dell-1 namespaces: high throughput)
   ROUNDS=1 bash "$HERE/night_attack_battery.sh"
+  # real-VM Kali vantage (realistic path), if configured, every KALI_EVERY cycles
+  if [ "${USE_KALI:-0}" = "1" ] && [ $((cycle % ${KALI_EVERY:-3})) -eq 0 ]; then
+    ROUNDS=1 bash "$HERE/night_kali.sh"
+  fi
   # periodic DDoS phase
   if [ $((cycle % DDOS_EVERY)) -eq 0 ]; then DDOS_DUR=240 bash "$HERE/night_ddos.sh"; fi
   # periodic gap-hunt pass

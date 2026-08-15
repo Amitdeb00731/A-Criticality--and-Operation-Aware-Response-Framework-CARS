@@ -60,6 +60,29 @@ HOURS=14 nohup bash night_orchestrator.sh > "$HOME/night_$(date +%Y%m%d)/logs/or
 Knobs: `HOURS` (default 14), `DDOS_EVERY` (cycles between DDoS phases, default 6),
 `GAP_EVERY` (default 8), `DDOS_PPS` (default 200, raise cautiously), `GAP` (inter-attack gap, default 4 s).
 
+### Optional: add the real Kali VM as an attacker vantage
+The namespaces give throughput; the real Kali VM gives the realistic attacker path
+(`.2.77` on-segment). Off by default. To include it:
+```
+# prereq: passwordless SSH from Dell 1 to Kali (its mgmt/eth0 interface up),
+# and the S7 client on Kali at /home/msclab/s7_write.py
+ssh msclab@<kali-mgmt-ip> true    # must succeed without a password
+# then launch with:
+HOURS=14 USE_KALI=1 KALI_SSH=msclab@<kali-mgmt-ip> nohup bash night_orchestrator.sh > ... &
+```
+Notes: Kali single-injection attacks are measured on the same Dell-1 mirror clock
+and logged with `kali_` labels in `mttm_all.csv`, so the at-scale MTTM then
+includes real-VM path samples, not only namespaces. Kali runs every `KALI_EVERY`
+cycles (default 3). A real-VM *sustained flood* (`KALI_DDOS=1`) is cut in about a
+second, not 7.6 ms, because a continuous flood interacts with the 3 s dedup window
+— report it as the sustained-flood cut time, not a single-injection reaction
+window (consistent with the two-pivot section). The `.1` NAT pivot is already
+captured in the report, so drive that one manually if you want it re-measured;
+the overnight automation covers the common on-segment `.77` case. If Kali is
+"confined to OT" (eth0/eth2 down for the honest-insider posture) it cannot be
+SSH-driven — either bring mgmt up for the night, or launch `night_kali.sh` on Kali
+by hand.
+
 ## 5. In the morning
 ```
 cat "$HOME"/night_*/logs/SUMMARY.txt          # auto-generated summary
