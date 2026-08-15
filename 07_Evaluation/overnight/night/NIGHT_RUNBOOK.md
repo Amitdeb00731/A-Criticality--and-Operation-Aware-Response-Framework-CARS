@@ -21,6 +21,28 @@ night.**
 
 **Left as honest caveats (not automated):** controller-crash / control-plane failover, trusted-insider slow-and-low within the operating envelope, and encrypted-protocol / TLS DPI. These are documented as limitations rather than staged, because staging them safely on the live rig would risk the process or misrepresent what CARS claims.
 
+### PLC_AWARE mode (for the unattended overnight on the S7-1200 CPU 1212C)
+The 1212C has only **6 dynamic connection resources** (hardware-fixed). Every S7 attack CARS
+isolates leaves a dead session that holds a dynamic slot until the CPU reaps it; a high-volume
+campaign exhausts the 6 slots and evicts the legitimate Factory IO client (which does not
+auto-reconnect). `PLC_AWARE=1` builds the run around that limit:
+- at most **one** PLC1 S7 attack per cycle, rotated across the S7 vectors, fired only when the
+  tank is confirmed live, then drained (`PLC_DRAIN`, default 25 s) so the slot is reaped;
+- all pool-free attacks keep full volume: Modbus to the separate unit (.20), and the API/scapy
+  coverage probes (response ladder, tier ladder, GUARD anti-spoof, auth-API, segmentation);
+- the flood/stress phases that hammer PLC1's accept queue (DDoS SYN flood, gap-hunt half-open,
+  FP-stress read load) are **skipped** - their findings are already captured from the earlier
+  supervised runs.
+
+Launch unattended:
+```
+D=/home/msclab/night_$(date +%Y%m%d)
+tmux new -s cars "sudo NIGHT_ROOT=$D HOURS=14 PLC_AWARE=1 bash night_orchestrator.sh"
+```
+Knobs: `PLC_DRAIN` (reap pause after each PLC1 attack, default 25 s), `CYCLE_SLEEP` (default 45 s).
+The `FREEZE_MAX` safety net still applies: if Factory IO is ever evicted anyway, attacks halt and
+the rest of the night becomes a clean stability trace.
+
 ## Safety rails (built in)
 - Cookie-scoped deletes only (`cookie=0xca/-1`), never by src/dst.
 - Green-check + self-heal each cycle; if unhealthy, attacks pause and monitoring continues.

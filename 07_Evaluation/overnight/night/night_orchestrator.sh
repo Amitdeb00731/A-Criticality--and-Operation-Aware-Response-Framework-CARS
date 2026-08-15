@@ -84,15 +84,18 @@ while [ "$(date +%s)" -lt "$END" ]; do
   if [ "${USE_KALI:-0}" = "1" ] && [ $((cycle % ${KALI_EVERY:-3})) -eq 0 ]; then
     ROUNDS=1 bash "$HERE/night_kali.sh"
   fi
-  # periodic coverage pass (response ladder + tier sweep + GUARD + auth-API)
+  # periodic coverage pass (response ladder + tier sweep + GUARD + auth-API) - all API/scapy,
+  # opens no S7 session to PLC1, so it is safe for the 6-slot pool and runs in every mode
   if [ $((cycle % COV_EVERY)) -eq 0 ]; then bash "$HERE/night_coverage.sh"; fi
-  # periodic DDoS phase
-  if [ $((cycle % DDOS_EVERY)) -eq 0 ]; then DDOS_DUR=90 bash "$HERE/night_ddos.sh"; fi
-  # periodic gap-hunt pass
-  if [ $((cycle % GAP_EVERY)) -eq 0 ]; then bash "$HERE/night_gaphunt.sh"; fi
-  # periodic adversarial-benign false-positive stress
-  if [ $((cycle % FP_EVERY)) -eq 0 ]; then FP_DUR=300 bash "$HERE/night_fpstress.sh"; fi
-  # periodic bounded last-good-restore test
+  # The flood/stress phases below all hammer PLC1's S7 accept queue (SYN flood, half-open,
+  # legit-read load) and would exhaust the 1212C's 6 dynamic slots. Their findings are already
+  # documented, so PLC_AWARE mode skips them and relies on the paced single-slot battery instead.
+  if [ "${PLC_AWARE:-0}" != 1 ]; then
+    if [ $((cycle % DDOS_EVERY)) -eq 0 ]; then DDOS_DUR=90 bash "$HERE/night_ddos.sh"; fi
+    if [ $((cycle % GAP_EVERY)) -eq 0 ]; then bash "$HERE/night_gaphunt.sh"; fi
+    if [ $((cycle % FP_EVERY)) -eq 0 ]; then FP_DUR=300 bash "$HERE/night_fpstress.sh"; fi
+  fi
+  # periodic bounded last-good-restore test (one PLC1 session, infrequent - safe in either mode)
   if [ $((cycle % REM_EVERY)) -eq 0 ]; then bash "$HERE/night_remediation.sh"; fi
   # reset to a clean baseline between cycles; give the PLC S7 stack room to breathe
   # (constant back-to-back assault was what stressed Factory IO's link)
