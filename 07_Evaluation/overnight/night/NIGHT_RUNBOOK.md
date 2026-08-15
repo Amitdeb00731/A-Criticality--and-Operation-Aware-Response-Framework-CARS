@@ -88,7 +88,19 @@ not walk away until you have seen "preflight passed".
 Knobs: `HOURS` (default 14), `DDOS_EVERY` (cycles between DDoS phases, default 6),
 `GAP_EVERY` (default 8), `COV_EVERY` (coverage pass, default 4), `FP_EVERY` (FP stress,
 default 10), `REM_EVERY` (restore test, default 10), `DDOS_PPS` (default 200, raise
-cautiously), `GAP` (inter-attack gap, default 4 s).
+cautiously), `GAP` (inter-attack gap, default 4 s), `CYCLE_SLEEP` (rest between cycles,
+default 45 s - gives the PLC S7 stack room), `STOP_EVERY` (fire the CPU-halt vector only
+every N cycles, default 12).
+
+### Factory-IO liveness safety (added after a live-run finding)
+The PLC-STOP vector genuinely halts the CPU, and Factory IO's S7 link does not
+auto-reconnect, so a leaked stop or constant storm pressure can freeze the tank for the
+rest of the night. Mitigations, all built in: storm rates are capped, the CPU-halt vector
+fires only every `STOP_EVERY` cycles (not every cycle), there is a `CYCLE_SLEEP` rest
+between cycles, and a **tank-liveness guard** samples the level each cycle - if it is
+frozen while the process still reports online (the Factory IO drop signature) it pauses
+attacks, logs the window to `freeze.csv`, and attempts a hot-start recovery. The morning
+`SUMMARY.txt` reports any freeze windows so they can be excluded/annotated honestly.
 
 ### Optional: add the real Kali VM as an attacker vantage
 The namespaces give throughput; the real Kali VM gives the realistic attacker path

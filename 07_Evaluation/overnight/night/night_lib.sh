@@ -84,3 +84,19 @@ measure_attack(){
 }
 
 mttm_header(){ [ -f "$NIGHT_ROOT/logs/mttm_all.csv" ] || echo "ts,label,atk,t0,t_enforce,mttm_ms,response,hard_timeout,leaked_frames" > "$NIGHT_ROOT/logs/mttm_all.csv"; }
+
+# ---- tank liveness (Factory IO watchdog) -----------------------------------
+# The tank level MUST move while Factory IO drives the sim. A level that is frozen
+# while remediation still reports online=1 means Factory IO's S7 link has dropped
+# (it does NOT auto-reconnect). We sample 3 points over 8s; frozen only if the whole
+# spread is < 0.03, so a moving tank is never mislabelled.
+tank_level(){ python3 -c "import json;print(json.load(open('/tmp/cars_remediation_status.json'))['level'])" 2>/dev/null; }
+tank_frozen(){ local x y z; x=$(tank_level); sleep 4; y=$(tank_level); sleep 4; z=$(tank_level)
+  [ -z "$x" ] || [ -z "$z" ] && return 1
+  python3 -c "import sys
+v=[float('$x'),float('$y'),float('$z')]
+sys.exit(0 if (max(v)-min(v))<0.03 else 1)" 2>/dev/null; }
+# best-effort recovery if the process looks frozen: clear any residue, hot-start the CPU
+# (in case a stop leaked and halted it), re-arm. Cannot reconnect the Factory IO GUI client.
+recover_process(){ log "  process looks frozen - clearing residue, hot-start, re-arm (best effort)"
+  clean_all_reactive; sudo ip netns exec "$NS_OP" python3 "$S7" --host "$PLC1" --start >/dev/null 2>&1; sleep 2; arm; }

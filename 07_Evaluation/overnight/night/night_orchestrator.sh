@@ -60,8 +60,17 @@ while [ "$(date +%s)" -lt "$END" ]; do
     continue
   fi
   fails=0
+  # Factory-IO liveness guard: a frozen tank (level not moving) with the process still
+  # "online" means Factory IO's S7 link dropped - it does NOT auto-reconnect. Do not pile
+  # attacks on a dead process; log the window, attempt recovery, and skip attacks this cycle.
+  if tank_frozen; then
+    log "watchdog: FACTORYIO_FREEZE (tank level not moving) - pausing attacks, attempting recovery"
+    FZ="$NIGHT_ROOT/logs/freeze.csv"; [ -f "$FZ" ] || echo "ts,detail,cycle,level" > "$FZ"
+    echo "$(TS),FACTORYIO_FREEZE,$cycle,$(tank_level)" >> "$FZ"
+    recover_process; sleep 30; continue
+  fi
   # attack battery every cycle (Dell-1 namespaces: high throughput)
-  ROUNDS=1 bash "$HERE/night_attack_battery.sh"
+  CYCLE=$cycle STOP_EVERY="${STOP_EVERY:-12}" ROUNDS=1 bash "$HERE/night_attack_battery.sh"
   # real-VM Kali vantage (realistic path), if configured, every KALI_EVERY cycles
   if [ "${USE_KALI:-0}" = "1" ] && [ $((cycle % ${KALI_EVERY:-3})) -eq 0 ]; then
     ROUNDS=1 bash "$HERE/night_kali.sh"
@@ -76,8 +85,9 @@ while [ "$(date +%s)" -lt "$END" ]; do
   if [ $((cycle % FP_EVERY)) -eq 0 ]; then FP_DUR=300 bash "$HERE/night_fpstress.sh"; fi
   # periodic bounded last-good-restore test
   if [ $((cycle % REM_EVERY)) -eq 0 ]; then bash "$HERE/night_remediation.sh"; fi
-  # reset to a clean baseline between cycles
-  clean_all_reactive; selfheal; sleep 8
+  # reset to a clean baseline between cycles; give the PLC S7 stack room to breathe
+  # (constant back-to-back assault was what stressed Factory IO's link)
+  clean_all_reactive; selfheal; sleep "${CYCLE_SLEEP:-45}"
 done
 
 log "campaign window elapsed; final snapshot"

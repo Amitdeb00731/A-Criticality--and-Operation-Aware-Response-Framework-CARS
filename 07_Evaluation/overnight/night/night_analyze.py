@@ -81,6 +81,15 @@ if rem:
               f"level[before={r['level_before']} min={r['level_min']} max={r['level_max']}] "
               f"excursion={r['excursion']} -> {r['outcome']}")
 
+fz = rd("freeze.csv") if os.path.exists(os.path.join(L,"freeze.csv")) else []
+print("\nFACTORY-IO LIVENESS")
+if fz:
+    print(f"  tank-freeze events detected (Factory IO link dropped): {len(fz)}")
+    for r in fz[:10]: print(f"    {r.get('ts')} {r.get('detail','')} {r.get('cycle','')} {r.get('level','')}")
+    print("  (attacks were paused during these windows; exclude/annotate them when reconciling.)")
+else:
+    print("  no tank-freeze events - process stayed live under attack all night.")
+
 mo = rd("monitor.csv")
 if mo:
     onl=[r for r in mo if r.get("online")=="1"]; drift=[r for r in mo if r.get("flowaudit")=="DRIFT"]
