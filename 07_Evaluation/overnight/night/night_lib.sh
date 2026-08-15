@@ -62,11 +62,12 @@ measure_attack(){
   for i in $(seq 1 400); do                     # poll ~8s for the reactive install
     local line; line=$(sudo ovs-ofctl -O OpenFlow13 dump-flows ovsgw 2>/dev/null | grep -m1 -E "0xca.*nw_src=$atk")
     if [ -n "$line" ]; then
+      local tp; tp=$(date +%s.%N)                 # timestamp AT detection - take it before any slow work
       dur=$(echo "$line"|grep -oE 'duration=[0-9.]+'|cut -d= -f2)
-      # only accept a FRESHLY-installed rule; a large duration means a stale rule leaked in
-      # (that was the cause of the impossible negative MTTM values)
-      if python3 -c "import sys;sys.exit(0 if float('${dur:-99}')<3 else 1)" 2>/dev/null; then
-        local tp; tp=$(date +%s.%N)
+      # accept only a FRESHLY-installed rule (integer seconds < 3). Done in bash so the hot path has
+      # no python spawn inflating the measurement; a large duration = stale rule (the negative-MTTM cause).
+      local iv=${dur%%.*}
+      if [ -n "$iv" ] && [ "$iv" -lt 3 ] 2>/dev/null; then
         hto=$(echo "$line"|grep -oE 'hard_timeout=[0-9]+'|cut -d= -f2)
         te=$(python3 -c "print(f'{$tp-$dur:.6f}')" 2>/dev/null)
         break
