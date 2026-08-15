@@ -592,7 +592,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.62\textwidth]{stat_confusion.png}
-\caption{Decision accuracy at scale, confusion matrix over the 2{,}078-case labelled corpus: 2{,}040 true positives, 38 true negatives, no false positives or negatives, 100\% accuracy with a 95\% Wilson confidence interval of $[0.9982, 1.0000]$. Source: \texttt{results/vast/vast.csv}.}
+\caption{Decision at scale over the 2{,}078-case labelled corpus, which is attack-heavy by design (2{,}040 attacks against 38 legitimate or exempt cases). Every attack was restricted (no false negative) and every legitimate or exempt case permitted (no false positive); because of the class imbalance the two per-class error rates, not aggregate accuracy, are the meaningful figures (a drop-everything baseline would score 98\% accuracy yet a 100\% false-positive rate). Source: \texttt{results/vast/vast.csv}.}
 \label{fig:statconfusion}
 \end{figure}
 
@@ -620,7 +620,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.78\textwidth]{stat_mttm_load.png}
-\caption{Reaction window against background decision load on the live testbed: the window holds in the tens of milliseconds up to about a thousand operations a second, rising only as the single-threaded controller nears the decision-and-log bench ceiling of sixteen to eighteen thousand a second. Source: \texttt{results/gap1\_live/curve.csv}.}
+\caption{Reaction window against background load, measured at the controller's decision-and-log stage: both the background and the probe are posted directly to \texttt{/cars/respond}, so this characterises the controller (\texttt{classify}, \texttt{select\_response} and the audit write), not the Snort-to-file-to-HTTP sensor bridge. The window holds in the tens of milliseconds to about a thousand operations a second and rises only as this single-threaded stage nears its sixteen-to-eighteen-thousand-a-second bench ceiling. The sensor bridge is a separate and lower ceiling, the acknowledged bottleneck carried to the future work (Section~\ref{sec:threats}), and is not what this curve measures. Source: \texttt{results/gap1\_live/curve.csv}.}
 \label{fig:statload}
 \end{figure}
 
