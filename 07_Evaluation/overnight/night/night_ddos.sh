@@ -13,8 +13,8 @@ PPS="${DDOS_PPS:-200}"        # target diverse-source packets/s (bounded; raise 
 CSV="$NIGHT_ROOT/logs/ddos.csv"; [ -f "$CSV" ] || echo "ts,alert_rate_s,cars_ms_avg,probe_mttm_ms,probe_resp" > "$CSV"
 
 log "DDoS phase: ${DUR}s sustained, target ${PPS} pps diverse spoofed sources -> PLC1"
-# diverse-source flood from the attacker namespace (rate-limited scapy)
-sudo ip netns exec "$NS_ATK" python3 - "$PLC1" "$DUR" "$PPS" <<'PY' &
+# diverse-source flood from the attacker namespace (rate-limited scapy), hard-bounded by timeout
+sudo timeout $((DUR+15)) ip netns exec "$NS_ATK" python3 - "$PLC1" "$DUR" "$PPS" <<'PY' &
 import sys,time,random,socket,struct
 try:
     from scapy.all import IP,TCP,send,conf; conf.verb=0

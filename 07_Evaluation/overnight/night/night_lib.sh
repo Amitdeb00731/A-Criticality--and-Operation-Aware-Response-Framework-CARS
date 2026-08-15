@@ -39,7 +39,8 @@ greencheck(){
   return $((1-ok))
 }
 # self-heal: kill any runaway attack loops that survived a Ctrl-C / crash (lesson: mb_client respawn)
-selfheal(){ sudo pkill -9 -f 'while true' 2>/dev/null; sudo pkill -f 'netns exec .*python3.*s7_write' 2>/dev/null; sudo pkill -f mb_client 2>/dev/null; sleep 1; }
+selfheal(){ for ns in "$NS_ATK" "$NS_OP" "$NS_MB"; do sudo pkill -f "netns exec $ns" 2>/dev/null; done
+  sudo pkill -f 's7_write.py' 2>/dev/null; sudo pkill -f 'mb_attack' 2>/dev/null; sudo pkill -f 'mb_client' 2>/dev/null; sleep 1; }
 
 # ---- the core measurement: single-clock MTTM + leaked frames + response ----
 # measure_attack <label> <atk_ip> <atk_ns> <launch-cmd...>

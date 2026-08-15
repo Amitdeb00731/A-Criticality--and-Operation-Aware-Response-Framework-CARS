@@ -15,10 +15,33 @@ GAP_EVERY="${GAP_EVERY:-8}"       # run a gap-hunt pass every N cycles
 mttm_header
 log "=========== OVERNIGHT CAMPAIGN START (${HOURS} h) -> $NIGHT_ROOT ==========="
 
-# preflight
-selfheal; arm
-if ! greencheck; then log "PREFLIGHT not green — fix the rig, then relaunch"; fi
-bash "$HERE/../green_check.sh" > "$NIGHT_ROOT/logs/greencheck_start.txt" 2>&1 || true
+# ---- fail-fast preflight: catch anything that would need a human mid-run ----
+preflight(){
+  local fatal=0
+  # 1) must run without a sudo password prompt (else it hangs at hour N unattended)
+  if [ "$(id -u)" != "0" ] && ! sudo -n true 2>/dev/null; then
+    log "FATAL: not root and sudo needs a password. An unattended run would hang on the first sudo."
+    log "       relaunch as:  sudo -E HOURS=$HOURS bash $HERE/night_orchestrator.sh"
+    fatal=1
+  fi
+  # 2) attack clients present
+  for f in "$S7" "$MBATK"; do [ -f "$f" ] || { log "FATAL: missing attack client $f"; fatal=1; }; done
+  # 3) capture interfaces present (non-fatal: capture degrades, run still completes)
+  ip -br link show snort0 >/dev/null 2>&1 || log "WARN: mirror interface snort0 not found (edit night_lib.sh)"
+  ip -br link show enx9c69d331d874 >/dev/null 2>&1 || log "WARN: PLC-port interface not found (edit night_lib.sh); leaked-frame counts will be 0"
+  # 4) scapy for the DDoS + gap probes (non-fatal: those phases degrade)
+  python3 -c 'import scapy' 2>/dev/null || log "WARN: scapy missing; DDoS + some gap probes will be skipped"
+  # 5) disk headroom (non-fatal, but warn loudly)
+  local freem; freem=$(df -Pm "$NIGHT_ROOT" 2>/dev/null|awk 'NR==2{print $4}')
+  [ "${freem:-99999}" -lt 3072 ] && log "WARN: only ${freem}MB free at $NIGHT_ROOT; the disk guard will stop pcaps if it runs low"
+  # 6) rig must be green to start (don't launch a doomed 14 h run)
+  selfheal; arm
+  bash "$HERE/../green_check.sh" > "$NIGHT_ROOT/logs/greencheck_start.txt" 2>&1 || true
+  greencheck || { log "FATAL: rig not green at launch (controller/process). Fix, then relaunch."; fatal=1; }
+  return $fatal
+}
+if ! preflight; then log "PREFLIGHT FAILED — aborting before the unattended run starts."; exit 1; fi
+log "preflight passed: root/sudo ok, clients present, rig green. Safe to walk away."
 
 # continuous monitor in the background for the whole run
 MON_DUR=$((HOURS*3600+300)) bash "$HERE/night_monitor.sh" &

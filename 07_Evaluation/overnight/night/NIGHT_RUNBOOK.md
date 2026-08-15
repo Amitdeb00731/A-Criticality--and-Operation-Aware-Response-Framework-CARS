@@ -43,20 +43,39 @@ bash 07_Evaluation/overnight/green_check.sh   # must be green before starting
 ## 3. DRY RUN (one short cycle — do this before the night)
 ```
 cd 07_Evaluation/overnight/night
-HOURS=0 ROUNDS=1 bash night_attack_battery.sh   # ~1 min: confirm mttm_all.csv fills, rig stays green
-tail -n +1 "$HOME"/night_*/logs/mttm_all.csv
-bash ../green_check.sh                            # confirm still green
+D=/home/msclab/night_$(date +%Y%m%d)
+sudo NIGHT_ROOT=$D ROUNDS=1 bash night_attack_battery.sh   # ~1 min; also proves sudo runs without a prompt
+cat $D/logs/mttm_all.csv
+bash ../green_check.sh                                       # confirm still green
 ```
 If the battery logs sane MTTM values and the rig is green, proceed. If a command
 errors (interface, client path, scapy), fix it and re-dry-run.
 
-## 4. Launch the full night (detached, survives logout)
+## 4. Launch the full night — fully unattended (walk away, come back when done)
+Yes, this is designed to run start-to-finish with no mid-run intervention. Two
+things make that safe, and both are enforced at launch:
+- **Run as root** so no `sudo` password prompt can ever hang it mid-run. The
+  orchestrator's preflight aborts immediately (while you are still there) if it is
+  not root/passwordless-sudo, if an attack client is missing, or if the rig is not
+  green — so an unrunnable night fails at second 0, not at hour 3.
+- It launches the monitor and all phases itself, self-heals and green-checks each
+  cycle, bounds every capture and flood with `timeout`, caps pcap disk use with a
+  headers-only snaplen + a disk guard, and writes `SUMMARY.txt` at the end.
+
 ```
 cd 07_Evaluation/overnight/night
-HOURS=14 nohup bash night_orchestrator.sh > "$HOME/night_$(date +%Y%m%d)/logs/orchestrator.out" 2>&1 &
-# or run inside tmux/screen so you can detach:
-#   tmux new -s cars 'HOURS=14 bash night_orchestrator.sh'
+D=/home/msclab/night_$(date +%Y%m%d)            # fixed output path (root's $HOME differs)
+# detached in tmux so it survives logout; run as root:
+tmux new -d -s cars "sudo NIGHT_ROOT=$D HOURS=14 bash night_orchestrator.sh"
+#   ... or without tmux:
+# sudo NIGHT_ROOT=$D HOURS=14 nohup bash night_orchestrator.sh >/tmp/cars_night.out 2>&1 &
 ```
+After launching, confirm it actually started (preflight passed) before you leave:
+```
+sleep 20; tail -5 $D/logs/campaign.log        # should show "preflight passed ... Safe to walk away"
+```
+If instead you see `PREFLIGHT FAILED`, fix the one thing it names and relaunch — do
+not walk away until you have seen "preflight passed".
 Knobs: `HOURS` (default 14), `DDOS_EVERY` (cycles between DDoS phases, default 6),
 `GAP_EVERY` (default 8), `DDOS_PPS` (default 200, raise cautiously), `GAP` (inter-attack gap, default 4 s).
 
@@ -66,9 +85,13 @@ The namespaces give throughput; the real Kali VM gives the realistic attacker pa
 ```
 # prereq: passwordless SSH from Dell 1 to Kali (its mgmt/eth0 interface up),
 # and the S7 client on Kali at /home/msclab/s7_write.py
-ssh msclab@<kali-mgmt-ip> true    # must succeed without a password
+sudo ssh msclab@<kali-mgmt-ip> true   # must succeed without a password AS ROOT
+# (the campaign runs as root, so root's SSH key must be authorised on Kali;
+#  install it with:  sudo ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519;
+#  sudo ssh-copy-id msclab@<kali-mgmt-ip> )
 # then launch with:
-HOURS=14 USE_KALI=1 KALI_SSH=msclab@<kali-mgmt-ip> nohup bash night_orchestrator.sh > ... &
+D=/home/msclab/night_$(date +%Y%m%d)
+tmux new -d -s cars "sudo NIGHT_ROOT=$D HOURS=14 USE_KALI=1 KALI_SSH=msclab@<kali-mgmt-ip> bash night_orchestrator.sh"
 ```
 Notes: Kali single-injection attacks are measured on the same Dell-1 mirror clock
 and logged with `kali_` labels in `mttm_all.csv`, so the at-scale MTTM then
