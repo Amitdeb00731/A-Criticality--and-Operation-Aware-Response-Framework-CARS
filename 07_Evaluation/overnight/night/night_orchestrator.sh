@@ -10,8 +10,9 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; source "$HERE/night_lib.sh"
 HOURS="${HOURS:-14}"; END=$(( $(date +%s) + HOURS*3600 ))
-DDOS_EVERY="${DDOS_EVERY:-6}"     # run a DDoS phase every N cycles
-GAP_EVERY="${GAP_EVERY:-8}"       # run a gap-hunt pass every N cycles
+DDOS_EVERY="${DDOS_EVERY:-10}"    # run a DDoS phase every N cycles (transport-layer residual
+GAP_EVERY="${GAP_EVERY:-16}"      # + gap-hunt run less often: they stress the PLC S7 stack and
+                                  # the residual is already documented - keep them sparse + gentle)
 COV_EVERY="${COV_EVERY:-4}"       # response-ladder + tier-sweep + GUARD + auth-API every N cycles
 FP_EVERY="${FP_EVERY:-10}"        # adversarial-benign false-positive stress every N cycles
 REM_EVERY="${REM_EVERY:-10}"      # bounded last-good-restore test every N cycles
@@ -78,7 +79,7 @@ while [ "$(date +%s)" -lt "$END" ]; do
   # periodic coverage pass (response ladder + tier sweep + GUARD + auth-API)
   if [ $((cycle % COV_EVERY)) -eq 0 ]; then bash "$HERE/night_coverage.sh"; fi
   # periodic DDoS phase
-  if [ $((cycle % DDOS_EVERY)) -eq 0 ]; then DDOS_DUR=240 bash "$HERE/night_ddos.sh"; fi
+  if [ $((cycle % DDOS_EVERY)) -eq 0 ]; then DDOS_DUR=90 bash "$HERE/night_ddos.sh"; fi
   # periodic gap-hunt pass
   if [ $((cycle % GAP_EVERY)) -eq 0 ]; then bash "$HERE/night_gaphunt.sh"; fi
   # periodic adversarial-benign false-positive stress

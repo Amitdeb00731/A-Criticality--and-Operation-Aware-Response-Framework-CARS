@@ -8,8 +8,12 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; source "$HERE/night_lib.sh"
 mttm_header
-DUR="${DDOS_DUR:-300}"        # seconds of sustained flood per invocation
-PPS="${DDOS_PPS:-200}"        # target diverse-source packets/s (bounded; raise cautiously)
+DUR="${DDOS_DUR:-90}"         # seconds of sustained flood per invocation
+PPS="${DDOS_PPS:-40}"         # target diverse-source packets/s. Kept LOW: a live-run finding
+                              # showed a high-rate SYN flood on PLC1:102 exhausts the PLC's S7
+                              # accept queue and evicts Factory IO's legit session. The residual
+                              # is documented from that run; the repeatable load test stays gentle
+                              # and aborts on any tank freeze.
 CSV="$NIGHT_ROOT/logs/ddos.csv"; [ -f "$CSV" ] || echo "ts,alert_rate_s,cars_ms_avg,probe_mttm_ms,probe_resp" > "$CSV"
 
 log "DDoS phase: ${DUR}s sustained, target ${PPS} pps diverse spoofed sources -> PLC1"
@@ -32,9 +36,16 @@ sleep 5
 # sample under load: alert rate, controller decide time, and a probe MTTM
 end=$((SECONDS+DUR)); off=$(sudo bash -c "wc -l < $ALERT" 2>/dev/null||echo 0)
 while [ $SECONDS -lt $end ]; do
-  sleep 25
+  sleep 10
+  # protect the live process: if the flood starts evicting Factory IO, abort immediately
+  if tank_frozen; then
+    log "  DDoS: FACTORYIO_FREEZE mid-flood - aborting flood and recovering"
+    FZ="$NIGHT_ROOT/logs/freeze.csv"; [ -f "$FZ" ] || echo "ts,detail,cycle,level" > "$FZ"
+    echo "$(TS),DDOS_FREEZE_ABORT,ddos,$(tank_level)" >> "$FZ"
+    sudo pkill -f "netns exec $NS_ATK" 2>/dev/null; recover_process; break
+  fi
   local_now=$(sudo bash -c "wc -l < $ALERT" 2>/dev/null||echo 0)
-  arate=$(python3 -c "print(round(($local_now-$off)/25.0,1))" 2>/dev/null); off=$local_now
+  arate=$(python3 -c "print(round(($local_now-$off)/10.0,1))" 2>/dev/null); off=$local_now
   cms=$(curl -s -m4 "$API/cars/status"|python3 -c 'import sys,json;print(json.load(sys.stdin).get("cars_ms_avg"))' 2>/dev/null)
   # probe: a distinct forbidden control from the SCADA vantage, measured under the load
   measure_attack ddos_probe "$IP_OP" "$NS_OP" \
@@ -45,5 +56,5 @@ while [ $SECONDS -lt $end ]; do
   log "  under-load: alert_rate=${arate}/s cars_ms=${cms:-NA} probe_mttm=${pm:-NA}ms"
 done
 sudo pkill -f "netns exec $NS_ATK" 2>/dev/null; wait "$FLOOD" 2>/dev/null
-clean_all_reactive; selfheal; sleep 3; greencheck || { arm; }
+clean_all_reactive; selfheal; sleep 3; tank_frozen && recover_process; greencheck || { arm; }
 log "DDoS phase done"
