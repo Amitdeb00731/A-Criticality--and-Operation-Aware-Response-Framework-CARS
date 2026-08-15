@@ -79,9 +79,13 @@ measure_attack(){
   # the S7 slot is freed at once (the old order killed it behind the drop rule, so the RST was
   # dropped and the PLC held the dead session for minutes -> pool exhaustion -> Factory IO drop).
   sleep 0.4
-  sudo pkill -STOP -f "$S7" 2>/dev/null; sudo pkill -STOP -f "$MBATK" 2>/dev/null
-  clean_src "$atk"; sleep 0.3
-  sudo pkill -KILL -f "$S7" 2>/dev/null; sudo pkill -KILL -f "$MBATK" 2>/dev/null
+  # resolve client PIDs first (signalling by PID avoids pkill's self-match: 'pkill -STOP -f s7_write.py'
+  # matches its OWN command line and SIGSTOPs itself -> deadlock; kill by PID cannot do that)
+  local cpids; cpids="$(pgrep -f "$S7" 2>/dev/null) $(pgrep -f "$MBATK" 2>/dev/null)"
+  for p in $cpids; do sudo kill -STOP "$p" 2>/dev/null; done   # freeze client (stop it sending)
+  clean_src "$atk"; sleep 0.3                                  # clear isolation; frozen client cannot re-trigger it
+  for p in $cpids; do sudo kill -KILL "$p" 2>/dev/null; done   # kill -> client's RST reaches the PLC over the
+                                                              # now-clean path -> the dead S7 slot is freed at once
   sudo pkill -f "netns exec $ns" 2>/dev/null; sleep 1.0
   sudo pkill -f "mir_$tag"; sudo pkill -f "plc_$tag"; wait 2>/dev/null
   # first attack frame at the mirror = t0
