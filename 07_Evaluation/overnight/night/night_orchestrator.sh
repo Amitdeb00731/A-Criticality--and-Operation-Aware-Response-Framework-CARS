@@ -51,7 +51,7 @@ log "preflight passed: root/sudo ok, clients present, rig green. Safe to walk aw
 MON_DUR=$((HOURS*3600+300)) bash "$HERE/night_monitor.sh" &
 MONPID=$!
 
-cycle=0; fails=0
+cycle=0; fails=0; frz=0
 while [ "$(date +%s)" -lt "$END" ]; do
   cycle=$((cycle+1)); log "----- cycle $cycle -----"
   # watchdog: if unhealthy, self-heal and skip attacks this cycle (keep monitoring)
@@ -65,10 +65,18 @@ while [ "$(date +%s)" -lt "$END" ]; do
   # "online" means Factory IO's S7 link dropped - it does NOT auto-reconnect. Do not pile
   # attacks on a dead process; log the window, attempt recovery, and skip attacks this cycle.
   if tank_frozen; then
-    log "watchdog: FACTORYIO_FREEZE (tank level not moving) - pausing attacks, attempting recovery"
+    frz=$((frz+1))
+    log "watchdog: FACTORYIO_FREEZE #$frz (tank level not moving) - pausing attacks, attempting recovery"
     FZ="$NIGHT_ROOT/logs/freeze.csv"; [ -f "$FZ" ] || echo "ts,detail,cycle,level" > "$FZ"
     echo "$(TS),FACTORYIO_FREEZE,$cycle,$(tank_level)" >> "$FZ"
-    recover_process; sleep 30; continue
+    recover_process
+    if [ "$frz" -ge "${FREEZE_MAX:-3}" ]; then
+      log "watchdog: $frz freezes - the PLC pool cannot sustain the load unattended. HALTING attacks;"
+      log "          monitor keeps running so the rest of the night is a clean stability trace."
+      while [ "$(date +%s)" -lt "$END" ]; do sleep 300; tank_frozen && recover_process; done
+      break
+    fi
+    sleep 30; continue
   fi
   # attack battery every cycle (Dell-1 namespaces: high throughput)
   CYCLE=$cycle STOP_EVERY="${STOP_EVERY:-12}" ROUNDS=1 bash "$HERE/night_attack_battery.sh"

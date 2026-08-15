@@ -51,6 +51,7 @@ measure_attack(){
   local label="$1" atk="$2" ns="$3"; shift 3
   local tgt="${MEAS_TGT:-$PLC1}" leak="${MEAS_LEAK:-1}"
   local d="$NIGHT_ROOT/pcap"; local tag="$(date +%s)_$label"
+  clean_src "$atk"; sleep 0.2   # clear any lingering rule so we time the FRESH install, not a stale one
   # short captures at mirror (t0 source) and, for PLC1 attacks, the PLC port (leak counter)
   sudo timeout 12 tcpdump -i snort0 -nn -tt -U "host $atk" -w "$d/mir_$tag.pcap" 2>/dev/null & local CM=$!
   local CP=""; [ "$leak" = 1 ] && { sudo timeout 12 tcpdump -i enx9c69d331d874 -nn -tt -U "host $atk and host $tgt" -w "$d/plc_$tag.pcap" 2>/dev/null & CP=$!; }
@@ -61,14 +62,27 @@ measure_attack(){
   for i in $(seq 1 400); do                     # poll ~8s for the reactive install
     local line; line=$(sudo ovs-ofctl -O OpenFlow13 dump-flows ovsgw 2>/dev/null | grep -m1 -E "0xca.*nw_src=$atk")
     if [ -n "$line" ]; then
-      local tp; tp=$(date +%s.%N)
       dur=$(echo "$line"|grep -oE 'duration=[0-9.]+'|cut -d= -f2)
-      hto=$(echo "$line"|grep -oE 'hard_timeout=[0-9]+'|cut -d= -f2)
-      te=$(python3 -c "print(f'{$tp-$dur:.6f}')" 2>/dev/null)
-      break
+      # only accept a FRESHLY-installed rule; a large duration means a stale rule leaked in
+      # (that was the cause of the impossible negative MTTM values)
+      if python3 -c "import sys;sys.exit(0 if float('${dur:-99}')<3 else 1)" 2>/dev/null; then
+        local tp; tp=$(date +%s.%N)
+        hto=$(echo "$line"|grep -oE 'hard_timeout=[0-9]+'|cut -d= -f2)
+        te=$(python3 -c "print(f'{$tp-$dur:.6f}')" 2>/dev/null)
+        break
+      fi
     fi; sleep 0.02
   done
-  sleep 0.5; sudo pkill -f "netns exec $ns" 2>/dev/null; sleep 1.5
+  # Reap the dead S7 session cleanly so it does NOT linger on the PLC's tiny connection pool
+  # and eventually evict Factory IO. Order matters: freeze the client (stop it sending), clear
+  # the isolation rule, then kill it so its TCP RST reaches the PLC over the now-clean path and
+  # the S7 slot is freed at once (the old order killed it behind the drop rule, so the RST was
+  # dropped and the PLC held the dead session for minutes -> pool exhaustion -> Factory IO drop).
+  sleep 0.4
+  sudo pkill -STOP -f "$S7" 2>/dev/null; sudo pkill -STOP -f "$MBATK" 2>/dev/null
+  clean_src "$atk"; sleep 0.3
+  sudo pkill -KILL -f "$S7" 2>/dev/null; sudo pkill -KILL -f "$MBATK" 2>/dev/null
+  sudo pkill -f "netns exec $ns" 2>/dev/null; sleep 1.0
   sudo pkill -f "mir_$tag"; sudo pkill -f "plc_$tag"; wait 2>/dev/null
   # first attack frame at the mirror = t0
   local t0; t0=$(sudo tcpdump -nn -tt -r "$d/mir_$tag.pcap" "src $atk" 2>/dev/null | head -1 | awk '{print $1}')
