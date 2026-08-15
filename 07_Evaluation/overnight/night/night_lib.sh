@@ -49,10 +49,11 @@ selfheal(){ for ns in "$NS_ATK" "$NS_OP" "$NS_MB"; do sudo pkill -f "netns exec 
 # Resets fast via cookie-scoped delete (self-heal lifecycle sampled separately, not per attack).
 measure_attack(){
   local label="$1" atk="$2" ns="$3"; shift 3
+  local tgt="${MEAS_TGT:-$PLC1}" leak="${MEAS_LEAK:-1}"
   local d="$NIGHT_ROOT/pcap"; local tag="$(date +%s)_$label"
-  # short captures at mirror (t0 source) and PLC port (leak counter)
+  # short captures at mirror (t0 source) and, for PLC1 attacks, the PLC port (leak counter)
   sudo timeout 12 tcpdump -i snort0 -nn -tt -U "host $atk" -w "$d/mir_$tag.pcap" 2>/dev/null & local CM=$!
-  sudo timeout 12 tcpdump -i enx9c69d331d874 -nn -tt -U "host $atk and host $PLC1" -w "$d/plc_$tag.pcap" 2>/dev/null & local CP=$!
+  local CP=""; [ "$leak" = 1 ] && { sudo timeout 12 tcpdump -i enx9c69d331d874 -nn -tt -U "host $atk and host $tgt" -w "$d/plc_$tag.pcap" 2>/dev/null & CP=$!; }
   sleep 0.3
   local t_launch; t_launch=$(date +%s.%N)
   ( "$@" ) >/dev/null 2>&1 &                    # launch the attack (caller supplies the client cmd)

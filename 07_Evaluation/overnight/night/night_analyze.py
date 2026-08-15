@@ -48,6 +48,32 @@ if g:
     print("\nGAP-HUNT OUTCOMES")
     for r in g: print(f"  [{r['gap']}] {r['attempt']} -> {r['outcome']}  ({r['detail']})")
 
+lad = rd("ladder.csv")
+if lad:
+    print("\nRESPONSE-LADDER COVERAGE (decision + installed rule per response)")
+    for r in lad: print(f"  {r['response_tested']:9} {r['src']}->{r['dst']:14} verdict={r['verdict']:16} rule={r['rule']}")
+
+cp = rd("controlplane.csv")
+if cp:
+    print("\nCONTROL-PLANE / GUARD / AUTH PROBES")
+    for r in cp: print(f"  [{r['probe']}] {r['detail']} -> {r['outcome']}")
+
+fps = rd("fpstress.csv")
+if fps:
+    tot = fps[-1].get("fp_events","?")
+    win = [int(r["legit_0xca"]) for r in fps if r.get("legit_0xca") not in (None,"","NA")]
+    print("\nADVERSARIAL-BENIGN FALSE-POSITIVE STRESS (noisy-but-legit traffic)")
+    print(f"  samples: {len(fps)} | wrongful cuts against a legit source (cumulative): {tot} (expect 0)")
+    if win: print(f"  per-sample legit-0xca: max={max(win)} (any >0 = a false positive to investigate)")
+
+rem = rd("remediation.csv")
+if rem:
+    print("\nLAST-GOOD RESTORE TEST (bounded FDI, abort-on-excursion)")
+    for r in rem:
+        print(f"  restores {r['restores_before']}->{r['restores_after']} "
+              f"level[before={r['level_before']} min={r['level_min']} max={r['level_max']}] "
+              f"excursion={r['excursion']} -> {r['outcome']}")
+
 mo = rd("monitor.csv")
 if mo:
     onl=[r for r in mo if r.get("online")=="1"]; drift=[r for r in mo if r.get("flowaudit")=="DRIFT"]

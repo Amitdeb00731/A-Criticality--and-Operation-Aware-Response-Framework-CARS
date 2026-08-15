@@ -14,6 +14,13 @@ night.**
 6. `night_ddos.sh` — bounded sustained diverse-source flood through the real Snort→bridge→controller pipeline, sampling probe MTTM + alert rate + controller decide-time under load → `ddos.csv`.
 7. `night_gaphunt.sh` — genuine attempts at the documented residuals (fragmentation, sub-poll transient, TCP-seq injection, bounded state-exhaustion, half-open pool, rare Modbus codes) → `gaphunt.csv`.
 
+### Coverage extensions (close the covered-but-thin / not-covered items)
+8. `night_coverage.sh` — (A) full **response ladder**: ALLOW / REFUSE (safety loop, never cut) / THROTTLE (real SENSITIVE write installs a meter) / DEFLECT (forced deception redirect) recorded to `ladder.csv`; ISOLATE + BLOCK come at scale from the battery. (B) four-tier + **Cell-2 sweep** — identical forbidden control against CRITICAL PLC1, HIGH PLC2 (Cell-2 via NAT), MEDIUM historian, LOW Modbus, so the 75/60/45/30 s `hard_timeout` ladder is captured at scale (`mttm_all.csv`, labels `tier_*`). (C) **GUARD anti-spoof** probe — spoofed protected identities from the attacker port, `/cars/guard` drop-counter delta. (D) **authenticated-API** probe — unauthenticated `POST /cars/{defense,restore,reload}` must return 401 and CARS must stay armed → `controlplane.csv`. Runs every `COV_EVERY` cycles (default 4).
+9. `night_fpstress.sh` — **adversarial-benign false-positive stress**: noisy-but-legitimate traffic (varied-rate legit reads + odd-but-valid offsets + ARP/mDNS broadcast storms from allowlisted sources) while watching for any reactive rule installed against a legit source or any legit conduit removed. A false positive = any non-zero count. → `fpstress.csv`. Runs every `FP_EVERY` cycles (default 10). Closes the "0% FP shown only on clean traffic" point.
+10. `night_remediation.sh` — bounded **last-good restore** test: a short low-rate FDI from an allowlisted host, watching whether the remediation agent was invoked (restores counter climbs, level restored) or the fast cut pre-empted any drift (no restore needed) — both honest outcomes. Aborts on any tank-level excursion. → `remediation.csv`. Runs every `REM_EVERY` cycles (default 10).
+
+**Left as honest caveats (not automated):** controller-crash / control-plane failover, trusted-insider slow-and-low within the operating envelope, and encrypted-protocol / TLS DPI. These are documented as limitations rather than staged, because staging them safely on the live rig would risk the process or misrepresent what CARS claims.
+
 ## Safety rails (built in)
 - Cookie-scoped deletes only (`cookie=0xca/-1`), never by src/dst.
 - Green-check + self-heal each cycle; if unhealthy, attacks pause and monitoring continues.
@@ -46,6 +53,8 @@ cd 07_Evaluation/overnight/night
 D=/home/msclab/night_$(date +%Y%m%d)
 sudo NIGHT_ROOT=$D ROUNDS=1 bash night_attack_battery.sh   # ~1 min; also proves sudo runs without a prompt
 cat $D/logs/mttm_all.csv
+sudo NIGHT_ROOT=$D bash night_coverage.sh                   # ~2 min; proves ladder/tier-sweep/GUARD/auth-API probes work
+cat $D/logs/ladder.csv $D/logs/controlplane.csv
 bash ../green_check.sh                                       # confirm still green
 ```
 If the battery logs sane MTTM values and the rig is green, proceed. If a command
@@ -77,7 +86,9 @@ sleep 20; tail -5 $D/logs/campaign.log        # should show "preflight passed ..
 If instead you see `PREFLIGHT FAILED`, fix the one thing it names and relaunch — do
 not walk away until you have seen "preflight passed".
 Knobs: `HOURS` (default 14), `DDOS_EVERY` (cycles between DDoS phases, default 6),
-`GAP_EVERY` (default 8), `DDOS_PPS` (default 200, raise cautiously), `GAP` (inter-attack gap, default 4 s).
+`GAP_EVERY` (default 8), `COV_EVERY` (coverage pass, default 4), `FP_EVERY` (FP stress,
+default 10), `REM_EVERY` (restore test, default 10), `DDOS_PPS` (default 200, raise
+cautiously), `GAP` (inter-attack gap, default 4 s).
 
 ### Optional: add the real Kali VM as an attacker vantage
 The namespaces give throughput; the real Kali VM gives the realistic attacker path
