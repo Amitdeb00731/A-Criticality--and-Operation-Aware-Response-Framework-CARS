@@ -1,0 +1,78 @@
+# Overnight CARS stress campaign — runbook
+
+A single orchestrated 12–14 h run that exercises all seven areas and captures the
+evidence, then self-heals and stays green. Runs on **Dell 1**. Built from the
+existing harness interfaces (`cars_campaign_lib` idioms, `s7_write.py`,
+`mb_attack.py`, the `/cars/*` API, the b2 single-clock MTTM method). I could not
+test these on the live rig, so **do the dry-run in step 3 before committing to the
+night.**
+
+## What it does (maps to your seven scripts)
+1. `night_monitor.sh` — continuous mirror + PLC-port capture (rotating hourly) and a per-minute health/behaviour snapshot (`monitor.csv`).
+2+5. `night_attack_battery.sh` — rotates realistic OT vectors (unauthorised connect/write/control/stop, Modbus write, FDI sensor-spoof low & high, scan).
+3+4. Every attack is measured by `measure_attack` in `night_lib.sh`: single-clock **MTTM**, **leaked frames at the PLC port**, response, and `hard_timeout` → `mttm_all.csv`.
+6. `night_ddos.sh` — bounded sustained diverse-source flood through the real Snort→bridge→controller pipeline, sampling probe MTTM + alert rate + controller decide-time under load → `ddos.csv`.
+7. `night_gaphunt.sh` — genuine attempts at the documented residuals (fragmentation, sub-poll transient, TCP-seq injection, bounded state-exhaustion, half-open pool, rare Modbus codes) → `gaphunt.csv`.
+
+## Safety rails (built in)
+- Cookie-scoped deletes only (`cookie=0xca/-1`), never by src/dst.
+- Green-check + self-heal each cycle; if unhealthy, attacks pause and monitoring continues.
+- **Never** `del-controller` (that froze the process before).
+- The two risky gap probes (state-exhaustion, half-open) abort if the process goes offline.
+- Leaves the rig armed and green; writes `greencheck_start/end.txt`.
+
+## 1. Prerequisites — verify these rig-specific values first
+```
+# interfaces used by the captures — confirm names:
+ip -br link | grep -E 'snort0|enx'      # mirror = snort0 ; PLC1 port = enx9c69d331d874 (edit night_lib.sh if different)
+# attack clients present:
+ls /home/msclab/s7_write.py /home/msclab/mb_attack.py
+ls /home/msclab/frag_s7_write.py        # optional (fragmentation probe skips if absent)
+# scapy present for the DDoS + gap probes:
+python3 -c 'import scapy; print("scapy ok")'
+# API token readable:
+cat /home/msclab/cars/api_token >/dev/null && echo token-ok
+```
+Edit the interface name / client paths at the top of `night_lib.sh` if any differ.
+
+## 2. Green baseline
+```
+bash 07_Evaluation/overnight/green_check.sh   # must be green before starting
+```
+
+## 3. DRY RUN (one short cycle — do this before the night)
+```
+cd 07_Evaluation/overnight/night
+HOURS=0 ROUNDS=1 bash night_attack_battery.sh   # ~1 min: confirm mttm_all.csv fills, rig stays green
+tail -n +1 "$HOME"/night_*/logs/mttm_all.csv
+bash ../green_check.sh                            # confirm still green
+```
+If the battery logs sane MTTM values and the rig is green, proceed. If a command
+errors (interface, client path, scapy), fix it and re-dry-run.
+
+## 4. Launch the full night (detached, survives logout)
+```
+cd 07_Evaluation/overnight/night
+HOURS=14 nohup bash night_orchestrator.sh > "$HOME/night_$(date +%Y%m%d)/logs/orchestrator.out" 2>&1 &
+# or run inside tmux/screen so you can detach:
+#   tmux new -s cars 'HOURS=14 bash night_orchestrator.sh'
+```
+Knobs: `HOURS` (default 14), `DDOS_EVERY` (cycles between DDoS phases, default 6),
+`GAP_EVERY` (default 8), `DDOS_PPS` (default 200, raise cautiously), `GAP` (inter-attack gap, default 4 s).
+
+## 5. In the morning
+```
+cat "$HOME"/night_*/logs/SUMMARY.txt          # auto-generated summary
+bash 07_Evaluation/overnight/green_check.sh   # confirm the rig survived green
+```
+Then copy the results into the repo and upload:
+```
+cp -r "$HOME"/night_$(date +%Y%m%d)/logs  <repo>/07_Evaluation/overnight/results/night/
+```
+Upload `logs/` (the CSVs + SUMMARY.txt + greencheck_start/end.txt). Keep the pcaps
+locally unless a specific one is needed (they are large). I then fold the fresh
+figures in and **reconcile any shifted headline number to the overnight run (R10)** —
+if the at-scale MTTM or a gap outcome differs from what the report says, the report
+gets the fresh figure, honestly.
+
+## Only after the results are folded in and validated: disassemble the testbed.
