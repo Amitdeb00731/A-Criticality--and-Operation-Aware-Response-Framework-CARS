@@ -1,0 +1,78 @@
+ts,probe,detail,outcome
+2026-08-16T00:29:26,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T00:29:26,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T00:29:30,guard_antispoof,drops_before=188 after=203,SPOOF_DROPPED
+2026-08-16T00:29:30,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T00:29:30,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T00:29:30,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T00:29:30,authapi,armstate_after_unauth,ARMED
+2026-08-16T00:36:33,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T00:36:33,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T00:36:36,guard_antispoof,drops_before=203 after=218,SPOOF_DROPPED
+2026-08-16T00:36:36,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T00:36:36,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T00:36:36,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T00:36:36,authapi,armstate_after_unauth,ARMED
+2026-08-16T00:43:11,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T00:43:11,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T00:43:15,guard_antispoof,drops_before=218 after=229,SPOOF_DROPPED
+2026-08-16T00:43:15,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T00:43:15,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T00:43:15,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T00:43:15,authapi,armstate_after_unauth,ARMED
+2026-08-16T00:50:17,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T00:50:17,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T00:50:21,guard_antispoof,drops_before=233 after=244,SPOOF_DROPPED
+2026-08-16T00:50:21,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T00:50:21,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T00:50:21,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T00:50:21,authapi,armstate_after_unauth,ARMED
+2026-08-16T00:57:24,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T00:57:24,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T00:57:28,guard_antispoof,drops_before=248 after=263,SPOOF_DROPPED
+2026-08-16T00:57:28,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T00:57:28,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T00:57:28,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T00:57:28,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:05:06,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:05:06,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:05:09,guard_antispoof,drops_before=263 after=274,SPOOF_DROPPED
+2026-08-16T01:05:09,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:05:09,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:05:09,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:05:09,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:12:12,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:12:12,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:12:16,guard_antispoof,drops_before=278 after=293,SPOOF_DROPPED
+2026-08-16T01:12:16,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:12:16,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:12:16,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:12:16,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:19:54,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:19:54,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:19:57,guard_antispoof,drops_before=293 after=308,SPOOF_DROPPED
+2026-08-16T01:19:57,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:19:57,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:19:57,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:19:57,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:25:57,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:25:57,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:26:01,guard_antispoof,drops_before=308 after=319,SPOOF_DROPPED
+2026-08-16T01:26:01,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:26:01,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:26:01,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:26:01,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:33:04,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:33:04,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:33:07,guard_antispoof,drops_before=323 after=338,SPOOF_DROPPED
+2026-08-16T01:33:07,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:33:07,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:33:07,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:33:07,authapi,armstate_after_unauth,ARMED
+2026-08-16T01:40:45,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-16T01:40:45,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-16T01:40:49,guard_antispoof,drops_before=338 after=353,SPOOF_DROPPED
+2026-08-16T01:40:49,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-16T01:40:49,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-16T01:40:49,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-16T01:40:49,authapi,armstate_after_unauth,ARMED

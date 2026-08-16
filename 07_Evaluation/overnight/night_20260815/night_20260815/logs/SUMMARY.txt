@@ -1,0 +1,121 @@
+==================== OVERNIGHT CAMPAIGN SUMMARY ====================
+
+ATTACKS & MTTM (every attack, single clock)
+  total attacks measured : 115
+  ended in enforcement   : 115/115
+  MTTM ms: n=115 median=8.5 mean=-487.7 p95=110.9 p99=136.1 min=-60539.9 max=140.2
+  leaked frames at PLC port: median=0 max=7 | attacks with 0 leaked = 81/115
+  per-vector median MTTM:
+    ddos_probe       n=   2 median=98.4 ms
+    fdi_high         n=  16 median=97.6 ms
+    fdi_scada        n=  16 median=97.7 ms
+    modbus_illegal   n=  16 median=7.2 ms
+    modbus_scan      n=  16 median=10.3 ms
+    recon_connect    n=  16 median=7.2 ms
+    unauth_control   n=  16 median=8.0 ms
+    unauth_stop      n=   1 median=71.0 ms
+    unauth_write     n=  16 median=7.1 ms
+
+DDoS-UNDER-LOAD (real Snort->bridge->controller pipeline)
+  sustained alert rate: median=433/s max=709/s
+  probe MTTM under load: median=98.4 ms max=108.5 ms (baseline single-injection ~7.6 ms)
+
+GAP-HUNT OUTCOMES
+  [fragmentation] split@byte14 -> EVADED  (reassembly+PDU-anchored rules)
+  [fragmentation] split@byte9 -> EVADED  (reassembly+PDU-anchored rules)
+  [transient_injection] 2s inject/delete #1 -> missed_by_poll  (10s poll vs event monitor)
+  [transient_injection] 2s inject/delete #2 -> missed_by_poll  (10s poll vs event monitor)
+  [transient_injection] 2s inject/delete #3 -> missed_by_poll  (10s poll vs event monitor)
+  [seq_injection] spoofed out-of-window ACK (HMI->PLC) -> SENT_for_manual_pcap_check  (GUARD binds HMI to port+MAC; confirm ct_state=+inv on the mirror)
+  [state_exhaustion] 8s spoofed-source SYN flood -> PROCESS_OK  (conntrack before=NA after=NA)
+  [half_open] 3 isolate-mid-session bursts -> PLC_POOL_OK  (half-open on S7 accept queue until PLC TCP timeout)
+  [rare_modbus] FC 0x11 x3 -> not_recovered  (single-frame DPI limit)
+  [rare_modbus] FC 0x2b x3 -> not_recovered  (single-frame DPI limit)
+  [rare_modbus] FC 0x08 x3 -> not_recovered  (single-frame DPI limit)
+
+RESPONSE-LADDER COVERAGE (decision + installed rule per response)
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=BLOCK SENSITIVE  rule=none
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=BLOCK SENSITIVE  rule=none
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=BLOCK SENSITIVE  rule=none
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=BLOCK SENSITIVE  rule=none
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+
+CRITICALITY -> HARD_TIMEOUT LADDER (real installed rule per tier)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.144 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.522 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.703 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.624 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.611 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.592 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.513 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.618 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.586 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.567 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.151 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.567 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.319 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.357 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.645 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.182 ms)
+
+CONTROL-PLANE / GUARD / AUTH / SEGMENTATION PROBES
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=82 after=97 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=97 after=112 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=112 after=127 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=127 after=142 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+
+ADVERSARIAL-BENIGN FALSE-POSITIVE STRESS (noisy-but-legit traffic)
+  samples: 15 | wrongful cuts against a legit source (cumulative): 0 (expect 0)
+  per-sample legit-0xca: max=0 (any >0 = a false positive to investigate)
+
+LAST-GOOD RESTORE TEST (bounded FDI, abort-on-excursion)
+  restores 45->46 level[before=51.6 min=27 max=61] excursion=0 -> remediation_invoked_restored
+
+FACTORY-IO LIVENESS
+  tank-freeze events detected (Factory IO link dropped): 3
+    2026-08-15T21:31:41 FACTORYIO_FREEZE 5 44.0
+    2026-08-15T21:32:22 FACTORYIO_FREEZE 6 44.0
+    2026-08-15T22:04:00 FACTORYIO_FREEZE 19 66.9
+  (attacks were paused during these windows; exclude/annotate them when reconciling.)
+
+STABILITY OVER THE NIGHT
+  snapshots: 40 | process online: 40/40 (100.0%)
+  tank level over run: mean=52.7 min=31.3 max=70.1 (band 20-78)
+  flow-audit DRIFT snapshots (should be 0 in steady state): 0
+
+(Reconcile any shifted headline number to these fresh figures per REPORT_PLAN R10.)

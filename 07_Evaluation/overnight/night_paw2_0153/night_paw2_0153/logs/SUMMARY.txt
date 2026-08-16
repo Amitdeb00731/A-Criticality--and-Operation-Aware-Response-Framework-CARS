@@ -1,0 +1,231 @@
+==================== OVERNIGHT CAMPAIGN SUMMARY ====================
+
+ATTACKS & MTTM (every attack, single clock)
+  total attacks measured : 150
+  ended in enforcement   : 150/150
+  MTTM ms: n=150 median=9.4 mean=27.9 p95=109.4 p99=141.8 min=4.9 max=142.2
+  leaked frames at PLC port: median=0 max=11 | attacks with 0 leaked = 131/150
+  per-vector median MTTM:
+    fdi_high         n=  10 median=103.4 ms
+    fdi_scada        n=   9 median=101.4 ms
+    modbus_illegal   n=  50 median=8.3 ms
+    modbus_scan      n=  50 median=11.9 ms
+    recon_connect    n=  10 median=8.4 ms
+    unauth_control   n=  10 median=7.8 ms
+    unauth_write     n=  11 median=8.2 ms
+
+RESPONSE-LADDER COVERAGE (decision + installed rule per response)
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+  ALLOW     192.168.2.31->192.168.2.10   verdict=ALLOW OPERATIONAL rule=none
+  REFUSE    192.168.2.9->192.168.2.10   verdict=REFUSE CRITICAL  rule=none
+  THROTTLE  192.168.2.31->192.168.2.20   verdict=THROTTLE SENSITIVE rule=meter:1
+  DEFLECT   192.168.2.66->192.168.2.10   verdict=DEFLECT FORBIDDEN rule=priority=105
+
+CRITICALITY -> HARD_TIMEOUT LADDER (real installed rule per tier)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.341 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.248 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.716 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.632 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.394 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.34 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.511 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.421 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.448 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.428 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.621 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.614 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.387 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.159 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.658 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.535 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.528 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.229 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.34 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.424 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.568 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.497 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.394 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.267 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.508 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.687 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.14 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.61 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.323 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.168 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.61 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.67 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.535 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.163 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.157 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.634 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.418 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.475 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.36 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.209 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.146 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.671 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.591 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.55 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.156 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.655 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.66 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.391 ms)
+  192.168.2.10   crit=CRITICAL  response=ISOLATE  hard_timeout=75s  (engine decide 0.665 ms)
+  192.168.3.10   crit=HIGH      response=ISOLATE  hard_timeout=60s  (engine decide 0.58 ms)
+  192.168.2.30   crit=MEDIUM    response=ISOLATE  hard_timeout=45s  (engine decide 0.743 ms)
+  192.168.2.20   crit=LOW       response=ISOLATE  hard_timeout=30s  (engine decide 0.189 ms)
+
+CONTROL-PLANE / GUARD / AUTH / SEGMENTATION PROBES
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=353 after=368 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=368 after=383 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=383 after=398 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=398 after=413 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=413 after=428 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=428 after=443 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=443 after=458 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=458 after=473 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=473 after=488 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=488 after=503 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=503 after=518 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+  [guard_antispoof] drops_before=518 after=533 -> SPOOF_DROPPED
+  [authapi] unauth_POST_/cars/defense -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/restore -> HTTP_401_REFUSED
+  [authapi] unauth_POST_/cars/reload -> HTTP_401_REFUSED
+  [authapi] armstate_after_unauth -> ARMED
+  [segmentation] atk_to_192.168.2.20 -> segmented_ok
+  [segmentation] atk_to_192.168.3.10 -> segmented_ok
+
+LAST-GOOD RESTORE TEST (bounded FDI, abort-on-excursion)
+  restores 209->209 level[before=58.9 min=28 max=71] excursion=0 -> cut_preempted_drift_no_restore_needed
+  restores 212->219 level[before=33.3 min=26 max=050] excursion=0 -> remediation_invoked_restored
+  restores 220->220 level[before=25.8 min=26 max=69] excursion=0 -> cut_preempted_drift_no_restore_needed
+  restores 221->221 level[before=46.0 min=27 max=51] excursion=0 -> cut_preempted_drift_no_restore_needed
+  restores 223->223 level[before=69.4 min=27 max=71] excursion=0 -> cut_preempted_drift_no_restore_needed
+
+FACTORY-IO LIVENESS
+  tank-freeze events detected (Factory IO link dropped): 2
+    2026-08-16T02:59:37 FACTORYIO_FREEZE 37 61.6
+    2026-08-16T03:00:18 FACTORYIO_FREEZE 38 61.6
+  (attacks were paused during these windows; exclude/annotate them when reconciling.)
+
+STABILITY OVER THE NIGHT
+  snapshots: 92 | process online: 92/92 (100.0%)
+  tank level over run: mean=51.5 min=25.7 max=70.9 (band 20-78)
+  flow-audit DRIFT snapshots (should be 0 in steady state): 0
+
+(Reconcile any shifted headline number to these fresh figures per REPORT_PLAN R10.)

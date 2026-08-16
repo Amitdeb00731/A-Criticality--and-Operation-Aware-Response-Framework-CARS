@@ -1,0 +1,15 @@
+ts,probe,detail,outcome
+2026-08-15T23:38:05,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-15T23:38:05,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-15T23:38:09,guard_antispoof,drops_before=158 after=173,SPOOF_DROPPED
+2026-08-15T23:38:09,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-15T23:38:09,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-15T23:38:09,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-15T23:38:09,authapi,armstate_after_unauth,ARMED
+2026-08-15T23:45:04,segmentation,atk_to_192.168.2.20,segmented_ok
+2026-08-15T23:45:04,segmentation,atk_to_192.168.3.10,segmented_ok
+2026-08-15T23:45:07,guard_antispoof,drops_before=173 after=188,SPOOF_DROPPED
+2026-08-15T23:45:07,authapi,unauth_POST_/cars/defense,HTTP_401_REFUSED
+2026-08-15T23:45:07,authapi,unauth_POST_/cars/restore,HTTP_401_REFUSED
+2026-08-15T23:45:07,authapi,unauth_POST_/cars/reload,HTTP_401_REFUSED
+2026-08-15T23:45:07,authapi,armstate_after_unauth,ARMED
