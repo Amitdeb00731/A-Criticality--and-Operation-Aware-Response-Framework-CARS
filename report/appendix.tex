@@ -634,12 +634,12 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \subsection{Long-run and stress-test campaign}
 \label{appx:longrun}
 
-The figures below back the long-run and stress test of Section~\ref{sec:evallongrun}: four autonomous runs on the one testbed, 440 measured attacks, all enforced. They extend the earlier evidence in duration and repetition, not in network size, and each is generated directly from the run's captured CSVs.
+The figures below back the long-run and stress test of Section~\ref{sec:evallongrun}: four autonomous runs on the one testbed, 440 measured attacks, all enforced. They extend the earlier evidence in duration and repetition, not in network size. The four runs are repeated runs on the same testbed and machine state, not independent replicates; where a median is quoted it is pooled across the runs rather than averaged across per-run medians. Each plot is generated directly from the per-run \texttt{logs/*.csv} by \href{\repourl/blob/main/07_Evaluation/overnight/night/night_analyze.py}{\texttt{night\_analyze.py}}, with the row counts and any exclusions stated in the caption.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_longrun_mttm.png}
-\caption{Reaction window over the long-run and stress campaign. The source-cut path (356 attacks, median 8.5\,ms) sits close to the 7.6\,ms controlled single-clock reference of Section~\ref{sec:evallatency}; the false-data injections from the compromised trusted host form a separate mode near 100\,ms, the conduit-block path that installs after the first packets. 437 of the 440 measured attacks are shown (two under-load probe samples and one stale-rule artefact row excluded). Source: the four \texttt{night\_*/logs/mttm\_all.csv}.}
+\caption{Reaction window over the long-run and stress campaign. The source-cut path (356 attacks, median 8.5\,ms) sits close to the 7.6\,ms controlled single-clock reference of Section~\ref{sec:evallatency}; the false-data injections from the compromised trusted host form a separate mode near 100\,ms, the conduit-block path that installs after the first packets. 437 of the 440 measured attacks are shown: two under-load DDoS-probe samples, which belong to the load curve rather than the clean reaction window, and one physically impossible negative row from a stale-rule read, are excluded. Source: the four \texttt{night\_*/logs/mttm\_all.csv}.}
 \label{fig:statlongmttm}
 \end{figure}
 
@@ -667,6 +667,6 @@ The figures below back the long-run and stress test of Section~\ref{sec:evallong
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.98\textwidth]{stat_longrun_stability.png}
-\caption{Process stability under continuous attack: the tank level across the ninety-two-minute paced run, held within the 20 to 78 control band throughout, with the controller reporting the process online in all ninety-two one-minute snapshots and the flow auditor reporting no drift. The two dashed marks are the brief Factory IO evictions that recovered automatically. Source: \texttt{night\_paw2\_0153/logs/\{monitor,freeze\}.csv}.}
+\caption{Process stability under continuous attack: the tank level across the ninety-two-minute paced run, held within the 20 to 78 control band throughout. The controller and its remediation agent reported the process online in all ninety-two one-minute snapshots (this is the agent's PLC link sampled once a minute, which does not capture sub-minute client outages) and the flow auditor reported no drift. The two dashed marks are the brief Factory IO client evictions that the liveness guard caught and recovered. Source: \texttt{night\_paw2\_0153/logs/\{monitor,freeze\}.csv}.}
 \label{fig:statlongstab}
 \end{figure}
