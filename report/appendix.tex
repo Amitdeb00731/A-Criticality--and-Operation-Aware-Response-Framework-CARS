@@ -630,3 +630,43 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \caption{Reconnection jitter on the legitimate conduit: restarting the passive Snort sensor is transparent (no dip), whereas a forced controller reconnection stalls forwarding. Source: \texttt{results/jitter/timeline.csv} (one spurious counter sample removed).}
 \label{fig:statjitter}
 \end{figure}
+
+\subsection{Long-run and stress-test campaign}
+\label{appx:longrun}
+
+The figures below back the long-run and stress test of Section~\ref{sec:evallongrun}: four autonomous runs on the one testbed, 440 measured attacks, all enforced. They extend the earlier evidence in duration and repetition, not in network size, and each is generated directly from the run's captured CSVs.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{stat_longrun_mttm.png}
+\caption{Reaction window over the long-run and stress campaign. The source-cut path (356 attacks, median 8.5\,ms) sits close to the 7.6\,ms controlled single-clock reference of Section~\ref{sec:evallatency}; the false-data injections from the compromised trusted host form a separate mode near 100\,ms, the conduit-block path that installs after the first packets. 437 of the 440 measured attacks are shown (two under-load probe samples and one stale-rule artefact row excluded). Source: the four \texttt{night\_*/logs/mttm\_all.csv}.}
+\label{fig:statlongmttm}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{stat_longrun_pervector.png}
+\caption{Per-vector reaction window pooled over the four runs (box is the interquartile range, line the median). The source-cut vectors sit at roughly 7 to 12\,ms; the two false-data injection vectors from the compromised trusted host sit near 100\,ms because they draw a conduit block rather than an immediate source cut. Source: \texttt{night\_*/logs/mttm\_all.csv}.}
+\label{fig:statlongpervec}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{stat_longrun_tierladder.png}
+\caption{Criticality-scaled isolation timeout over 120 tier probes across the four runs. Every probe installed 75/60/45/30\,s for CRITICAL/HIGH/MEDIUM/LOW with no deviation, at a median engine decide-time of 0.50\,ms. Source: \texttt{night\_*/logs/tierladder.csv}.}
+\label{fig:statlongtier}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{stat_connpool_gradient.png}
+\caption{The S7-1200 (1212C) connection-pool limit. The CPU exposes six dynamic connection resources; repeatedly isolating S7 sessions leaves half-open sessions that consume them. Packing about five isolations into each short cycle evicted the legitimate Factory IO client at 4.0 times an hour and the run could not be sustained; pacing to one isolation per cycle held the process for about ninety minutes at 1.3 to 2.0 evictions an hour. This is the empirical confirmation of the connection-pool caveat in Section~\ref{sec:threats}. Source: \texttt{night\_*/logs/\{freeze,monitor,mttm\_all\}.csv}.}
+\label{fig:statconnpool}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\textwidth]{stat_longrun_stability.png}
+\caption{Process stability under continuous attack: the tank level across the ninety-two-minute paced run, held within the 20 to 78 control band throughout, with the controller reporting the process online in all ninety-two one-minute snapshots and the flow auditor reporting no drift. The two dashed marks are the brief Factory IO evictions that recovered automatically. Source: \texttt{night\_paw2\_0153/logs/\{monitor,freeze\}.csv}.}
+\label{fig:statlongstab}
+\end{figure}
