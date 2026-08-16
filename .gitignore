@@ -53,3 +53,7 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+# overnight run raw captures (large; keep only logs/*.csv + summaries in git)
+07_Evaluation/overnight/night_*/**/pcap/
+07_Evaluation/overnight/night_*/**/*.pcap
