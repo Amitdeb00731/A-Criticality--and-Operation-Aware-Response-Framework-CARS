@@ -1,5 +1,0 @@
-ts,restores_before,restores_after,level_before,level_min,level_max,excursion,outcome
-2026-08-16T00:39:35,205,205,36.0,27,66,0,cut_preempted_drift_no_restore_needed
-2026-08-16T00:58:03,207,207,29.4,29,54,0,cut_preempted_drift_no_restore_needed
-2026-08-16T01:16:18,207,207,45.5,27,62,0,cut_preempted_drift_no_restore_needed
-2026-08-16T01:33:42,208,208,70.5,27,71,0,cut_preempted_drift_no_restore_needed
