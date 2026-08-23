@@ -171,3 +171,188 @@
   month       = sep,
   doi         = {10.6028/NIST.SP.800-82r3}
 }
+
+% ===========================================================================
+% Added references (metadata read from the source PDFs in the papers folder;
+% two DOIs/venues confirmed against the authoritative publisher records where
+% the on-disk PDF carried a preprint placeholder or omitted the venue).
+% ===========================================================================
+
+% Closest architectural sibling: two-level whitelist + DPI IDS for ICS via SDN/P4
+@inproceedings{kabasele2018twolevel,
+  author    = {Kabasele Ndonda, Gorby and Sadre, Ramin},
+  title     = {A Two-level Intrusion Detection System for Industrial Control System Networks using {P4}},
+  booktitle = {Proceedings of the 5th International Symposium for ICS \& SCADA Cyber Security Research (ICS-CSR)},
+  year      = {2018},
+  publisher = {BCS Learning \& Development},
+  doi       = {10.14236/ewic/ICS2018.4}
+}
+
+% Motivation + related work: cloud-based IDS/IPS for ICS using SDN (Ukraine 2015)
+@inproceedings{brugman2019cloud,
+  author    = {Brugman, Jonathon and Khan, Mohammed and Kasera, Sneha and Parvania, Masood},
+  title     = {Cloud Based Intrusion Detection and Prevention System for Industrial Control Systems Using Software Defined Networking},
+  booktitle = {2019 Resilience Week (RWS)},
+  year      = {2019},
+  publisher = {IEEE},
+  isbn      = {978-1-7281-2135-2}
+}
+
+% Operation-aware IDS/IPS for an industrial protocol (DNP3)
+@inproceedings{radoglou2020diderot,
+  author    = {Radoglou-Grammatikis, Panagiotis and Sarigiannidis, Panagiotis and Efstathopoulos, George and Karypidis, Paris-Alexandros and Sarigiannidis, Antonios},
+  title     = {{DIDEROT}: An Intrusion Detection and Prevention System for {DNP3}-based {SCADA} Systems},
+  booktitle = {Proceedings of the 15th International Conference on Availability, Reliability and Security (ARES '20)},
+  year      = {2020},
+  month     = aug,
+  address   = {Virtual Event, Ireland},
+  publisher = {ACM},
+  doi       = {10.1145/3407023.3409314}
+}
+
+% SDN/NFV virtualised incident-response functions for control systems (journal companion to murillo2018leveraging)
+@article{murillo2018virf,
+  author    = {Murillo Piedrahita, Andr{\'e}s F. and Gaur, Vikram and Giraldo, Jairo and C{\'a}rdenas, Alvaro A. and Rueda, Sandra Julieta},
+  title     = {Virtual incident response functions in control systems},
+  journal   = {Computer Networks},
+  volume    = {135},
+  pages     = {147--159},
+  year      = {2018},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.comnet.2018.01.040}
+}
+
+% Modbus/TCP DFA model for intrusion detection (grounds the Modbus DPI)
+@article{goldenberg2013modbus,
+  author    = {Goldenberg, Niv and Wool, Avishai},
+  title     = {Accurate modeling of {Modbus/TCP} for intrusion detection in {SCADA} systems},
+  journal   = {International Journal of Critical Infrastructure Protection},
+  volume    = {6},
+  pages     = {63--75},
+  year      = {2013},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.ijcip.2013.05.001}
+}
+
+% SDN-based firewall / whitelisting for industrial (Industry 4.0) systems
+@article{tsuchiya2018firewall,
+  author    = {Tsuchiya, Akihiro and Fraile, Francisco and Koshijima, Ichiro and {\'O}rtiz, Angel and Poler, Ra{\'u}l},
+  title     = {Software defined networking firewall for industry 4.0 manufacturing systems},
+  journal   = {Journal of Industrial Engineering and Management},
+  volume    = {11},
+  number    = {2},
+  pages     = {318--333},
+  year      = {2018},
+  publisher = {OmniaScience},
+  doi       = {10.3926/jiem.2534}
+}
+
+% Programmable data planes for OT security (recent, data-plane enforcement + future work)
+@article{holik2025pdp,
+  author    = {Holik, Filip and Cook, Marco M. and Li, Xicheng and Shah, Awais Aziz and Pezaros, Dimitrios},
+  title     = {Programmable Data Planes for Increased Digital Resilience in {OT} Networks},
+  journal   = {IEEE Communications Magazine},
+  volume    = {63},
+  number    = {7},
+  year      = {2025},
+  publisher = {IEEE},
+  doi       = {10.1109/MCOM.001.2400446}
+}
+
+% SDN self-healing + specification-based IDS in a critical-infrastructure setting
+@article{jin2017microgrid,
+  author    = {Jin, Dong and Li, Zhiyi and Hannon, Christopher and Chen, Chen and Wang, Jianhui and Shahidehpour, Mohammad and Lee, Cheol Won},
+  title     = {Toward a Cyber Resilient and Secure Microgrid Using Software-Defined Networking},
+  journal   = {IEEE Transactions on Smart Grid},
+  volume    = {8},
+  number    = {5},
+  pages     = {2494--2504},
+  year      = {2017},
+  publisher = {IEEE},
+  doi       = {10.1109/TSG.2017.2703911}
+}
+
+% Reactive SDN mitigation at the source via controller (mirror-detect-then-react loop)
+@article{manso2019ddos,
+  author    = {Manso, Pedro and Moura, Jos{\'e} and Serr{\~a}o, Carlos},
+  title     = {{SDN}-Based Intrusion Detection System for Early Detection and Mitigation of {DDoS} Attacks},
+  journal   = {Information},
+  volume    = {10},
+  number    = {3},
+  pages     = {106},
+  year      = {2019},
+  publisher = {MDPI},
+  doi       = {10.3390/info10030106}
+}
+
+% SDN-based moving-target defence against stealthy FDI in SCADA (FDI + future work)
+@inproceedings{kpoze2025reconfig,
+  author    = {Kpoze, Aur{\'e}lie and Degila, Jules and Ahouandjinou, Arnaud},
+  title     = {Leveraging Network Reconfiguration to Mitigate Stealthy {FDI} Attacks in Smart Grid {SCADA} Systems by Exploiting Attacker Uncertainty},
+  booktitle = {Towards New e-Infrastructure and e-Services for Developing Countries (AFRICOMM 2024)},
+  series    = {Lecture Notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering},
+  volume    = {652},
+  pages     = {293--314},
+  year      = {2025},
+  publisher = {Springer},
+  doi       = {10.1007/978-3-032-01904-2_19}
+}
+
+% Data-driven DDoS detection in SDN-based SCADA (contrast to CARS rule-based decision)
+@article{oyucu2024ensemble,
+  author    = {Oyucu, Saadin and Polat, Onur and T{\"u}rko{\u{g}}lu, Muammer and Polat, H{\"u}seyin and Aks{\"o}z, Ahmet and A{\u{g}}da{\c{s}}, Mehmet Tevfik},
+  title     = {Ensemble Learning Framework for {DDoS} Detection in {SDN}-Based {SCADA} Systems},
+  journal   = {Sensors},
+  volume    = {24},
+  number    = {1},
+  pages     = {155},
+  year      = {2024},
+  publisher = {MDPI},
+  doi       = {10.3390/s24010155}
+}
+
+% Moving-target-defence survey (frames the MTD alternative for future work)
+@article{lakshminarayana2024mtd,
+  author        = {Lakshminarayana, Subhash and Chen, Yexiang and Konstantinou, Charalambos and Mashima, Daisuke and Srivastava, Anurag K.},
+  title         = {Survey of Moving Target Defense in Power Grids: Design Principles, Tradeoffs, and Future Directions},
+  journal       = {arXiv preprint arXiv:2409.18317},
+  year          = {2024},
+  eprint        = {2409.18317},
+  archivePrefix = {arXiv},
+  primaryClass  = {eess.SY}
+}
+
+% SDN-based per-flow security-policy enforcement (cross-domain precedent, robotics)
+@inproceedings{rivera2019rosdefender,
+  author    = {Rivera, Sean and Lagraa, Sofiane and Nita-Rotaru, Cristina and Becker, Sheila and State, Radu},
+  title     = {{ROS}-Defender: {SDN}-Based Security Policy Enforcement for Robotic Applications},
+  booktitle = {2019 IEEE Security and Privacy Workshops (SPW)},
+  year      = {2019},
+  publisher = {IEEE},
+  doi       = {10.1109/SPW.2019.00030}
+}
+
+% Broad SDN security survey (traditional/AI/MTD) for background positioning
+% (published record confirmed on IEEE Xplore; on-disk PDF was an accepted preprint with a placeholder DOI)
+@article{abdi2024sdnreview,
+  author    = {Abdi, Abdinasir Hirsi and Audah, Lukman and Salh, Adeb and Alhartomi, Mohammed A. and Rasheed, Haroon and Ahmed, Salman and Tahir, Ahmed},
+  title     = {Security Control and Data Planes of {SDN}: A Comprehensive Review of Traditional, {AI}, and {MTD} Approaches to Security Solutions},
+  journal   = {IEEE Access},
+  volume    = {12},
+  pages     = {69941--69980},
+  year      = {2024},
+  publisher = {IEEE},
+  doi       = {10.1109/ACCESS.2024.3393548}
+}
+
+% OpenFlow protocol primary source; version 1.3.0 (wire protocol 0x04) is the version os-ken implements and CARS deploys
+@techreport{onf2012openflow13,
+  author      = {{Open Networking Foundation}},
+  title       = {OpenFlow Switch Specification, Version 1.3.0 (Wire Protocol 0x04)},
+  institution = {Open Networking Foundation},
+  type        = {ONF Technical Specification},
+  number      = {TS-006},
+  year        = {2012},
+  month       = jun,
+  url         = {https://opennetworking.org/wp-content/uploads/2014/10/openflow-spec-v1.3.0.pdf}
+}
