@@ -207,6 +207,52 @@ def classify(src_ip, dst_ip, op=None):
     return "FORBIDDEN", s, d
 
 
+# ===================================================================================
+# CARS framework: optional site-config overlay (non-destructive, opt-in).
+# If the environment variable CARS_SITE points to a site.yaml, the policy constants
+# above are overlaid from it. With CARS_SITE unset this block is a no-op, so default
+# behaviour is identical to before it existed. The overlay is fully guarded: any
+# failure logs a warning and keeps the built-in defaults. Parity of the shipped
+# examples/site.testbed.yaml with these defaults is proven by
+# framework/tests/test_config_parity.py. See framework/README.md.
+# ===================================================================================
+_CARS_SITE = os.environ.get("CARS_SITE")
+if _CARS_SITE:
+    try:
+        try:
+            from cars.config import load as _cars_load
+        except ImportError:
+            import sys as _sys
+            _fw = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "framework"))
+            if _fw not in _sys.path:
+                _sys.path.insert(0, _fw)
+            from cars.config import load as _cars_load
+        _sc = _cars_load(_CARS_SITE)
+        REGISTRY = {ip: {k: v for k, v in (("role", d["role"]), ("name", d.get("name")),
+                                           ("cell", d.get("cell"))) if v is not None}
+                    for ip, d in _sc.registry.items()}
+        CRITICALITY = {ip: d["tier"] for ip, d in _sc.registry.items() if d.get("tier")}
+        CW = dict(_sc.weights)
+        BLOCK_TIMEOUT = _sc.timeout_base_s
+        BINDINGS = [(b["dpid"], b["ofport"], b["mac"], b["ip"]) for b in _sc.bindings]
+        UPLINKS = dict(_sc.uplinks)
+        PROTECTED_IPS = sorted({b[3] for b in BINDINGS})
+        ALLOWLIST = [tuple(c) for c in _sc.conduits]
+        DEFAULT_DENY = [tuple(d) for d in _sc.default_deny]
+        RULEBOOK = [tuple(r) for r in _sc.rulebook]
+        _r = _sc.response or {}
+        THROTTLE_RATE = _r.get("throttle_rate", THROTTLE_RATE)
+        THROTTLE_BURST = _r.get("throttle_burst", THROTTLE_BURST)
+        SHARED_ROLES = set(_r.get("shared_roles", SHARED_ROLES))
+        FLOOD_EXEMPT = {str(x) for x in _r.get("flood_exempt", FLOOD_EXEMPT)}
+        HONEYPOT_IP = str(_r.get("honeypot_ip", HONEYPOT_IP))
+        print("[CARS] site config overlaid from %s (assets=%d conduits=%d rulebook=%d)"
+              % (_CARS_SITE, len(REGISTRY), len(ALLOWLIST), len(RULEBOOK)))
+    except Exception as _e:
+        print("[CARS] site-config overlay FAILED (%s); using built-in defaults" % _e)
+# ===================================================================================
+
+
 class CARSEngine(app_manager.OSKenApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 

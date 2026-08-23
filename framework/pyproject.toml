@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cars-ids"
+version = "0.1.0"
+description = "CARS: a criticality- and operation-aware SDN intrusion-response framework for ICS"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Amit Kiran Deb" }]
+keywords = ["ICS", "OT", "SDN", "OpenFlow", "intrusion-response", "Snort", "S7comm", "Modbus"]
+dependencies = [
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Live controller / fabric (real testbed).
+controller = ["os-ken>=2.7", "requests>=2.28"]
+# Emulation-for-anyone: software PLCs + Mininet-driven topology.
+emulation = ["python-snap7>=1.3", "pymodbus>=3.5,<3.9"]
+# Development.
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[project.scripts]
+cars = "cars.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cars*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# Stable, environment-independent ruleset: pyflakes, pycodestyle, isort, pyupgrade.
+# (flake8-executable EXE is excluded: file-mode bits are a Windows/git artefact.)
+select = ["E", "F", "W", "I", "UP"]

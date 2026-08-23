@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    paths: ["framework/**", "06_Build/cars_engine.py", ".github/workflows/ci.yml"]
+  pull_request:
+    paths: ["framework/**", "06_Build/cars_engine.py", ".github/workflows/ci.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./framework
+          pip install pytest ruff python-snap7 "pymodbus>=3.5,<3.9"
+
+      - name: Lint the package
+        run: ruff check framework/cars
+
+      - name: Config parity (site.yaml reproduces the engine exactly)
+        run: pytest framework/tests/test_config_parity.py -q
+
+      - name: Emulation core (headless S7 PLC + tank + attacker)
+        run: pytest framework/tests/test_emulation_core.py -q

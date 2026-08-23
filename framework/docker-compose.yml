@@ -1,0 +1,23 @@
+# CARS controller via Docker Compose. Run from the framework/ directory:
+#   docker compose up --build
+#
+# This brings up the CONTROLLER only. Point your Open vSwitch bridges (real fabric
+# or the Mininet emulation on the host) at this container's :6653. The emulation
+# (emulation/topo.py) runs on the host with root; set its RemoteController ip to the
+# Docker host address.
+services:
+  controller:
+    build:
+      context: ..                      # repo root (needs framework/ and 06_Build/)
+      dockerfile: framework/Dockerfile
+    image: cars-controller:0.1.0
+    container_name: cars-controller
+    environment:
+      CARS_SITE: /cars/framework/examples/site.testbed.yaml
+    ports:
+      - "6653:6653"                    # OpenFlow: switches connect here
+      - "8080:8080"                    # control API + /cars/respond feed
+    volumes:
+      # override the built-in testbed policy by mounting your own site.yaml:
+      - ./examples:/cars/framework/examples:ro
+    restart: unless-stopped

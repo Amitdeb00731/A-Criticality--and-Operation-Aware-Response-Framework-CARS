@@ -1,0 +1,23 @@
+# Docker build context is the repo root, but only framework/ and 06_Build/cars_engine.py
+# are used. Keep the context small by excluding the dissertation and heavy assets.
+report/
+presentation/
+papers/
+01_Literature_Review/
+02_Research_Notes/
+03_Build_Scripts/
+04_Testbed/
+05_Execution/
+07_Evaluation/
+_archive/
+docs/
+**/__pycache__/
+**/*.pyc
+**/.ruff_cache/
+**/.pytest_cache/
+.git/
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.bak

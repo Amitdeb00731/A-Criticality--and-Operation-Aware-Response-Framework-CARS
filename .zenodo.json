@@ -1,0 +1,28 @@
+{
+  "title": "CARS: A Criticality- and Operation-Aware SDN Intrusion-Response Framework for Industrial Control Systems",
+  "description": "An SDN intrusion-response framework for industrial control systems whose response is conditioned on asset criticality and the industrial operation recovered from the traffic, so automated reactive defence can be enabled without risking the physical process. Responses are bounded, reversible and evidence-generating. Built and validated on a hardware testbed with real Siemens S7-1212C PLCs and a live tank process; packaged here as an installable, config-driven framework with a no-hardware emulation. Research prototype from an MSc Cyber Security dissertation, University of Bristol.",
+  "upload_type": "software",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    { "name": "Deb, Amit Kiran", "affiliation": "University of Bristol" }
+  ],
+  "keywords": [
+    "software-defined networking",
+    "industrial control systems",
+    "OT security",
+    "intrusion response",
+    "OpenFlow",
+    "deep packet inspection",
+    "S7comm",
+    "Modbus",
+    "asset criticality"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Amitdeb00731/A-Criticality--and-Operation-Aware-Response-Framework-CARS",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}
