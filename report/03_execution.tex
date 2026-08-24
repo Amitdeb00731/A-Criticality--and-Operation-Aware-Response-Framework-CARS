@@ -2,7 +2,7 @@
 \label{chap:execution}
 
 \noindent
-This chapter describes the design of CARS and its realisation on the testbed. It opens with the threat and attacker model that the design answers, then presents the testbed architecture, the layered enforcement pipeline, the criticality and operation model at its centre, and the supporting components, and closes with how these are deployed across the physical nodes. The chapter is arranged from the threats inward, so that each mechanism can be read against the specific capability it counters.
+This chapter presents CARS as a design and then its realisation, arranged from the general to the specific. It opens with the threat and attacker model the design answers, then sets out CARS as an architecture, the layered enforcement pipeline, the criticality and operation model at its centre, and the reference implementation of the detection, the responses and the self-checks. It then shows that this design is portable, a core separated from site-specific configuration rather than tied to one plant, before describing the concrete testbed on which CARS was instantiated and the deployment that produced the results of Chapter~\ref{chap:evaluation}. The design is the contribution; the testbed is one instantiation of it, used to validate it against a real physical process.
 
 \section{Threat and attacker model}
 \label{sec:threat}
@@ -28,69 +28,10 @@ The attacker's objective is to disrupt or seize control of the physical process,
 
 Attacker knowledge depends on position. The external host begins with no knowledge of the roles or addresses on the segment and must discover them, whereas the compromised trusted host already holds a legitimate identity and knows the conduits it is permitted to use. The model is bounded deliberately. Physical attacks on the devices, supply-chain compromise, and attacks on authentication mechanisms are out of scope, since the focus is network-borne attacks on the process once the perimeter has been breached, following the same scoping as related ICS reconnaissance work \cite{samanis2025phd}. Two residual boundaries are carried honestly through the evaluation. An endpoint that is fully compromised while acting only within the operations its role is permitted is inside the trust the design grants that role. A fully subverted controller that knows the defence's own internal markings is outside what a self-checking control plane can detect. Both are examined in Chapter~\ref{chap:evaluation}.
 
-\section{Testbed architecture}
-\label{sec:testbed}
-
-The work is built on a hardware testbed rather than an emulation, so that a response can be judged against its effect on a real process. The testbed comprises four machines and two real PLCs, arranged as the two-cell topology of Figure~\ref{fig:topology}. The physical process cell, with its PLC and operator HMI, is shown in Figure~\ref{fig:hardware}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{fig02_topology_v2.png}
-\caption{The SDN-ICS logical topology. Three OpenFlow switches sit under a single CARS controller: Cell-1 on \texttt{ovs1}, the gateway on \texttt{ovsgw}, and Cell-2 on \texttt{ovs2}. Above the OT fabric is the modelled perimeter exercised in Chapter~\ref{chap:evaluation}: an enterprise/IT zone and a DMZ separated from the process network by an enterprise and an OT firewall, the latter source-NATing every north-to-south crossing onto the gateway identity. This is distinct from the Cell-2 NAT clone, through which \texttt{ovs2} is addressed on its own subnet. Link types are distinguished by style: \emph{control-plane} links (dashed purple) carry OpenFlow between the controller and the three switches on an out-of-band management network; \emph{data-plane} links (solid dark) carry process traffic across the fabric; and the \emph{mirror} link (grey) copies gateway traffic out-of-band to the Snort sensor. Protected assets are shown by functional role and criticality tier. The topology is that of the running testbed; the host addresses and the full port and binding map are read from the live fabric (\texttt{ovs-vsctl show}, Figure~\ref{fig:ovsshow}) and listed in Appendix~\ref{appx:material}.}
-\label{fig:topology}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.82\textwidth]{photo_testbed_panel.jpg}
-\caption{The physical process cell. The Siemens S7-1212C PLC and its operator HMI are wired into the cell through the labelled HMI and PLC network ports, which face the Open vSwitch fabric. The green terminal blocks carry the PLC's 24\,V digital inputs and relay outputs. Photographed on the testbed.}
-\label{fig:hardware}
-\end{figure}
-
-\subsection{Nodes and devices}
-
-The testbed is built on physical machines rather than an emulation. A dedicated controller node runs the CARS controller as an os-ken OpenFlow~1.3 application. The fabric is three OpenFlow switches under that controller: \texttt{ovs1} carries Cell-1, \texttt{ovsgw} the gateway, and \texttt{ovs2} carries Cell-2. The switches \texttt{ovs1} and \texttt{ovsgw} run together with the Snort sensor and the supporting services on one node, which also hosts the simulated supervisory and attacker endpoints in Linux network namespaces, while \texttt{ovs2} runs on a separate node. A Windows machine runs TIA Portal and Factory IO and acts as the engineering workstation. The two PLCs are Siemens S7-1200 units; PLC1 is a 1212C, model 6ES7~212-1BE40-0XB0 running firmware 4.2.3, confirmed by scanning it during evaluation. An operator HMI is present on each cell. The supervisory hosts, the SCADA or Modbus operator, the historian, the remediation agent and the Modbus unit, are realised as namespaces on the fabric-and-sensing node, each bound to a switch port, and the external attacker is a Kali Linux virtual machine on that node, attached to the OT segment and holding no registered role.
-
-\subsection{The two cells}
-
-The fabric is divided into two process cells and a gateway, each an OpenFlow switch under the one controller. Cell-1, on switch \texttt{ovs1}, holds PLC1, which controls the critical tank, and its operator HMI. Cell-2, on switch \texttt{ovs2}, holds PLC2 and its HMI, reached through a network-address translation that presents their internal addresses \texttt{192.168.2.10} and \texttt{192.168.2.9} as \texttt{192.168.3.10} and \texttt{192.168.3.9} to the rest of the fabric; the translation lets the second cell reuse the Cell-1 addressing plan while remaining separately reachable. The gateway switch, \texttt{ovsgw}, carries the supervisory seams, the engineering and Factory IO host, the Snort mirror, the honeypot decoy, and the attacker vantage. The two cells and the gateway are joined by a patch link and a translated transit, so that all traffic to a protected asset crosses the CARS fabric and is subject to its policy. Beyond the fabric sits a modelled perimeter, an enterprise IT zone and a DMZ that reach the process network only through an enterprise and an OT firewall; that perimeter is the north-to-south path exercised by the two-pivot analysis of Chapter~\ref{chap:evaluation}, and on the OT segment itself CARS is the enforcing layer. The fabric read directly from the switches with \texttt{ovs-vsctl show} is given in Figure~\ref{fig:ovsshow}: each bridge holds its OpenFlow connection to the controller, runs in secure fail mode, and presents the PLC and HMI on separate ports.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.86\textwidth]{term_ovs1_show.png}\\[6pt]
-\includegraphics[width=0.86\textwidth]{term_ovs2_show.png}
-\caption{The fabric read from the switches with \texttt{ovs-vsctl show}: Cell-1 (\texttt{ovs1}, top) and Cell-2 (\texttt{ovs2}, bottom). Each bridge is connected to the controller at \texttt{tcp:10.10.10.1:6653} with \texttt{fail\_mode: secure}, and carries its PLC and HMI on separate ports; \texttt{ovs1} also holds the patch to the gateway and \texttt{ovs2} the internal \texttt{cell2gw}. Captured live on 3 August 2026 (OVS 3.3.4); the arrows are annotations.}
-\label{fig:ovsshow}
-\end{figure}
-
-\subsection{The physical process}
-
-Cell-1 runs a live tank-level process, provided by Factory IO on the Windows machine and controlled by PLC1 over S7 across the fabric, as shown in Figure~\ref{fig:hil}. Factory IO supplies the level from a sensor and the state of the Start, Reset and Stop buttons as PLC inputs, and renders the fill valve, the discharge valve and the indicator lamps from the PLC outputs. The control runs in a cyclic block, OB30, which scales the raw sensor to a level of zero to one hundred, latches a running state from the operator buttons, and holds the level in a band by opening the fill valve below thirty and closing it above seventy against a constant discharge. The level that the PLC computes, held in a data block, is the process value that CARS protects; driving it out of its band, or blinding the PLC to it, is the physical harm the evaluation measures. The running scene and the operator HMI are shown in Figure~\ref{fig:process}, and the Factory IO driver that binds the scene to PLC1 in Figure~\ref{fig:driver}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{{fig08_hil.drawio}.png}
-\caption{The hardware-in-the-loop. Factory IO supplies the level and button inputs and renders the valve and lamp outputs; PLC1 runs the control in OB30; every exchange crosses the CARS fabric. Addresses and mappings are from the deployed project.}
-\label{fig:hil}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\begin{minipage}[c]{0.50\textwidth}\centering\includegraphics[width=\linewidth]{factoryio_scene.jpg}\end{minipage}\hfill
-\begin{minipage}[c]{0.46\textwidth}\centering\includegraphics[width=\linewidth]{hmi1_tanklevel.jpg}\end{minipage}
-\caption{The live process. Left: the Factory IO tank scene, with the level meter, the fill and discharge valves, the flow meter, and the Start, Stop and Reset station. Right: the operator HMI reading the tank level, here about 40 per cent, and the pump value. The scene runs on the Windows machine and exchanges its inputs and outputs with PLC1 over S7 across the fabric.}
-\label{fig:process}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.58\textwidth]{factoryio_driver.png}
-\caption{The Factory IO S7-1200 driver, bound to PLC1 at \texttt{192.168.2.10}. The inputs are the Start, Reset and Stop buttons at \texttt{\%I10.0}--\texttt{\%I10.2}, the running flag at \texttt{\%I10.3}, and the level, flow and setpoint values at \texttt{\%ID100}/\texttt{\%ID104}/\texttt{\%ID108}; the outputs are the lamps at \texttt{\%Q0.0}--\texttt{\%Q0.2}, the fill and discharge valves at \texttt{\%QD100}/\texttt{\%QD104}, and the setpoint and process value at \texttt{\%QD108}/\texttt{\%QD112}. Read from the deployed driver configuration; these match the OB30 tag table.}
-\label{fig:driver}
-\end{figure}
-
-\section{CARS design overview}
+\section{CARS: architecture and principles}
 \label{sec:designoverview}
+
+CARS is a response framework rather than a fixed configuration. Stated at the level a reference model is stated, before any particular plant, it is a controller that governs a software-defined fabric carrying industrial traffic and that conditions its response on two axes a uniform block ignores: the criticality of the asset under attack, and the industrial operation recovered from the packet. The response it enforces is bounded in time, reversible, and evidence-generating, which is the property that lets an operator arm it on a live process. Everything specific to a site, the assets and their tiers, the roles, the conduits and the rulebook, is configuration supplied to this framework, not part of it (Section~\ref{sec:portability}).
 
 CARS is placed as the enforcement point in the SDN fabric, between the operational hosts and the assets it protects, as shown in Figure~\ref{fig:overview}. Its design is layered. A proactive layer, always in force, binds each host's identity and admits only the connections on a short allowlist, so an unregistered host is refused before any operation is considered. A reactive layer recovers the operation from the traffic by deep packet inspection, decides its tier from the source role, the operation and the criticality of the target, and applies a graded response. A self-checking layer verifies the forwarding state against a trusted baseline and authenticates the control interface, so that a compromise of the control plane is caught rather than trusted.
 
@@ -101,7 +42,7 @@ CARS is placed as the enforcement point in the SDN fabric, between the operation
 \label{fig:overview}
 \end{figure}
 
-Two separations shape the design. The controller, which decides, is separate from the switches, which enforce, the standard software-defined split that lets one policy govern the whole fabric. The decision, which is a tier, is separate from the response, which is an action, so that a single judgement drives a graded ladder rather than one blunt action. Every response is bounded in time, reversible, and leaves an audit record, which is what allows an operator to enable it. The remaining sections detail each layer: the pipeline that enforces the policy (Section~\ref{sec:pipeline}), the criticality and operation model that decides (Section~\ref{sec:model}), and the reference implementation of the detection, the responses and the self-checks (Section~\ref{sec:implementation}).
+Two separations shape the design. The controller, which decides, is separate from the switches, which enforce, the standard software-defined split that lets one policy govern the whole fabric. The decision, which is a tier, is separate from the response, which is an action, so that a single judgement drives a graded ladder rather than one blunt action. Every response is bounded in time, reversible, and leaves an audit record, which is what allows an operator to enable it. The remaining sections detail each layer: the pipeline that enforces the policy (Section~\ref{sec:pipeline}), the criticality and operation model that decides (Section~\ref{sec:model}), and the reference implementation of the detection, the responses and the self-checks (Section~\ref{sec:implementation}); Section~\ref{sec:portability} then shows the design is portable across sites, and Section~\ref{sec:testbed} describes the testbed on which it was instantiated and validated.
 
 \section{The enforcement pipeline}
 \label{sec:pipeline}
@@ -126,7 +67,7 @@ The proactive rules carry the cookie \texttt{0x00a2} and the reactive rules carr
 \section{The criticality and operation model}
 \label{sec:model}
 
-CARS makes two kinds of decision. At the connection level a proactive policy fixes which parties may open a connection to which asset at all. At the operation level each permitted exchange is judged by the role of its source, the operation it carries, and the criticality of the asset it targets. This section defines the model; the pipeline of Section~\ref{sec:pipeline} enforces it. Every value quoted is taken from the deployed controller.
+CARS makes two kinds of decision. At the connection level a proactive policy fixes which parties may open a connection to which asset at all. At the operation level each permitted exchange is judged by the role of its source, the operation it carries, and the criticality of the asset it targets. This section defines the model; the pipeline of Section~\ref{sec:pipeline} enforces it. The values quoted are those of the testbed instantiation (Section~\ref{sec:testbed}) and are taken from the deployed controller; the model itself is defined by role, operation and consequence, and applies to any asset set (Section~\ref{sec:portability}).
 
 \subsection{Asset criticality}
 
@@ -234,6 +175,76 @@ The controller selects one of seven graded responses and realises it in OpenFlow
 \subsection{Forwarding integrity and control authentication}
 
 Two mechanisms protect CARS against a compromised control plane, the threat identified by Gardiner et al.\ \cite{gardiner2021controller}. A flow-integrity checker holds a trusted baseline of the proactive policy, distinguished by its cookie \texttt{0x00a2}, and compares the live tables against it every ten seconds; a rule that is missing, added or altered, other than the reactive rules under cookie \texttt{0x00ca}, is reported as drift, catching bogus injected rules, black-holes and removals in the manner of the policy checker of Melis et al.\ \cite{melis2018policychecker}. The ten-second interval is the knee of a trade-off: it bounds the time to catch a persistent injection at one poll while the cost of dumping three small flow tables every ten seconds is negligible, and a shorter interval narrows but cannot close the window, since a rule injected and withdrawn inside one poll still evades it. Separately, every state-changing control operation, such as disarming the defence, requires an authentication token, so a host that reaches the control interface cannot silently switch CARS off; an unauthenticated attempt is refused and logged.
+
+\section{Portability and scalability}
+\label{sec:portability}
+
+The design of the preceding sections is deliberately independent of the plant it protects. The pipeline, the response ladder, the criticality model and the rulebook are a specification; the assets, roles, conduits, bindings and tiers that fill them are configuration. The two are separated in the implementation: the engine's decision logic, its pipeline install and its response repertoire are the portable core, and everything specific to a deployment, the asset registry and its tiers, the conduit allowlist, the rulebook rows, the identity bindings and the fabric's uplinks, is expressible as a site file the same engine consumes. A site is described, not coded. Standing up CARS on a different plant means writing that file, not changing the engine: a new asset is a registry line with a tier, a new permitted path is a conduit line, a new response weighting is a tier weight. That the configuration extracted for the testbed reproduces the deployed policy exactly is checked by a parity test against the running engine, so the separation is verified rather than asserted. The backbone shown for the testbed in Section~\ref{sec:model}, the criticality tiers, the role and operation taxonomy, the decision matrix and the flow tables, is therefore not specific to this testbed; it is one instantiation of a portable model, and the same engine drives any site whose configuration it is given.
+
+Scale follows from the same separation. The pipeline is installed identically on every switch the controller governs (Section~\ref{sec:pipeline}), so extending the fabric is adding switches, which the controller discovers and programs without code change, and adding assets is extending the registry and the allowlist. The bounds of the reactive stage were measured directly in Section~\ref{sec:evalflowtable}: it scales to tens of thousands of concurrent responses on the deployed hardware, and the criticality-scaled timeout bounds that state without operator action.
+
+Independence from the hardware is demonstrated, not merely asserted. The same engine, the same pipeline and the same rulebook run in a hardware-free emulation in which the physical PLC is replaced by a software S7 server and the fabric by software switches, so the full defended attack, both response layers, can be reproduced on a single machine with no PLC, switch or cabling. The testbed of Section~\ref{sec:testbed} gives the real, physically-grounded validation; the emulation shows the design is not tied to that particular hardware. Both are published so the result can be reproduced either way.
+
+\section{Testbed instantiation}
+\label{sec:testbed}
+
+To validate CARS against a real physical process, the design was instantiated on a hardware testbed rather than an emulation, so that a response can be judged against its effect on a real process. The instantiation fills the site configuration of Section~\ref{sec:portability} with the assets, roles and conduits this bench presents: four machines and two real PLCs, arranged as the two-cell topology of Figure~\ref{fig:topology}. The physical process cell, with its PLC and operator HMI, is shown in Figure~\ref{fig:hardware}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig02_topology_v2.png}
+\caption{The SDN-ICS logical topology. Three OpenFlow switches sit under a single CARS controller: Cell-1 on \texttt{ovs1}, the gateway on \texttt{ovsgw}, and Cell-2 on \texttt{ovs2}. Above the OT fabric is the modelled perimeter exercised in Chapter~\ref{chap:evaluation}: an enterprise/IT zone and a DMZ separated from the process network by an enterprise and an OT firewall, the latter source-NATing every north-to-south crossing onto the gateway identity. This is distinct from the Cell-2 NAT clone, through which \texttt{ovs2} is addressed on its own subnet. Link types are distinguished by style: \emph{control-plane} links (dashed purple) carry OpenFlow between the controller and the three switches on an out-of-band management network; \emph{data-plane} links (solid dark) carry process traffic across the fabric; and the \emph{mirror} link (grey) copies gateway traffic out-of-band to the Snort sensor. Protected assets are shown by functional role and criticality tier. The topology is that of the running testbed; the host addresses and the full port and binding map are read from the live fabric (\texttt{ovs-vsctl show}, Figure~\ref{fig:ovsshow}) and listed in Appendix~\ref{appx:material}.}
+\label{fig:topology}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{photo_testbed_panel.jpg}
+\caption{The physical process cell. The Siemens S7-1212C PLC and its operator HMI are wired into the cell through the labelled HMI and PLC network ports, which face the Open vSwitch fabric. The green terminal blocks carry the PLC's 24\,V digital inputs and relay outputs. Photographed on the testbed.}
+\label{fig:hardware}
+\end{figure}
+
+\subsection{Nodes and devices}
+
+The testbed is built on physical machines rather than an emulation. A dedicated controller node runs the CARS controller as an os-ken OpenFlow~1.3 application. The fabric is three OpenFlow switches under that controller: \texttt{ovs1} carries Cell-1, \texttt{ovsgw} the gateway, and \texttt{ovs2} carries Cell-2. The switches \texttt{ovs1} and \texttt{ovsgw} run together with the Snort sensor and the supporting services on one node, which also hosts the simulated supervisory and attacker endpoints in Linux network namespaces, while \texttt{ovs2} runs on a separate node. A Windows machine runs TIA Portal and Factory IO and acts as the engineering workstation. The two PLCs are Siemens S7-1200 units; PLC1 is a 1212C, model 6ES7~212-1BE40-0XB0 running firmware 4.2.3, confirmed by scanning it during evaluation. An operator HMI is present on each cell. The supervisory hosts, the SCADA or Modbus operator, the historian, the remediation agent and the Modbus unit, are realised as namespaces on the fabric-and-sensing node, each bound to a switch port, and the external attacker is a Kali Linux virtual machine on that node, attached to the OT segment and holding no registered role.
+
+\subsection{The two cells}
+
+The fabric is divided into two process cells and a gateway, each an OpenFlow switch under the one controller. Cell-1, on switch \texttt{ovs1}, holds PLC1, which controls the critical tank, and its operator HMI. Cell-2, on switch \texttt{ovs2}, holds PLC2 and its HMI, reached through a network-address translation that presents their internal addresses \texttt{192.168.2.10} and \texttt{192.168.2.9} as \texttt{192.168.3.10} and \texttt{192.168.3.9} to the rest of the fabric; the translation lets the second cell reuse the Cell-1 addressing plan while remaining separately reachable. The gateway switch, \texttt{ovsgw}, carries the supervisory seams, the engineering and Factory IO host, the Snort mirror, the honeypot decoy, and the attacker vantage. The two cells and the gateway are joined by a patch link and a translated transit, so that all traffic to a protected asset crosses the CARS fabric and is subject to its policy. Beyond the fabric sits a modelled perimeter, an enterprise IT zone and a DMZ that reach the process network only through an enterprise and an OT firewall; that perimeter is the north-to-south path exercised by the two-pivot analysis of Chapter~\ref{chap:evaluation}, and on the OT segment itself CARS is the enforcing layer. The fabric read directly from the switches with \texttt{ovs-vsctl show} is given in Figure~\ref{fig:ovsshow}: each bridge holds its OpenFlow connection to the controller, runs in secure fail mode, and presents the PLC and HMI on separate ports.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\textwidth]{term_ovs1_show.png}\\[6pt]
+\includegraphics[width=0.86\textwidth]{term_ovs2_show.png}
+\caption{The fabric read from the switches with \texttt{ovs-vsctl show}: Cell-1 (\texttt{ovs1}, top) and Cell-2 (\texttt{ovs2}, bottom). Each bridge is connected to the controller at \texttt{tcp:10.10.10.1:6653} with \texttt{fail\_mode: secure}, and carries its PLC and HMI on separate ports; \texttt{ovs1} also holds the patch to the gateway and \texttt{ovs2} the internal \texttt{cell2gw}. Captured live on 3 August 2026 (OVS 3.3.4); the arrows are annotations.}
+\label{fig:ovsshow}
+\end{figure}
+
+\subsection{The physical process}
+
+Cell-1 runs a live tank-level process, provided by Factory IO on the Windows machine and controlled by PLC1 over S7 across the fabric, as shown in Figure~\ref{fig:hil}. Factory IO supplies the level from a sensor and the state of the Start, Reset and Stop buttons as PLC inputs, and renders the fill valve, the discharge valve and the indicator lamps from the PLC outputs. The control runs in a cyclic block, OB30, which scales the raw sensor to a level of zero to one hundred, latches a running state from the operator buttons, and holds the level in a band by opening the fill valve below thirty and closing it above seventy against a constant discharge. The level that the PLC computes, held in a data block, is the process value that CARS protects; driving it out of its band, or blinding the PLC to it, is the physical harm the evaluation measures. The running scene and the operator HMI are shown in Figure~\ref{fig:process}, and the Factory IO driver that binds the scene to PLC1 in Figure~\ref{fig:driver}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{{fig08_hil.drawio}.png}
+\caption{The hardware-in-the-loop. Factory IO supplies the level and button inputs and renders the valve and lamp outputs; PLC1 runs the control in OB30; every exchange crosses the CARS fabric. Addresses and mappings are from the deployed project.}
+\label{fig:hil}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.50\textwidth}\centering\includegraphics[width=\linewidth]{factoryio_scene.jpg}\end{minipage}\hfill
+\begin{minipage}[c]{0.46\textwidth}\centering\includegraphics[width=\linewidth]{hmi1_tanklevel.jpg}\end{minipage}
+\caption{The live process. Left: the Factory IO tank scene, with the level meter, the fill and discharge valves, the flow meter, and the Start, Stop and Reset station. Right: the operator HMI reading the tank level, here about 40 per cent, and the pump value. The scene runs on the Windows machine and exchanges its inputs and outputs with PLC1 over S7 across the fabric.}
+\label{fig:process}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.58\textwidth]{factoryio_driver.png}
+\caption{The Factory IO S7-1200 driver, bound to PLC1 at \texttt{192.168.2.10}. The inputs are the Start, Reset and Stop buttons at \texttt{\%I10.0}--\texttt{\%I10.2}, the running flag at \texttt{\%I10.3}, and the level, flow and setpoint values at \texttt{\%ID100}/\texttt{\%ID104}/\texttt{\%ID108}; the outputs are the lamps at \texttt{\%Q0.0}--\texttt{\%Q0.2}, the fill and discharge valves at \texttt{\%QD100}/\texttt{\%QD104}, and the setpoint and process value at \texttt{\%QD108}/\texttt{\%QD112}. Read from the deployed driver configuration; these match the OB30 tag table.}
+\label{fig:driver}
+\end{figure}
 
 \section{Deployment}
 \label{sec:deployment}

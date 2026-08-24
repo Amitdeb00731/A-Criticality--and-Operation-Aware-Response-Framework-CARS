@@ -18,10 +18,10 @@ The work is grounded in a hardware testbed rather than a simulation. Two real Si
 The aim of the project was to design, build and evaluate an SDN intrusion-response system for ICS whose response is conditioned on asset criticality and operation, so that automated response can be enabled without risking the physical process. This was pursued through the following objectives:
 
 \begin{itemize}
-\item Build a representative hardware testbed comprising an SDN fabric, real PLCs, an operator panel and a live physical process.
 \item Design a response model that grades enforcement by asset criticality and operation class, and that is bounded, reversible and evidence-generating.
 \item Implement the model as an OpenFlow controller with a layered pipeline, together with the integrity checks needed to remain trustworthy under control-plane compromise.
-\item Integrate a hardware-in-the-loop process so that responses can be tested against real physical consequences.
+\item Keep the design portable, separating a controller core from the site-specific configuration of assets, roles and conduits, so that the same engine applies to any plant rather than to one testbed.
+\item Build a representative hardware testbed with real PLCs, an operator panel and a live hardware-in-the-loop process, and instantiate CARS on it to validate the design against real physical consequences.
 \item Evaluate decision conformance and false positives, and validate each capability at the packet level against realistic attacks, comparing protected with unprotected operation.
 \end{itemize}
 
@@ -29,8 +29,9 @@ The aim of the project was to design, build and evaluate an SDN intrusion-respon
 The main achievements of the project, each evidenced in the chapters that follow, are:
 
 \begin{itemize}
-\item A working three-node SDN-ICS testbed with two real S7-1212C PLCs and a live hardware-in-the-loop tank process driven through the controlled fabric.
-\item An implementation of CARS as a three-table OpenFlow pipeline: identity binding against spoofing, a stateful policy stage carrying a criticality- and operation-aware rulebook, and a graded seven-level response ladder, supported by a flow-integrity checker and an authenticated control interface.
-\item A decision evaluation across the range of role, operation class and asset criticality in which every legitimate operation was permitted and every illegitimate one was refused, with no false positives against the live process traffic.
+\item CARS itself: a criticality- and operation-aware SDN intrusion-response framework, realised as a three-table OpenFlow pipeline (identity binding against spoofing, a stateful policy stage carrying the criticality- and operation-aware rulebook, and a learning switch), a graded seven-level response ladder, a flow-integrity checker and an authenticated control interface.
+\item A portable design in which the engine is separated from a site configuration of assets, roles, conduits and tiers, verified to reproduce the deployed policy, and shown to run unchanged in a hardware-free emulation as well as on the physical testbed.
+\item A three-node SDN-ICS hardware testbed with two real S7-1212C PLCs and a live hardware-in-the-loop tank process, on which CARS was instantiated and validated against a real physical consequence.
+\item A decision-conformance evaluation across the range of role, operation class and asset criticality in which every legitimate operation was permitted and every illegitimate one was refused, with no false positives against the live process traffic.
 \item A packet-level validation of each capability, protected against unprotected, spanning reconnaissance, identity spoofing, out-of-state traffic, control-plane and flow tampering, operation-aware commands, and a false-data injection that overflowed the tank when unprotected yet was severed on its first write when the defence was enabled.
 \end{itemize}

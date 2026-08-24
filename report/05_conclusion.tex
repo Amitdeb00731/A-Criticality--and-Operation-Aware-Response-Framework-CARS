@@ -16,10 +16,10 @@ The project met the five objectives set out in Chapter~\ref{chap:introduction}, 
 \hline
 Objective & Outcome \\
 \hline
-Build a representative hardware testbed with an SDN fabric, real PLCs, an operator panel and a live process & Three-node fabric, two S7-1212C PLCs, KTP700 panel, EWS and a Factory IO tank driven through the controlled switches (Chapter~\ref{chap:execution}) \\
 Design a graded, bounded, reversible, evidence-generating response model & Seven-rung ladder (ALLOW to REFUSE) with criticality-scaled self-healing durations (75/60/45/30\,s) and an audit record per decision (Chapters~\ref{chap:execution},~\ref{chap:evaluation}) \\
 Implement it as an OpenFlow controller with a layered pipeline and integrity checks & Three-table pipeline (GUARD, stateful POLICY, SWITCH), flow-integrity checker and token-authenticated control API (Chapters~\ref{chap:execution},~\ref{chap:evaluation}) \\
-Integrate a hardware-in-the-loop process for real-consequence testing & Factory IO tank on the live PLC, judged by overflow versus safe band (Chapters~\ref{chap:execution},~\ref{chap:evaluation}) \\
+Keep the design portable, a core separated from site-specific configuration, applicable to any plant & Engine decoupled from a site file of assets, roles, conduits and tiers, verified to reproduce the deployed policy, and run unchanged in a hardware-free emulation (Chapter~\ref{chap:execution}) \\
+Build a hardware testbed with real PLCs, an operator panel and a live process, and instantiate CARS on it for real-consequence testing & Three-node fabric, two S7-1212C PLCs, KTP700 panel, EWS and a Factory IO tank on the live PLC, judged by overflow versus safe band (Chapters~\ref{chap:execution},~\ref{chap:evaluation}) \\
 Evaluate decision conformance and false positives; validate each capability at the packet level, protected versus unprotected & zero false positives and zero false negatives over the decision space and a 2{,}078-case corpus; wire-level campaign across every capability; reaction window characterised (median 7.6\,ms) (Chapter~\ref{chap:evaluation}) \\
 \hline
 \end{tabular}
