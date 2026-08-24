@@ -50,10 +50,10 @@ fi
 
 FLOWS='for b in ovs1 ovsgw ovs2; do echo "== $b =="; ovs-ofctl -O OpenFlow13 dump-flows $b 2>/dev/null | grep -E "cookie=0x(ca|a2)|priority=55," || echo "  (none yet)"; done'
 
-C1="printf '\033[1;36m== CONTROLLER: GUARD installs + BRAIN decisions (ISOLATE / auto-heal) ==\033[0m\n'; tail -n 25 -f $CTRL_LOG"
-C2="printf '\033[1;33m== FLOWS: 0xa2 allow | 0xca reactive isolate | p55 default-deny ==\033[0m\n'; watch -t -c -n1 '$FLOWS'"
-C3="printf '\033[1;32m== PROCESS: tank loop — level / pump / interference ==\033[0m\n'; tail -n 25 -f $PROC_LOG"
-C4="printf '\033[1;35m== DPI: Snort alerts + operation-aware bridge REPORTs ==\033[0m\n'; tail -n 25 -f $BRIDGE_LOG $SNORT_ALERT 2>/dev/null"
+C1="clear; printf '\033[1;36m== CONTROLLER: GUARD installs + BRAIN decisions (ISOLATE / auto-heal) ==\033[0m\n'; tail -n 25 -f $CTRL_LOG"
+C2="clear; printf '\033[1;33m== FLOWS: 0xa2 allow | 0xca reactive isolate | p55 default-deny ==\033[0m\n'; watch -t -c -n1 '$FLOWS'"
+C3="clear; printf '\033[1;32m== PROCESS: tank loop — level / pump / interference ==\033[0m\n'; tail -n 25 -f $PROC_LOG"
+C4="clear; printf '\033[1;35m== DPI: Snort alerts + operation-aware bridge REPORTs ==\033[0m\n'; tail -n 25 -f $BRIDGE_LOG $SNORT_ALERT 2>/dev/null"
 
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 tmux new-session -d -s "$SESSION" -x "$(tput cols 2>/dev/null || echo 220)" -y "$(tput lines 2>/dev/null || echo 50)"
