@@ -7,7 +7,9 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FW="$(cd "$HERE/.." && pwd)"
 REPO="$(cd "$FW/.." && pwd)"
-SITE="${CARS_SITE:-$FW/examples/site.testbed.yaml}"
+# default to the emulation config: GUARD anti-spoof bindings are physical-port/MAC
+# specific and would false-drop Mininet hosts; POLICY (allowlist + default-deny) still enforces.
+SITE="${CARS_SITE:-$FW/examples/site.emulation.yaml}"
 ENGINE="$REPO/06_Build/cars_engine.py"
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "MISSING: $1"; MISS=1; }; }
@@ -38,7 +40,7 @@ kill -0 "$CTRL_PID" 2>/dev/null || { echo "controller failed to start; see /tmp/
 echo "controller up (pid $CTRL_PID, log /tmp/cars_controller.log)"
 
 echo "== bringing up the fabric + software PLCs (Mininet CLI) =="
-echo "   in the CLI:  atk python3 $REPO/06_Build/s7_write.py 192.168.2.10"
-echo "   then:        ovsgw ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca"
+echo "   in the CLI:  atk python3 $REPO/06_Build/s7_write.py --host 192.168.2.10"
+echo "   then:        sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10   (priority=55 drop = attacker denied)"
 cd "$FW"
 python3 "$HERE/topo.py"

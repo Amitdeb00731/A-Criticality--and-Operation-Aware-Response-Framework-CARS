@@ -91,8 +91,9 @@ def build():
     info("*** CARS emulation up. The software PLCs and tank co-sim are running.\n")
     info("*** Confirm the controller is up (CARS_SITE=... osken-manager ../06_Build/cars_engine.py),\n")
     info("*** then launch an attack from the Mininet CLI, e.g.:\n")
-    info("      atk python3 " + os.path.join(here, "..", "..", "06_Build", "s7_write.py") + " 192.168.2.10\n")
-    info("*** and watch the isolate:  ovsgw ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca\n")
+    info("      atk python3 " + os.path.join(here, "..", "..", "06_Build", "s7_write.py") + " --host 192.168.2.10\n")
+    info("*** the attacker is default-denied; see the drop:\n")
+    info("      sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10   (priority=55 drop, n_packets>0)\n")
     CLI(net)
     net.stop()
 
