@@ -88,16 +88,18 @@ scada python3 ../06_Build/s7_write.py --host 192.168.2.10 --count 5
 sh ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca
 ```
 
-What you should see:
+What you should see (validated, Ubuntu 24.04):
 
-- **Bridge** (`/tmp/cars_bridge.log`): `REPORT 192.168.2.31 -> 192.168.2.10 S7 op=CONTROL … | CARS: …` — Snort fired `CARS-S7-CONTROL-write` and the bridge reported the *operation*, not just "TCP".
-- **Controller** (`/tmp/cars_controller.log`): the engine classifies CONTROL-on-CRITICAL-PLC as **FORBIDDEN** and installs an **ISOLATE** on `192.168.2.31`, cookie `0xca`, with the criticality-scaled timeout.
-- **Flows**: a `cookie=0xca` rule on `ovsgw` matching `192.168.2.31`.
-- **Process** (`/tmp/cars_s7.log`): the PLC's `interference` counter ticks up **once** (the first write leaked on the allowlisted conduit — the report's Gap 3) and then **stops** as the isolate cuts the source; the level keeps oscillating. The attacker is cut; the process is not.
+- **Operation-aware, on one conduit** (`/tmp/cars_bridge.log`): the *same* `scada→plc1` conduit reported twice — `TCP … op=null … response: ALLOW` (monitor only) for the connection, then `S7 op=CONTROL … tier: FORBIDDEN … response: ISOLATE` for the write. The decision keys on the operation, not the transport.
+- **Controller** (`/tmp/cars_controller.log`): `FORBIDDEN 192.168.2.31(scada) -> 192.168.2.10(plc) S7 CONTROL => ISOLATE source 192.168.2.31 75s (quarantine all conduits, self-healing)`.
+- **Criticality-scaled flow** (`sh ovs-ofctl … dump-flows ovsgw | grep 0xca`): `cookie=0xca, hard_timeout=75, priority=110, nw_src=192.168.2.31 actions=drop` — the `75 = 30 + 15×3` timeout is the CRITICAL criticality weight, live.
+- **Bounded & reversible** (`/tmp/cars_controller.log`): after the window, `ISOLATE AUTO-HEALED (timeout) dpid=1/2/3 192.168.2.31 -> *` — the source-quarantine lifts itself on every switch.
+- **Attack trace** (`s7_write.py`): `CONNECTED` → `wrote 0x08` (the first write leaks on the allowlisted conduit — the report's Gap 3) → then `S7TimeoutError` — every subsequent write is cut.
+- **Process preserved** (`/tmp/cars_s7.log`): the tank keeps oscillating (`level=… pump=… cycles=…`) with `interference=0` — the attacker is cut and the process is undisturbed.
 
 > Contrast to prove the *operation* axis: `scada python3 ../06_Build/s7_write.py --host 192.168.2.10 --read` performs an S7 **read**. It fires `CARS-S7-READ-var`, is classified OPERATIONAL, and is **not** isolated — same host, same conduit, different operation, different response.
 
-The self-plant loop and its interference detection are self-tested (`python3 emulation/plc/s7_server.py` under `CARS_SELF_PLANT=1`); the Snort SPAN + bridge + isolate is the runbook above.
+This reproduces, with no hardware, every core property: criticality-aware (the 75s scaling), operation-aware (TCP ALLOW vs S7-CONTROL ISOLATE on one conduit), bounded and reversible (the auto-heal), evidence-generating (the decision logs), and process-preserving (interference 0). The self-plant loop and its interference detection are additionally self-tested via `python3 emulation/plc/s7_server.py` under `CARS_SELF_PLANT=1`.
 
 ---
 
