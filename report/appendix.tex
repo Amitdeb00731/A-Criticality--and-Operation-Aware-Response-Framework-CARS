@@ -17,7 +17,7 @@ Repository path & Role in this dissertation \\
 \href{\repourl/blob/main/06_Build/cars_flow_audit.py}{\texttt{06\_Build/cars\_flow\_audit.py}} & Flow-integrity poll against the trusted baseline \\
 \href{\repourl/blob/main/06_Build/cars_remediation.py}{\texttt{06\_Build/cars\_remediation.py}} & Process last-good restore agent \\
 \href{\repourl/blob/main/06_Build/cars_process.py}{\texttt{06\_Build/cars\_process.py}} & Process / control-law reference model \\
-\href{\repourl/tree/main/07_Evaluation/overnight}{\texttt{07\_Evaluation/overnight/}} & Accuracy-at-scale, criticality behaviour, flow-integrity, jitter and the Gap 1/2/4 harnesses, with raw data under \texttt{results/} \\
+\href{\repourl/tree/main/07_Evaluation/overnight}{\texttt{07\_Evaluation/overnight/}} & Conformance-at-scale, criticality behaviour, flow-integrity, jitter and the Gap 1/2/4 harnesses, with raw data under \texttt{results/} \\
 \href{\repourl/blob/main/07_Evaluation/overnight/gap4_flowmonitor/cars_flowmonitor.py}{\texttt{gap4\_flowmonitor/cars\_flowmonitor.py}} & Event-driven flow-integrity monitor (Section~\ref{sec:threats}) \\
 \href{\repourl/tree/main/report}{\texttt{report/}} & This dissertation, its figures and its \texttt{appendix\_listings/} data files \\
 \hline
@@ -97,7 +97,7 @@ The full decision matrix of Section~\ref{sec:evalaccuracy}, all twenty-seven cas
 \section{Decision logs and events}
 \label{appx:logs}
 
-The controller logs every decision it takes, so the accuracy figures rest on thousands of live judgements, not only the scored matrix. Listing~\ref{lst:decisions} is a representative extract spanning the campaign: the reconnaissance isolate, the identity-spoof refusal, the mean-time-to-mitigate isolate, the operation-aware isolate, the flow-integrity drift, and two legitimate operations permitted. The complete per-run logs are the exported CSV artefacts (each run logs on the order of a thousand decisions).
+The controller logs every decision it takes, so the conformance result rests on thousands of live judgements, not only the scored matrix. Listing~\ref{lst:decisions} is a representative extract spanning the campaign: the reconnaissance isolate, the identity-spoof refusal, the mean-time-to-mitigate isolate, the operation-aware isolate, the flow-integrity drift, and two legitimate operations permitted. The complete per-run logs are the exported CSV artefacts (each run logs on the order of a thousand decisions).
 
 \lstinputlisting[style=carssrc,caption={Representative controller decisions across the campaign (extract of the decision log; times \texttt{08-05}).},label={lst:decisions}]{appendix_listings/decision_extract.csv}
 
@@ -208,7 +208,7 @@ def classify(src_ip, dst_ip, op=None):
     return "FORBIDDEN", s, d                       # nothing matched -> default deny
 \end{lstlisting}
 
-\noindent The role lookup resolves each address to its registered role; the loop returns the tier of the first rulebook row whose source, destination and operation all match, and defaults to FORBIDDEN when none do. This is the exact path the accuracy evaluation drives through \texttt{/cars/respond}. The remaining load-bearing pieces of the controller and of the supporting scripts follow in the same form.
+\noindent The role lookup resolves each address to its registered role; the loop returns the tier of the first rulebook row whose source, destination and operation all match, and defaults to FORBIDDEN when none do. This is the exact path the conformance evaluation drives through \texttt{/cars/respond}. The remaining load-bearing pieces of the controller and of the supporting scripts follow in the same form.
 
 \subsection*{Controller: the rest of the decision-to-enforcement path}
 
@@ -333,7 +333,7 @@ while time.time() < end:
 
 \subsection*{Evaluation and proof harnesses}
 
-\noindent \textbf{Accuracy harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
+\noindent \textbf{Conformance harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
 
 \begin{lstlisting}[style=carssrc,caption={Driving each case through the engine and scoring it against intent.},label={lst:eval}]
 def respond(src,dst,op,rate=0,dpid=1):            # one case -> the deployed decision path
@@ -604,7 +604,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.62\textwidth]{stat_confusion.png}
-\caption{Decision at scale over the 2{,}078-case labelled corpus, which is attack-heavy by design (2{,}040 attacks against 38 legitimate or exempt cases). Every attack was restricted (no false negative) and every legitimate or exempt case permitted (no false positive); because of the class imbalance the two per-class error rates, not aggregate accuracy, are the meaningful figures (a drop-everything baseline would score 98\% accuracy yet a 100\% false-positive rate). Source: \texttt{results/vast/vast.csv}.}
+\caption{Decision conformance at scale over the 2{,}078-case labelled corpus, which is attack-heavy by design (2{,}040 attacks against 38 legitimate or exempt cases). Every attack was restrained (no false negative) and every legitimate or exempt case permitted (no false positive). Because the decision is deterministic and the corpus is imbalanced, the two per-class error rates, both zero, are the meaningful figures rather than any aggregate. The attack side, where the label and the default-deny share the same registration test, is a coverage-and-robustness result; the zero false positive over the authorised cases is the trust result. Source: \texttt{results/vast/vast.csv}.}
 \label{fig:statconfusion}
 \end{figure}
 
