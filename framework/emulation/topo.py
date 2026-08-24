@@ -18,6 +18,9 @@ Layout (see the report's Chapter 3 topology figure):
                    Snort mirror, attacker vantage .2.77
   ovs2 (Cell-2)  : PLC2 .3.10, HMI2 .3.9   (reached via the transit link)
 """
+import os
+import time
+
 from mininet.net import Mininet
 from mininet.node import RemoteController, OVSSwitch
 from mininet.link import TCLink
@@ -82,8 +85,7 @@ def build():
     mbplc.cmd(f"python3 {here}/plc/modbus_server.py 192.168.2.20 > /tmp/cars_mb.log 2>&1 &")
     _wait = 2
     info(f"*** software PLCs launching (logs in /tmp/cars_*.log); waiting {_wait}s...\n")
-    import time as _t
-    _t.sleep(_wait)
+    time.sleep(_wait)
     hist.cmd(f"python3 {here}/plc/tank.py --host 192.168.2.10 > /tmp/cars_tank.log 2>&1 &")
 
     info("*** CARS emulation up. The software PLCs and tank co-sim are running.\n")
