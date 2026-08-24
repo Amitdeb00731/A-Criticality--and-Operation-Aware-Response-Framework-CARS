@@ -37,7 +37,10 @@ touch "$CTRL_LOG" "$PROC_LOG" "$BRIDGE_LOG" 2>/dev/null || true
 DASH_PID=""
 if [ -f "$DASH" ] && command -v python3 >/dev/null 2>&1; then
   pkill -f cars_dashboard.py 2>/dev/null || true
-  CARS_URL="http://127.0.0.1:8080" python3 "$DASH" >/tmp/cars_dashboard.log 2>&1 &
+  # Names for the switches this emulation's topo.py creates (dpid 1=ovs1, 3=ovsgw,
+  # 2=ovs2). Supplied by the launcher — the dashboard itself assumes nothing.
+  CARS_URL="http://127.0.0.1:8080" CARS_SWITCH_NAMES="1=ovs1,3=ovsgw,2=ovs2" \
+    python3 "$DASH" >/tmp/cars_dashboard.log 2>&1 &
   DASH_PID=$!
   sleep 1
   if kill -0 "$DASH_PID" 2>/dev/null; then

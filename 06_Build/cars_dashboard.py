@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-# CARS — IT/OT Live Topology v5 (god-level live sync).  Run on Dell #1:  python3 ~/cars_dashboard.py
-# Open http://localhost:8090 . Discovery-driven: nodes, links, PORT bindings, link health, guard drops,
-# and brain decisions all pulled live from the controller (/cars/status|hosts|ports|links|guard|audit).
-# Threaded server (no broken-pipe spam). Switches & hosts DISCOVERED; north (IT/DMZ/FW/Snort) modeled.
+# CARS — Live Topology v6 (real reflection).  Run:  python3 cars_dashboard.py   (open http://localhost:8090)
+# Fully discovery-driven: switches (any dpids/count), hosts, roles, names, criticality, links, PORT
+# bindings, link health, guard drops and brain decisions are ALL pulled live from the controller
+# (/cars/status|hosts|ports|links|guard|criticality|audit) — nothing about the topology is hardcoded.
+# The CARS Controller node is real (every switch connects to it). The IT/DMZ/enterprise-FW/Snort/NAT
+# "north" is an OPTIONAL model of the surrounding environment, drawn only with CARS_MODEL_NORTH=1.
+# Threaded server (no broken-pipe spam).
 import http.server, socketserver, urllib.request, json, os
 
 # Controller REST base. Defaults to the hardware testbed; override for the
@@ -11,6 +14,32 @@ CARS = os.environ.get("CARS_URL", "http://10.10.10.1:8080")
 PORT = int(os.environ.get("CARS_DASH_PORT", "8090"))
 REM_STATUS = "/tmp/cars_remediation_status.json"   # written by cars_remediation.py (same host)
 REM_FEED = "/tmp/cars_remediation.jsonl"
+
+
+def cfg_js():
+    """Runtime config injected into the page. Everything the dashboard draws is
+    discovered live from the controller; these only govern OPTIONAL extras:
+      CARS_MODEL_NORTH=1     also draw the modeled IT/DMZ/enterprise-FW/Snort
+                             environment around the SDN fabric (off by default —
+                             the emulation has no such north, so it stays hidden).
+      CARS_SWITCH_NAMES      friendly labels for dpids, e.g. "1=ovs1,3=ovsgw,2=ovs2".
+                             The controller only knows dpids; without this, switches
+                             are labelled 'dpid N'. This is user-supplied, not baked in.
+      CARS_GATEWAY_DPID      which switch the modeled north attaches to (default 3).
+    """
+    model = os.environ.get("CARS_MODEL_NORTH", "") not in ("", "0", "false", "no")
+    names = {}
+    for tok in os.environ.get("CARS_SWITCH_NAMES", "").split(","):
+        if "=" in tok:
+            k, v = tok.split("=", 1)
+            names[k.strip()] = v.strip()
+    gw = os.environ.get("CARS_GATEWAY_DPID", "3")
+    try:
+        gw = int(gw)
+    except ValueError:
+        gw = 3
+    return ("window.CARS_CFG=%s;" % json.dumps(
+        {"modelNorth": model, "switchNames": names, "gatewayDpid": gw}))
 
 
 def remediation_feed():
@@ -131,6 +160,7 @@ HTML = r"""<!doctype html><html><head><meta charset="utf-8"><title>CARS Live Top
 </div>
 
 <script>
+/*__CARS_CFG__*/
 var NS='http://www.w3.org/2000/svg';
 var TYPE={
  atk:{c:'#f85149',g:'!',r:18}, fw:{c:'#d9902b',g:'FW',r:16}, host:{c:'#8b949e',g:'H',r:15},
@@ -142,27 +172,37 @@ var CRIT={'192.168.2.10':'CRITICAL','192.168.3.10':'HIGH','192.168.2.9':'HIGH','
 var CRITC={CRITICAL:'#f85149',HIGH:'#d9902b',MEDIUM:'#e3b341',LOW:'#3a3f4a'};
 function acl(ip){return (window._crit&&window._crit[ip])||CRIT[ip]||null;}
 function critColor(ip){var a=acl(ip);return a?CRITC[a]:null;}
+function shortName(nm){return nm?String(nm).split(/[\/(]/)[0].trim():null;}
 function hlabel(role,dpid,ip){
- if(role==='plc')return dpid==1?'PLC1':dpid==2?'PLC2':'PLC';
- if(role==='hmi')return dpid==1?'HMI1':dpid==2?'HMI2':'HMI';
- if(role==='historian')return 'Historian'; if(role==='ews')return 'EWS'; if(role==='scada')return 'SCADA'; if(role==='remediation')return 'CARS-Remediation';
- if(role==='supervisory')return ip||'Supervisory';
- if(role==='gateway')return 'OT-FW'; if(role==='cell2gw')return 'Cell-2 GW'; if(role==='unknown')return ip||'host'; return ip;}
-var ANCH=[
+ var nm=shortName(window._names&&window._names[ip]); if(nm)return nm;   // controller's real name
+ if(role==='plc')return 'PLC'; if(role==='hmi')return 'HMI';
+ if(role==='historian')return 'Historian'; if(role==='ews')return 'EWS'; if(role==='scada')return 'SCADA';
+ if(role==='remediation')return 'Remediation'; if(role==='gateway'||role==='cell2gw')return 'Gateway';
+ if(role==='unknown'||!role)return ip||'host'; return role+(ip?' '+ip:'');}
+var CFG=window.CARS_CFG||{modelNorth:false,switchNames:{},gatewayDpid:3};
+// The CARS Controller node is real — every discovered switch connects to it. Switches
+// and hosts are DISCOVERED live (never assumed). The IT/DMZ/enterprise-FW/Snort/NAT
+// "north" is only a MODEL of the environment around the SDN fabric; it is drawn solely
+// when CARS_MODEL_NORTH is set (the emulation has no such north, so it stays hidden).
+var ANCH=[{id:'ctrl',lbl:'CARS Controller', t:'ctrl', x:350,y:70}];
+var MODEL_ANCH=[
  {id:'atk', lbl:'IT Attacker', t:'atk', model:1, ip:'10.0.40.66', x:110,y:60},
  {id:'efw', lbl:'Enterprise FW', t:'fw', model:1, x:110,y:135},
  {id:'dmz', lbl:'DMZ / Jump', t:'host', model:1, ip:'172.16.35.10', x:110,y:210},
  {id:'otfw',lbl:'OT FW (NAT)', t:'fw', model:1, ip:'192.168.2.1', x:150,y:285},
- {id:'snort',lbl:'Snort IDS', t:'ids', model:1, x:480,y:205},
- {id:'ctrl',lbl:'CARS Controller', t:'ctrl', ip:'10.10.10.1', x:350,y:80},
- {id:'sw3', lbl:'ovsgw', t:'sw', dpid:3, x:320,y:300},
- {id:'sw1', lbl:'ovs1', t:'sw', dpid:1, x:220,y:420},
- {id:'sw2', lbl:'ovs2', t:'sw', dpid:2, x:460,y:420},
- {id:'nat2',lbl:'Cell-2 NAT · PLC2 .3.10', t:'fw', model:1, ip:'192.168.3.10', x:560,y:330}];
-var SLINK=[['atk','efw','model'],['efw','dmz','model'],['dmz','otfw','model'],['otfw','sw3','model'],
-           ['snort','sw3','mirror'],['ctrl','sw3','ctl'],['ctrl','sw1','ctl'],['ctrl','sw2','ctl'],
-           ['sw3','nat2','model'],['nat2','sw2','model']];
-var SWID={1:'sw1',2:'sw2',3:'sw3'};
+ {id:'snort',lbl:'Snort IDS', t:'ids', model:1, x:480,y:205}];
+// '__gw__' resolves to the gateway switch node at link-build time.
+var MODEL_SLINK=[['atk','efw','model'],['efw','dmz','model'],['dmz','otfw','model'],
+                 ['otfw','__gw__','model'],['snort','__gw__','mirror']];
+if(CFG.modelNorth)MODEL_ANCH.forEach(function(a){ANCH.push(a);});
+var SWID={};    // dpid -> node id, filled live from discovery (any dpids, any count)
+function ensureSwitches(dpids){
+ dpids.forEach(function(d){var id='sw_'+d;
+   if(!nodes[id]){var nm=(CFG.switchNames&&CFG.switchNames[String(d)])||('dpid '+d);
+     nodes[id]=mkNode({id:id,lbl:nm,t:'sw',dpid:d,x:W/2+(Math.random()-.5)*130,y:H/2+(Math.random()-.5)*130});}
+   SWID[d]=id;});
+ Object.keys(nodes).forEach(function(k){if(k.indexOf('sw_')===0){var d=+k.slice(3);
+   if(dpids.indexOf(d)<0){ng.removeChild(nodes[k].g);delete nodes[k];delete SWID[d];}}});}
 var W=680,H=600,nodes={},drag=null,moved=0,LINKS=[];
 var lg=document.getElementById('lg'),bgl=document.getElementById('bgl'),pl=document.getElementById('pl'),ng=document.getElementById('ng'),svg=document.getElementById('net');
 function mkNode(n){var ty=TYPE[n.t];
@@ -200,7 +240,7 @@ function computeHosts(list){
  var out=[];
  Object.keys(bm).forEach(function(mac){var s=bm[mac];
    s.sort(function(a,b){return Object.keys(pm[a.dpid+':'+a.port]).length-Object.keys(pm[b.dpid+':'+b.port]).length;});
-   var h=s[0];var role=ROLE[h.ip]||'unknown';
+   var h=s[0];var role=(window._roles&&window._roles[h.ip])||ROLE[h.ip]||'unknown';
    out.push({id:'h_'+mac,mac:mac,ip:h.ip,dpid:h.dpid,port:h.port,age:h.age,role:role,
              t:TYPEOF[role]||'host',lbl:hlabel(role,h.dpid,h.ip)});});
  return out;}
@@ -212,7 +252,12 @@ function reconcile(hostNodes){
    else{ex.age=h.age;ex.port=h.port;ex.dpid=h.dpid;ex.role=h.role;ex.ip=h.ip;}});}
 function rebuildLinks(fabric,hostNodes){
  LINKS=[];
- SLINK.forEach(function(l){if(nodes[l[0]]&&nodes[l[1]])LINKS.push({a:l[0],b:l[1],k:l[2]});});
+ // control plane: the real controller to every discovered switch
+ if(nodes['ctrl'])Object.keys(SWID).forEach(function(d){if(nodes[SWID[d]])LINKS.push({a:'ctrl',b:SWID[d],k:'ctl'});});
+ // modeled environment (only when CARS_MODEL_NORTH): attach north to the gateway switch
+ if(CFG.modelNorth){var gw=SWID[CFG.gatewayDpid];
+   MODEL_SLINK.forEach(function(l){var A=l[0]==='__gw__'?gw:l[0],B=l[1]==='__gw__'?gw:l[1];
+     if(A&&B&&nodes[A]&&nodes[B])LINKS.push({a:A,b:B,k:l[2]});});}
  (fabric||[]).forEach(function(f){var A=SWID[f.src_dpid],B=SWID[f.dst_dpid];
    if(A&&B&&nodes[A]&&nodes[B]&&f.src_dpid<f.dst_dpid)
      LINKS.push({a:A,b:B,k:'fabric',aport:f.src_port,ad:f.src_dpid,bport:f.dst_port,bd:f.dst_dpid});});
@@ -251,7 +296,7 @@ function showTip(n,ev){var t=document.getElementById('tip');
 function inspect(n){document.getElementById('inspH').textContent='Node · '+n.lbl;
  function r(k,v){return v!=null&&v!==''?'<tr><td class=sub style="padding:3px 0">'+k+'</td><td style="padding:3px 0">'+v+'</td></tr>':'';}
  var dn=n.mac&&window._down&&window._down['h_'+n.mac];
- var h='<table style="font-size:12px;width:100%">'+r('Type',n.t)+r('Role',n.role)+r('IP',n.ip?'<span class=t>'+n.ip+'</span>':'')
+ var h='<table style="font-size:12px;width:100%">'+r('Type',n.t)+r('Role',n.role)+r('Name',n.ip&&window._names&&window._names[n.ip])+r('IP',n.ip?'<span class=t>'+n.ip+'</span>':'')
   +r('MAC',n.mac?'<span class=t>'+n.mac+'</span>':'')+r('Location',n.dpid?('dpid '+n.dpid+(n.port!=null?' · port '+n.port:'')):(n.model?'modeled (not discovered)':''))
   +r('Last seen (ctrl)',n.age!=null?n.age+'s ago':'')+r('Link',n.dpid?(dn?'<span class=down>DOWN</span>':'<span class=up>up</span>'):'')
   +r('Source',n.model?'model':'discovered');
@@ -319,7 +364,9 @@ function poll(){
    return fetch('/api/'+e).then(function(r){return r.json();}).catch(function(){return {error:1};});}))
  .then(function(res){
    var st=res[0],ho=res[1],po=res[2],li=res[3],gu=res[4],au=res[5],df=res[6],mt=res[7],rem=res[8],crit=res[9];
-   window._crit=(crit&&crit.criticality)||window._crit||{};for(var _k in nodes){var _n=nodes[_k];if(_n.cr){_n.cr.setAttribute('stroke',critColor(_n.ip)||'none');}}
+   window._crit=(crit&&crit.criticality)||window._crit||{};
+   window._roles=(crit&&crit.roles)||window._roles||{};window._names=(crit&&crit.names)||window._names||{};
+   for(var _k in nodes){var _n=nodes[_k];if(_n.cr){_n.cr.setAttribute('stroke',critColor(_n.ip)||'none');}}
    window._armed=!!(df&&df.enforce_enabled);window._maint=!!(mt&&mt.active);
    var db=document.getElementById('defbtn');db.textContent='DEFENSE: '+(window._armed?'ARMED':'DISARMED');
    db.style.borderColor=window._armed?'#3fb950':'#f85149';db.style.color=window._armed?'#7ee2a8':'#ff7b72';
@@ -330,8 +377,11 @@ function poll(){
    document.getElementById('live').className=off?'dot off':'dot';
    document.getElementById('upd').textContent=(off?'controller offline · ':'synced ')+new Date().toLocaleTimeString();
    var sw=st.switches||[];
-   document.getElementById('sw').innerHTML=[['ovsgw',3],['ovs1',1],['ovs2',2]].map(function(x){
-     var up=sw.indexOf(x[1])>=0;return '<span class="tier '+(up?'OPERATIONAL':'FORBIDDEN')+'" style="margin:2px 4px 2px 0;display:inline-block">'+x[0]+' '+(up?'up':'down')+'</span>';}).join('')
+   ensureSwitches(sw);
+   document.getElementById('sw').innerHTML=sw.slice().sort(function(a,b){return a-b;}).map(function(d){
+     var nm=(CFG.switchNames&&CFG.switchNames[String(d)])||('dpid '+d);
+     return '<span class="tier OPERATIONAL" style="margin:2px 4px 2px 0;display:inline-block">'+nm+' up</span>';}).join('')
+     +(sw.length?'':'<span class="none">no switches connected yet</span>')
      +'<span class="tier '+(off?'FORBIDDEN':'OPERATIONAL')+'" style="display:inline-block">controller '+(off?'DOWN':'ok')+'</span>'
      +'<div style="margin-top:7px"><span class="tier '+(st.guard?'OPERATIONAL':'FORBIDDEN')+'">src-guard '+(st.guard?'armed':'off')+'</span> <span class="tier '+(st.arp_guard?'OPERATIONAL':'FORBIDDEN')+'">arp-guard '+(st.arp_guard?'armed':'off')+'</span></div>';
    var drops=(gu&&gu.drops)||{};var nz=Object.keys(drops).filter(function(k){return drops[k]>0;}).sort(function(a,b){return drops[b]-drops[a];});
@@ -348,12 +398,13 @@ function poll(){
      if(l.k==='host'){up=(ports[String(l.bd)]||{})[String(l.bport)]!=='down';}
      else if(l.k==='fabric'){up=(ports[String(l.ad)]||{})[String(l.aport)]!=='down'&&(ports[String(l.bd)]||{})[String(l.bport)]!=='down';}
      l.el.setAttribute('class','lk '+l.k+(up?'':' broken'));});
-   [['sw1',1],['sw2',2],['sw3',3]].forEach(function(x){if(nodes[x[0]])nodes[x[0]].c.setAttribute('stroke',sw.indexOf(x[1])>=0?TYPE.sw.c:'#59626e');});
+   Object.keys(SWID).forEach(function(d){var id=SWID[d];if(nodes[id])nodes[id].c.setAttribute('stroke',sw.indexOf(+d)>=0?TYPE.sw.c:'#59626e');});
    hn.forEach(function(h){var s2=(ports[String(h.dpid)]||{})[String(h.port)];var dn=s2==='down';
      window._down[h.id]=dn;if(nodes[h.id]){nodes[h.id].c.setAttribute('stroke',dn?'#f85149':TYPE[h.t].c);nodes[h.id].tx.setAttribute('fill',dn?'#f85149':'#c9d1d9');}});
    document.getElementById('inv').innerHTML='<tr><td class=sub>device</td><td class=sub>ip</td><td class=sub>@ port</td><td class=sub>link</td></tr>'+
      hn.map(function(h){var dn=window._down[h.id];
-       return '<tr><td><b>'+h.lbl+'</b></td><td class=t>'+(h.ip||'?')+'</td><td class=sub>ovs'+h.dpid+':p'+h.port+'</td><td class="'+(dn?'down':'up')+'">'+(dn?'DOWN':'up')+'</td></tr>';}).join('');
+       var swn=(CFG.switchNames&&CFG.switchNames[String(h.dpid)])||('dpid'+h.dpid);
+       return '<tr><td><b>'+h.lbl+'</b></td><td class=t>'+(h.ip||'?')+'</td><td class=sub>'+swn+':p'+h.port+'</td><td class="'+(dn?'down':'up')+'">'+(dn?'DOWN':'up')+'</td></tr>';}).join('');
    var seen={},blocks=[];(st.conduit_blocks||[]).concat(st.mac_blocks||[]).forEach(function(x){var k=x.replace(/^dpid\d+:/,'');if(!seen[k]){seen[k]=1;blocks.push(k);}});
    window._blocks=blocks;
    document.getElementById('blocks').innerHTML=blocks.length?blocks.map(function(x){return '<div class="blk">&#9940; '+x+'</div>';}).join(''):'<div class="none">No active blocks — all conduits flowing.</div>';
@@ -409,7 +460,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             if self.path == "/":
-                self._s(HTML.encode(), "text/html")
+                self._s(HTML.replace("/*__CARS_CFG__*/", cfg_js()).encode(), "text/html")
             elif self.path == "/api/remediation":
                 self._s(remediation_feed(), "application/json")
             elif self.path.startswith("/api/"):

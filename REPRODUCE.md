@@ -118,7 +118,9 @@ It opens a tmux 2×2 grid and launches the live web topology:
 | **FLOWS** (`ovs-ofctl` across `ovs1/ovsgw/ovs2`) | the rules themselves, live: `0xa2` allowlist, `0xca` reactive isolate (`hard_timeout=75`), `priority=55` default-deny with a climbing `n_packets`. |
 | **PROCESS** (`/tmp/cars_s7.log`) | the tank loop running — `level / pump / interference` — undisturbed through the attack. |
 | **DPI** (`/tmp/cars_bridge.log` + Snort alerts) | Snort firing and the bridge's operation-aware `REPORT … op=CONTROL`. |
-| **Web topology** — `http://localhost:8090` | a live SVG of the discovered switches, hosts, port bindings, GUARD drops and the colour-coded decision feed — the "testbed" picture. |
+| **Web topology** — `http://localhost:8090` | a live SVG of your *actual* running fabric — switches, hosts, roles, names, criticality, links, port bindings, GUARD drops and the colour-coded decision feed, **all discovered live from the controller** (nothing about the topology is hardcoded). Hosts appear as they're learned; a switch that drops disappears. |
+
+The topology view is a true reflection of the running Mininet: it draws whatever the controller has discovered (`/cars/status|hosts|links|ports|criticality`), so a different `site.yaml` or a changed `topo.py` shows up as-is. `observe.sh` passes the emulation's switch names (`dpid 1=ovs1, 3=ovsgw, 2=ovs2`) for friendly labels; without them switches read `dpid N`. The modeled IT/DMZ/Snort "north" is off by default — set `CARS_MODEL_NORTH=1` to draw it.
 
 Fire the attack (from the `mininet>` prompt) while this is up and you watch the whole chain in real time: Snort alert → bridge `op=CONTROL` → controller `ISOLATE` → a `0xca` flow appears → the tank keeps oscillating → 75 s later the flow auto-heals. Detach the grid with `Ctrl-b` then `d`; stop it with `tmux kill-session -t cars`.
 

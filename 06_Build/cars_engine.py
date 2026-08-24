@@ -352,7 +352,11 @@ class CARSEngine(app_manager.OSKenApp):
         if method == 'GET' and path == '/cars/guard':
             return reply({"drops": self.guard_stats})
         if method == 'GET' and path == '/cars/criticality':
-            return reply({"criticality": CRITICALITY, "weights": CW})
+            # roles/names come straight from the (site-config-overlaid) REGISTRY, so
+            # the dashboard reflects the controller's real assignments, not a static map.
+            return reply({"criticality": CRITICALITY, "weights": CW,
+                          "roles": {ip: d.get("role") for ip, d in REGISTRY.items()},
+                          "names": {ip: d.get("name") for ip, d in REGISTRY.items()}})
         if method == 'GET' and path == '/cars/defense':
             return reply({"enforce_enabled": self.enforce_enabled})
         if method == 'POST' and path == '/cars/defense':
