@@ -60,7 +60,25 @@ Table~0 performs identity binding, the defence against spoofing. Each protected 
 
 Table~1 is the stateful policy stage, and it carries connection state in the data plane in the manner introduced by AvantGuard \cite{shin2013avantguard}. An untracked packet is first submitted to connection tracking at priority 90 and re-enters the table. A packet belonging to an already established connection is admitted at priority 85, which is what allows a protected device such as the HMI to receive the replies to connections it began while remaining shielded from new inbound connections. New connections are then judged against the proactive policy. A small allowlist of conduits, each naming a source, a destination and a service port, is permitted and committed to the connection table at priority 80; the deployed policy holds a small set of such conduits, including the operator and engineering paths to PLC1 and the cross-cell collector path to PLC2. A new connection to a protected asset that matches no conduit is dropped at priority 55, the default-deny that closes an asset to everything except its named conduits, and a new connection to any other asset is committed and passed at priority 10. The reactive responses described in Section~\ref{sec:model} are installed into this same table by the controller at higher priorities, so that an isolate or a block takes precedence over the proactive rules for as long as an attack persists.
 
-Table~2 forwards. It floods broadcast traffic, sends a packet whose source and destination MAC pair has been learned to the correct port, and refers an unknown destination to the controller so that the source can be learned. Separating the three concerns, identity at Table~0, connection state and policy at Table~1, and forwarding at Table~2, means each is enforced on its own, and a packet cannot reach forwarding by evading an earlier stage.
+Table~2 forwards. It floods broadcast traffic, sends a packet whose source and destination MAC pair has been learned to the correct port, and refers an unknown destination to the controller so that the source can be learned. Separating the three concerns, identity at Table~0, connection state and policy at Table~1, and forwarding at Table~2, means each is enforced on its own, and a packet cannot reach forwarding by evading an earlier stage. The admission logic a packet meets is stated as pseudocode in Listing~\ref{lst:pipeline}, in the priority order the switch evaluates.
+
+\begin{lstlisting}[style=carspseudo,caption={The three-table admission a packet meets, in the switch's priority order: identity binding, then the stateful policy with the reactive responses on top, then forwarding.},label={lst:pipeline}]
+on packet P at a switch, ingress port p:
+    // Table 0 - identity binding (anti-spoof)
+    if (p, P.mac, P.ip) is a registered binding:  goto Table 1   // bound identity passes
+    else if p is an inter-switch uplink:           goto Table 1   // already checked upstream
+    else if P.ip is a protected address:           DROP           // claimed a protected identity from the wrong port
+    else:                                           goto Table 1
+
+    // Table 1 - stateful policy, highest matching priority wins
+    if a reactive rule matches P.src:              DROP or meter  // an active isolate / block / throttle
+    else if P is an established connection:         goto Table 2   // return traffic of an allowed session
+    else if (P.src, P.dst, P.port) is allowlisted: commit; goto Table 2   // a named conduit
+    else if P.dst is a protected asset:            DROP           // default-deny
+    else:                                           commit; goto Table 2
+
+    // Table 2 - learning switch: forward to the learned port, else flood and learn
+\end{lstlisting}
 
 The proactive rules carry the cookie \texttt{0x00a2} and the reactive rules carry \texttt{0x00ca}. This separation is used by the flow-integrity checker of Section~\ref{sec:implementation} to tell the fixed policy from the responses installed at run time.
 
@@ -133,6 +151,38 @@ any & any & any & FORBIDDEN \\
 \label{fig:decision}
 \end{figure}
 
+The decision, from the source role and operation through the criticality elevation to the graded response, is stated as pseudocode in Listing~\ref{lst:decide}, independent of the implementation language; the deployed code that realises it is annotated in Appendix~\ref{appx:logic}.
+
+\begin{lstlisting}[style=carspseudo,caption={The CARS operation decision. A tier is fixed by first match in the rulebook, a sensitive operation on a critical asset is elevated, and the tier, the criticality weight and the arrival rate select the graded response.},label={lst:decide}]
+function DECIDE(source, dest, operation, rate):
+    role  <- registry role of source          // 'unknown' if unregistered
+    tier  <- FORBIDDEN                          // default for the unknown
+    for each (r, d, op, t) in RULEBOOK:         // first match wins
+        if r matches role and d matches role(dest) and op matches operation:
+            tier <- t
+            break
+    weight <- criticality weight of dest        // 3, 2, 1, 0 for CRITICAL..LOW
+    if tier = SENSITIVE and weight = 3 and not in maintenance window:
+        tier <- FORBIDDEN                       // elevate on a critical asset
+    flood <- rate >= FLOOD_RATE and source not flood-exempt
+    return SELECT_RESPONSE(tier, weight, flood, offences of source)
+
+function SELECT_RESPONSE(tier, weight, flood, count):
+    if tier = CRITICAL:
+        return REFUSE                           // safety loop: mirror and alert, never cut
+    if tier = OPERATIONAL:
+        if not flood:  return ALLOW
+        if weight = 3: return BLOCK             // a flood on a critical asset is cut
+        return THROTTLE, then BLOCK on persistence
+    if tier = SENSITIVE:
+        if flood or weight = 3:  return BLOCK
+        return THROTTLE, then BLOCK on persistence
+    // tier = FORBIDDEN: a single command can harm
+    if source is a shared (NAT) identity:  return BLOCK   // cut the conduit, not every host behind it
+    if count < escalation-threshold(weight):  return BLOCK
+    return ISOLATE
+\end{lstlisting}
+
 \subsection{Proactive policy}
 
 Alongside the per-operation decision, a proactive policy fixes which connections may exist at all, independently of any live detection. It is a short allowlist of conduits, each a source, a destination and a service port, together with a default-deny on the protected assets. The deployed policy, loaded from a run-time file and installed as the priority-80 and priority-55 flows of Section~\ref{sec:pipeline}, holds a small set of conduits: the operator, engineering, remediation and historian paths to PLC1; the operator and historian paths to the Modbus unit; the engineering path to HMI1; and the cross-cell collector path to PLC2. Every other new connection to a protected asset is denied. The exact conduit list, with its addresses and service ports, is reproduced in Appendix~\ref{appx:material}. An unregistered host is therefore refused at the connection level before any operation is considered, while the rulebook governs what the permitted parties may then do. This allowlist-with-default-deny realises a software-defined firewall on the industrial fabric, the approach also taken for Industry~4.0 manufacturing networks \cite{tsuchiya2018firewall}, here narrowed to named conduits and paired with the stateful and operation-aware stages that the rest of this chapter describes.
@@ -170,7 +220,22 @@ Detection and response are joined by the chain shown in Figure~\ref{fig:detresp}
 
 \subsection{The response ladder}
 
-The controller selects one of seven graded responses and realises it in OpenFlow. ALLOW and MONITOR admit the traffic and record it. THROTTLE attaches a rate-limiting meter to the conduit. DEFLECT rewrites the destination to a honeypot and installs the forward and reverse rules for it. ISOLATE drops all traffic from the offending source at priority 110, and BLOCK drops the single offending conduit at priority 100. REFUSE is reserved for the safety-critical loop and only mirrors and alerts, never enforcing, so that the operator's control of the process can never be cut by the defence. Every reactive rule carries the cookie \texttt{0x00ca} and a criticality-scaled timeout of $30 + 15w$ seconds, so it expires and self-heals unless the attack persists. The thirty-second base is set to outlast an automated reconnect: a default TCP retransmission sequence spans roughly thirty-one seconds, so a thirty-second quarantine survives a full reconnect attempt rather than releasing the source mid-retry, while staying short enough that a mistaken block on a legitimate source clears in well under a minute. The fifteen-second step per weight makes the hold proportional to consequence, producing the 30, 45, 60 and 75 second ladder across the four tiers, measured in Section~\ref{sec:evalcriticality}.
+The controller selects one of seven graded responses and realises it in OpenFlow. ALLOW and MONITOR admit the traffic and record it. THROTTLE attaches a rate-limiting meter to the conduit. DEFLECT rewrites the destination to a honeypot and installs the forward and reverse rules for it. ISOLATE drops all traffic from the offending source at priority 110, and BLOCK drops the single offending conduit at priority 100. REFUSE is reserved for the safety-critical loop and only mirrors and alerts, never enforcing, so that the operator's control of the process can never be cut by the defence. Every reactive rule carries the cookie \texttt{0x00ca} and a criticality-scaled timeout of $30 + 15w$ seconds, so it expires and self-heals unless the attack persists. The thirty-second base is set to outlast an automated reconnect: a default TCP retransmission sequence spans roughly thirty-one seconds, so a thirty-second quarantine survives a full reconnect attempt rather than releasing the source mid-retry, while staying short enough that a mistaken block on a legitimate source clears in well under a minute. The fifteen-second step per weight makes the hold proportional to consequence, producing the 30, 45, 60 and 75 second ladder across the four tiers, measured in Section~\ref{sec:evalcriticality}. How a chosen response becomes a flow rule, and how it self-heals, is stated as pseudocode in Listing~\ref{lst:enforce}.
+
+\begin{lstlisting}[style=carspseudo,caption={Turning a response into an OpenFlow rule with a criticality-scaled timeout, and the self-heal on expiry that releases it unless the attack renews the detection.},label={lst:enforce}]
+function ENFORCE(response, source, dest, weight):
+    timeout <- 30 + 15 * weight                    // 75 / 60 / 45 / 30 s for CRITICAL..LOW
+    if response = ISOLATE:
+        install drop  matching (src = source)               // quarantine the source on every conduit
+    else if response = BLOCK:
+        install drop  matching (src = source, dst = dest)   // cut only the offending conduit
+    else if response = THROTTLE:
+        install meter matching (src = source, dst = dest)   // rate-limit, do not cut
+    stamp the rule with cookie 0x00ca and hard_timeout = timeout
+
+on hard_timeout expiry of a reactive rule:
+    remove the rule and clear the source's offence count    // self-heals unless the attack renews it
+\end{lstlisting}
 
 \subsection{Forwarding integrity and control authentication}
 
