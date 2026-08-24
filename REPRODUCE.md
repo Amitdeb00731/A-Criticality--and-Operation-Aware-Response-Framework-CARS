@@ -101,6 +101,27 @@ What you should see (validated, Ubuntu 24.04):
 
 This reproduces, with no hardware, every core property: criticality-aware (the 75s scaling), operation-aware (TCP ALLOW vs S7-CONTROL ISOLATE on one conduit), bounded and reversible (the auto-heal), evidence-generating (the decision logs), and process-preserving (interference 0). The self-plant loop and its interference detection are additionally self-tested via `python3 emulation/plc/s7_server.py` under `CARS_SELF_PLANT=1`.
 
+### Watch it all live (one screen)
+
+Rather than juggling four `tail -f`s, one command tiles every proof stream and brings up the topology view:
+
+```bash
+sudo apt install -y tmux                                  # once
+sudo -E env "PATH=$PATH" bash emulation/observe.sh        # after demo.sh (+ dpi.sh)
+```
+
+It opens a tmux 2×2 grid and launches the live web topology:
+
+| Panel | What it proves |
+|---|---|
+| **CONTROLLER** (`/tmp/cars_controller.log`) | GUARD installs, and each BRAIN decision — `ALLOW`, `FORBIDDEN … ISOLATE 75s`, and `AUTO-HEALED` when the window lapses. |
+| **FLOWS** (`ovs-ofctl` across `ovs1/ovsgw/ovs2`) | the rules themselves, live: `0xa2` allowlist, `0xca` reactive isolate (`hard_timeout=75`), `priority=55` default-deny with a climbing `n_packets`. |
+| **PROCESS** (`/tmp/cars_s7.log`) | the tank loop running — `level / pump / interference` — undisturbed through the attack. |
+| **DPI** (`/tmp/cars_bridge.log` + Snort alerts) | Snort firing and the bridge's operation-aware `REPORT … op=CONTROL`. |
+| **Web topology** — `http://localhost:8090` | a live SVG of the discovered switches, hosts, port bindings, GUARD drops and the colour-coded decision feed — the "testbed" picture. |
+
+Fire the attack (from the `mininet>` prompt) while this is up and you watch the whole chain in real time: Snort alert → bridge `op=CONTROL` → controller `ISOLATE` → a `0xca` flow appears → the tank keeps oscillating → 75 s later the flow auto-heals. Detach the grid with `Ctrl-b` then `d`; stop it with `tmux kill-session -t cars`.
+
 ---
 
 ## Level 3 — hardware testbed (real PLCs)

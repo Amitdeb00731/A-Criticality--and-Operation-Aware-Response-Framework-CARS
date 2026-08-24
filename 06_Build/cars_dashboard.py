@@ -3,10 +3,12 @@
 # Open http://localhost:8090 . Discovery-driven: nodes, links, PORT bindings, link health, guard drops,
 # and brain decisions all pulled live from the controller (/cars/status|hosts|ports|links|guard|audit).
 # Threaded server (no broken-pipe spam). Switches & hosts DISCOVERED; north (IT/DMZ/FW/Snort) modeled.
-import http.server, socketserver, urllib.request, json
+import http.server, socketserver, urllib.request, json, os
 
-CARS = "http://10.10.10.1:8080"
-PORT = 8090
+# Controller REST base. Defaults to the hardware testbed; override for the
+# emulation, e.g. CARS_URL=http://127.0.0.1:8080 python3 cars_dashboard.py
+CARS = os.environ.get("CARS_URL", "http://10.10.10.1:8080")
+PORT = int(os.environ.get("CARS_DASH_PORT", "8090"))
 REM_STATUS = "/tmp/cars_remediation_status.json"   # written by cars_remediation.py (same host)
 REM_FEED = "/tmp/cars_remediation.jsonl"
 
