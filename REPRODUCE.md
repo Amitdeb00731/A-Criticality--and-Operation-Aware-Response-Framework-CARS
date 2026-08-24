@@ -53,7 +53,7 @@ sudo -E env "PATH=$PATH" bash emulation/demo.sh
 
 ```
 hist cat /tmp/cars_tank.log
-atk python3 ../../06_Build/s7_write.py --host 192.168.2.10
+atk python3 ../06_Build/s7_write.py --host 192.168.2.10
 sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10
 ```
 
@@ -84,7 +84,7 @@ sudo -E env "PATH=$PATH" bash emulation/dpi.sh
 Then, at the `mininet>` prompt (terminal A), attack from an **allowlisted** host doing a **forbidden** op:
 
 ```
-scada python3 ../../06_Build/s7_write.py --host 192.168.2.10 --count 5
+scada python3 ../06_Build/s7_write.py --host 192.168.2.10 --count 5
 sh ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca
 ```
 
@@ -95,7 +95,7 @@ What you should see:
 - **Flows**: a `cookie=0xca` rule on `ovsgw` matching `192.168.2.31`.
 - **Process** (`/tmp/cars_s7.log`): the PLC's `interference` counter ticks up **once** (the first write leaked on the allowlisted conduit — the report's Gap 3) and then **stops** as the isolate cuts the source; the level keeps oscillating. The attacker is cut; the process is not.
 
-> Contrast to prove the *operation* axis: `scada python3 ../../06_Build/s7_write.py --host 192.168.2.10 --read` performs an S7 **read**. It fires `CARS-S7-READ-var`, is classified OPERATIONAL, and is **not** isolated — same host, same conduit, different operation, different response.
+> Contrast to prove the *operation* axis: `scada python3 ../06_Build/s7_write.py --host 192.168.2.10 --read` performs an S7 **read**. It fires `CARS-S7-READ-var`, is classified OPERATIONAL, and is **not** isolated — same host, same conduit, different operation, different response.
 
 The self-plant loop and its interference detection are self-tested (`python3 emulation/plc/s7_server.py` under `CARS_SELF_PLANT=1`); the Snort SPAN + bridge + isolate is the runbook above.
 
@@ -114,7 +114,9 @@ Use `examples/site.testbed.yaml` (real GUARD bindings). The system runs as the `
 | `osken-manager` missing, `No module named 'os_ken.cmd'` | os-ken 4.x wheels omit the runner. Pin `os-ken>=2.7,<3` (the `[controller]` extra now does). |
 | Controller won't run on Python 3.12 | os-ken isn't 3.12-ready — use a **Python 3.11** venv. The self-test (Level 1) is fine on 3.12. |
 | `No module named 'mininet'` (under the venv) | apt installs Mininet into system Python only. `pip install mininet` into the venv. |
-| `env: 'bash': No such file` / preflight `MISSING: osken-manager` under sudo | Run `sudo -E env "PATH=$PATH" bash emulation/demo.sh` to carry the venv PATH into root. |
+| `env: 'bash': No such file` / preflight `MISSING: osken-manager` (or `python-snap7`) under sudo | The venv must be **active in that same terminal** first, so `$PATH` has it: `source ~/cars311/bin/activate` then `sudo -E env "PATH=$PATH" bash emulation/demo.sh`. |
+| `python3: can't open file '…/framework/../../06_Build/s7_write.py'` | The Mininet CLI runs from `framework/`, so the attack path is `../06_Build/s7_write.py` (one level), or use the absolute path the banner prints. |
+| `bash: spython3: command not found` in the Mininet CLI | A paste merged two lines (`scada`+`python3`). Type the attack command on its own line. |
 | Legit hosts dropped as `SPOOFED`, tank `No route to host` | GUARD bindings are physical port/MAC. Use `examples/site.emulation.yaml` (demo.sh defaults to it). |
 | `s7_write.py: error: required: --host` | Use `--host 192.168.2.10`. |
 | `ovs-ofctl: 127.0.0.1 is not a bridge` | In the Mininet CLI, dump flows with `sh ovs-ofctl …` (OVS bridges live in the root namespace). |
