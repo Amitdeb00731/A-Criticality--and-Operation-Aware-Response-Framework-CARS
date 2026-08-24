@@ -26,6 +26,9 @@ echo "== clean any prior mininet state =="
 mn -c >/dev/null 2>&1 || true
 
 echo "== starting CARS controller (config: $SITE) =="
+# the engine still writes its audit log and seeds rulebook.json/a2_policy.json under
+# this fixed path; create it so a fresh host (any username) does not trip on it.
+mkdir -p /home/msclab/cars 2>/dev/null || true
 MANAGER="$(command -v osken-manager || command -v ryu-manager)"
 CARS_SITE="$SITE" "$MANAGER" "$ENGINE" > /tmp/cars_controller.log 2>&1 &
 CTRL_PID=$!
