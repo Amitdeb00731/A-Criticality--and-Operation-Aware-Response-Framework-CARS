@@ -61,3 +61,7 @@ Thumbs.db
 # tooling caches
 .ruff_cache/
 .pytest_cache/
+
+# python build dirs (editable installs)
+build/
+*.egg-link
