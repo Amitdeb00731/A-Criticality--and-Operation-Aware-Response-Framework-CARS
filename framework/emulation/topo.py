@@ -80,20 +80,42 @@ def build():
 
     # auto-start the software PLCs and the tank co-sim on their hosts, so the
     # emulation is turnkey: the operator only has to launch an attack.
+    #
+    # CARS_SELF_PLANT: run the plant INSIDE the PLC (like a real CPU's ladder
+    # logic) and do NOT start the external tank client. Then the only S7
+    # write-var on the wire is an attack — required for the reactive DPI demo,
+    # where an external legitimate control-write would itself trip the S7-CONTROL
+    # rule. Default (unset) keeps the validated tank.py-driven proactive demo.
+    self_plant = os.environ.get("CARS_SELF_PLANT", "") not in ("", "0", "false", "no")
     here = os.path.dirname(os.path.abspath(__file__))
-    plc1.cmd(f"python3 {here}/plc/s7_server.py 192.168.2.10 > /tmp/cars_s7.log 2>&1 &")
+    s7_env = "CARS_SELF_PLANT=1 " if self_plant else ""
+    plc1.cmd(f"{s7_env}python3 {here}/plc/s7_server.py 192.168.2.10 > /tmp/cars_s7.log 2>&1 &")
     mbplc.cmd(f"python3 {here}/plc/modbus_server.py 192.168.2.20 > /tmp/cars_mb.log 2>&1 &")
     _wait = 2
     info(f"*** software PLCs launching (logs in /tmp/cars_*.log); waiting {_wait}s...\n")
     time.sleep(_wait)
-    hist.cmd(f"python3 {here}/plc/tank.py --host 192.168.2.10 > /tmp/cars_tank.log 2>&1 &")
+    if self_plant:
+        info("*** SELF-PLANT mode: the PLC runs the tank loop internally "
+             "(process log: /tmp/cars_s7.log); no external tank client.\n")
+    else:
+        hist.cmd(f"python3 {here}/plc/tank.py --host 192.168.2.10 > /tmp/cars_tank.log 2>&1 &")
 
     info("*** CARS emulation up. The software PLCs and tank co-sim are running.\n")
     info("*** Confirm the controller is up (CARS_SITE=... osken-manager ../06_Build/cars_engine.py),\n")
-    info("*** then launch an attack from the Mininet CLI, e.g.:\n")
-    info("      atk python3 " + os.path.join(here, "..", "..", "06_Build", "s7_write.py") + " --host 192.168.2.10\n")
-    info("*** the attacker is default-denied; see the drop:\n")
-    info("      sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10   (priority=55 drop, n_packets>0)\n")
+    s7w = os.path.join(here, "..", "..", "06_Build", "s7_write.py")
+    if self_plant:
+        info("*** reactive DPI demo: start Snort + the bridge in a 2nd root terminal\n")
+        info("      sudo -E env \"PATH=$PATH\" bash emulation/dpi.sh\n")
+        info("*** then attack from an ALLOWLISTED host doing a FORBIDDEN op:\n")
+        info(f"      scada python3 {s7w} --host 192.168.2.10 --count 5\n")
+        info("*** first write leaks (allowlisted), then DPI -> 0x00ca ISOLATE on .2.31:\n")
+        info("      sh ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca\n")
+        info("*** and the process keeps running (see /tmp/cars_s7.log: interference stops).\n")
+    else:
+        info("*** then launch an attack from the Mininet CLI, e.g.:\n")
+        info(f"      atk python3 {s7w} --host 192.168.2.10\n")
+        info("*** the attacker is default-denied; see the drop:\n")
+        info("      sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10   (priority=55 drop, n_packets>0)\n")
     CLI(net)
     net.stop()
 

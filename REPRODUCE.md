@@ -67,9 +67,37 @@ sh ovs-ofctl -O OpenFlow13 dump-flows ovs1 | grep 192.168.2.10
 
 That is the Chapter 4 two-pivot proactive result, reproduced end to end on a blank machine.
 
-### The operation-aware (DPI) half — extension
+### The operation-aware (DPI) half — reactive `0x00ca` isolate
 
-The reactive `0x00ca` isolate fires from a Snort DPI alert, so it additionally needs Snort running on the gateway mirror with `06_Build/cars.rules`, feeding `snort_bridge.py` to `/cars/respond`. Without it, the **proactive** layer above still stops any unregistered attacker; the DPI layer adds operation-aware response for a compromised, allowlisted conduit.
+The proactive demo above stops an *unregistered* attacker at the allowlist. The reactive path adds the operation-aware response for a **compromised, allowlisted** conduit: a host that is *allowed* to talk to a PLC but issues a **forbidden operation** (an S7 write to a CRITICAL CPU). Detection is Snort DPI; the graded decision and the criticality-scaled `0x00ca` isolate are the controller's.
+
+One prerequisite makes this honest in emulation. On the hardware testbed the PLC ran its own ladder logic, so the *only* S7 write on the wire was an attack. In software, the tank is normally driven by an external client (`tank.py`) — those writes would themselves trip the S7-CONTROL rule. So run the PLC in **self-plant** mode, where the bang-bang loop runs *inside* the PLC (no legitimate control-write on the wire):
+
+```bash
+# terminal A — controller + fabric, PLC runs the plant itself
+sudo -E env "PATH=$PATH" CARS_SELF_PLANT=1 bash emulation/demo.sh
+
+# terminal B — Snort on the gateway SPAN + the Snort->controller bridge
+sudo -E env "PATH=$PATH" bash emulation/dpi.sh
+```
+
+Then, at the `mininet>` prompt (terminal A), attack from an **allowlisted** host doing a **forbidden** op:
+
+```
+scada python3 ../../06_Build/s7_write.py --host 192.168.2.10 --count 5
+sh ovs-ofctl -O OpenFlow13 dump-flows ovsgw | grep 0xca
+```
+
+What you should see:
+
+- **Bridge** (`/tmp/cars_bridge.log`): `REPORT 192.168.2.31 -> 192.168.2.10 S7 op=CONTROL … | CARS: …` — Snort fired `CARS-S7-CONTROL-write` and the bridge reported the *operation*, not just "TCP".
+- **Controller** (`/tmp/cars_controller.log`): the engine classifies CONTROL-on-CRITICAL-PLC as **FORBIDDEN** and installs an **ISOLATE** on `192.168.2.31`, cookie `0xca`, with the criticality-scaled timeout.
+- **Flows**: a `cookie=0xca` rule on `ovsgw` matching `192.168.2.31`.
+- **Process** (`/tmp/cars_s7.log`): the PLC's `interference` counter ticks up **once** (the first write leaked on the allowlisted conduit — the report's Gap 3) and then **stops** as the isolate cuts the source; the level keeps oscillating. The attacker is cut; the process is not.
+
+> Contrast to prove the *operation* axis: `scada python3 ../../06_Build/s7_write.py --host 192.168.2.10 --read` performs an S7 **read**. It fires `CARS-S7-READ-var`, is classified OPERATIONAL, and is **not** isolated — same host, same conduit, different operation, different response.
+
+The self-plant loop and its interference detection are self-tested (`python3 emulation/plc/s7_server.py` under `CARS_SELF_PLANT=1`); the Snort SPAN + bridge + isolate is the runbook above.
 
 ---
 
@@ -90,6 +118,9 @@ Use `examples/site.testbed.yaml` (real GUARD bindings). The system runs as the `
 | Legit hosts dropped as `SPOOFED`, tank `No route to host` | GUARD bindings are physical port/MAC. Use `examples/site.emulation.yaml` (demo.sh defaults to it). |
 | `s7_write.py: error: required: --host` | Use `--host 192.168.2.10`. |
 | `ovs-ofctl: 127.0.0.1 is not a bridge` | In the Mininet CLI, dump flows with `sh ovs-ofctl …` (OVS bridges live in the root namespace). |
+| DPI: the tank host gets isolated / interference floods | You skipped self-plant. Start terminal A with `CARS_SELF_PLANT=1` so the PLC (not an external client) drives the actuator. |
+| DPI: no `0xca` rule appears after the attack | Check `/tmp/cars_bridge.log` (did Snort alert?) and `/tmp/cars_snort.log`. Snort must be 2.9 for `cars.conf` (stream5); `apt install snort` on 24.04 gives 2.9. |
+| DPI: bridge can't reach the controller | The bridge posts to `127.0.0.1:8080`. Run `dpi.sh` on the same host as the controller; the WSGI binds `0.0.0.0:8080` and `/cars/respond` needs no token. |
 
 ---
 
