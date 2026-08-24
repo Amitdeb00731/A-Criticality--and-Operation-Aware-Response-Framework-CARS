@@ -1,6 +1,6 @@
 # Reproducing CARS
 
-Three levels, in increasing hardware need: the decision logic (any machine), the full defended attack in emulation (a Linux host with root), and the hardware testbed (real PLCs).
+Three levels, in increasing hardware need: the decision logic (any machine), the full defended attack in emulation (a Linux host with root), and the hardware testbed (real PLCs). **Levels 1–2 need no ICS hardware** — one Linux machine is enough. Full requirements and hardware tiers are in [`HARDWARE.md`](HARDWARE.md).
 
 ## 1. Decision logic and config parity (any machine)
 

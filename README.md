@@ -24,6 +24,8 @@ sudo emulation/demo.sh                                                          
 
 See **[`framework/docs/QUICKSTART.md`](framework/docs/QUICKSTART.md)** and **[`framework/docs/ARCHITECTURE.md`](framework/docs/ARCHITECTURE.md)**.
 
+> **No ICS hardware needed.** The emulation runs the full defended-attack demo on a single Linux machine — no PLCs, switches or cabling. Real hardware is only for reproducing the exact physical measurements. Full requirements and the three hardware tiers are in **[`HARDWARE.md`](HARDWARE.md)**.
+
 ## Headline results (from the live testbed)
 
 - **100%** decision accuracy and **0%** false positives on the live process; the accuracy holds over a **2,078-case** labelled corpus (95% Wilson lower bound **0.9982**).
