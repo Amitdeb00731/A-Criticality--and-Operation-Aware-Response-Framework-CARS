@@ -1,0 +1,15 @@
+# Captured live on ovs1 while an ISOLATE was in force, to show the reactive drop is
+# scoped to the attacker's source address alone and never touches the legitimate conduit.
+
+# 1) The rule an ISOLATE installs: one source-scoped drop, the attacker's address only.
+ cookie=0xca, hard_timeout=75, send_flow_rem, priority=110, ip, nw_src=192.168.2.77  actions=drop
+
+# 2) The legitimate Factory IO / EWS conduit to PLC1 during that same isolation: an intact
+#    committed allow, its counter advancing (traffic still forwarded to the PLC).
+ cookie=0xa2, table=1, n_packets=2, priority=80, ct_state=+new+trk, tcp,
+              nw_src=192.168.2.55, nw_dst=192.168.2.10, tp_dst=102  actions=ct(commit),goto_table:2
+
+# 3) The only drop that mentions the legitimate client is the GUARD identity check, which
+#    fires only on a SPOOFED 192.168.2.55 from the wrong port/MAC. n_packets=0: the real
+#    client never hits it. The isolate cannot, by construction, cut the legitimate conduit.
+ cookie=0x0,  table=0, n_packets=0, priority=100, ip, nw_src=192.168.2.55  actions=drop
