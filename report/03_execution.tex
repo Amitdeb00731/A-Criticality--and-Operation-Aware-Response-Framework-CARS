@@ -33,13 +33,13 @@ Attacker knowledge depends on position. The external host begins with no knowled
 
 CARS is a response framework rather than a fixed configuration. Stated at the level a reference model is stated, before any particular plant, it is a controller that governs a software-defined fabric carrying industrial traffic and that conditions its response on two axes a uniform block ignores: the criticality of the asset under attack, and the industrial operation recovered from the packet. The response it enforces is bounded in time, reversible, and evidence-generating, which is the property that lets an operator arm it on a live process. Everything specific to a site, the assets and their tiers, the roles, the conduits and the rulebook, is configuration supplied to this framework, not part of it (Section~\ref{sec:portability}).
 
-CARS is placed as the enforcement point in the SDN fabric, between the operational hosts and the assets it protects, as shown in Figure~\ref{fig:overview}. Its design is layered. A proactive layer, always in force, binds each host's identity and admits only the connections on a short allowlist, so an unregistered host is refused before any operation is considered. A reactive layer recovers the operation from the traffic by deep packet inspection, decides its tier from the source role, the operation and the criticality of the target, and applies a graded response. A self-checking layer verifies the forwarding state against a trusted baseline and authenticates the control interface, so that a compromise of the control plane is caught rather than trusted.
+CARS is placed as the enforcement point in the SDN fabric, between the operational hosts and the assets it protects, as shown in Figure~\ref{fig:arch}. Its design is layered. A proactive layer, always in force, binds each host's identity and admits only the connections on a short allowlist, so an unregistered host is refused before any operation is considered. A reactive layer recovers the operation from the traffic by deep packet inspection, decides its tier from the source role, the operation and the criticality of the target, and applies a graded response. A self-checking layer verifies the forwarding state against a trusted baseline and authenticates the control interface, so that a compromise of the control plane is caught rather than trusted.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{{fig01_topology_highlevel.drawio}.png}
-\caption{CARS in the fabric. All traffic to a protected asset crosses the SDN fabric, which the controller governs; the Factory IO process closes a hardware-in-the-loop with PLC1.}
-\label{fig:overview}
+\includegraphics[width=\textwidth]{fig_cars_arch.png}
+\caption{The CARS architecture and its deployment. The controller decides and governs the fabric over an out-of-band control plane; the three OpenFlow switches enforce in the data plane and carry the protected assets by role and criticality tier; a Snort sensor reads a gateway mirror; and the Factory IO tank closes a hardware-in-the-loop with PLC1. The dashed groups mark which physical node runs each part. Drawn for this report from the deployed system.}
+\label{fig:arch}
 \end{figure}
 
 Two separations shape the design. The controller, which decides, is separate from the switches, which enforce, the standard software-defined split that lets one policy govern the whole fabric. The decision, which is a tier, is separate from the response, which is an action, so that a single judgement drives a graded ladder rather than one blunt action. Every response is bounded in time, reversible, and leaves an audit record, which is what allows an operator to enable it. The remaining sections detail each layer: the pipeline that enforces the policy (Section~\ref{sec:pipeline}), the criticality and operation model that decides (Section~\ref{sec:model}), and the reference implementation of the detection, the responses and the self-checks (Section~\ref{sec:implementation}); Section~\ref{sec:portability} then shows the design is portable across sites, and Section~\ref{sec:testbed} describes the testbed on which it was instantiated and validated.
@@ -47,13 +47,13 @@ Two separations shape the design. The controller, which decides, is separate fro
 \section{The enforcement pipeline}
 \label{sec:pipeline}
 
-CARS enforces its policy in the data plane as a pipeline of three OpenFlow tables, installed on every switch in the fabric so that the same rules apply in each cell. A packet reaches its destination only if it passes all three stages; failing any stage drops or diverts it. The pipeline is shown in Figure~\ref{fig:pipeline}. The flow rules quoted below are read from the running switches rather than from the source, and the full tables are reproduced in Appendix~\ref{appx:material}, so that the description matches the deployed system exactly.
+CARS enforces its policy in the data plane as a pipeline of three OpenFlow tables, installed on every switch in the fabric so that the same rules apply in each cell. A packet reaches its destination only if it passes all three stages; failing any stage drops or diverts it. The pipeline, and the reactive decision that installs rules into it, are shown together in Figure~\ref{fig:carsflow}. The flow rules quoted below are read from the running switches rather than from the source, and the full tables are reproduced in Appendix~\ref{appx:material}, so that the description matches the deployed system exactly.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\textwidth]{{fig05_pipeline.drawio}.png}
-\caption{The CARS OpenFlow pipeline, captured live on \texttt{ovs1} and \texttt{ovsgw}. A packet is admitted only if its identity binds at Table~0, its connection is permitted and tracked at Table~1, and it is then forwarded at Table~2. Proactive policy carries cookie \texttt{0x00a2}; reactive responses installed by the controller carry \texttt{0x00ca}.}
-\label{fig:pipeline}
+\includegraphics[width=\textwidth]{fig_cars_flow.png}
+\caption{A packet's path through the CARS fabric, and the reactive decision that installs rules into it. Above, the three-table pipeline: a packet is admitted only if its identity binds at Table~0 (GUARD), its connection is permitted at the stateful Table~1 (POLICY), and it is then forwarded at Table~2 (SWITCH). Below, the decision that produces the reactive rules on Table~1: deep packet inspection recovers the operation, the rulebook maps the source role, operation and destination to a tier, a sensitive operation on a critical asset is elevated, and the tier, weight and rate select the graded response, installed under cookie \texttt{0x00ca} with a criticality-scaled self-heal (proactive policy carries \texttt{0x00a2}). Drawn for this report from the deployed pipeline, rulebook and Snort rules.}
+\label{fig:carsflow}
 \end{figure}
 
 Table~0 performs identity binding, the defence against spoofing. Each protected host is bound to the switch port, MAC address and IP address from which it is permitted to speak. A packet whose source matches its binding, at priority 200 for both IP and ARP, is passed to Table~1; traffic arriving on an inter-bridge link, which has already been checked at the far switch, is passed at priority 150. A packet that claims a protected address but arrives on any other port matches no binding and falls to a priority-100 rule that drops it, for both IP and ARP. Traffic that claims no protected address is passed on at priority 50. The effect is that an attacker cannot borrow the network identity of a trusted host: a forged source is dropped at ingress before it reaches the policy stage.
@@ -122,7 +122,7 @@ Each host has a role in the registry: \emph{plc}, \emph{hmi}, \emph{historian}, 
 
 \subsection{The rulebook and criticality elevation}
 
-The tier of an operation is decided by a rulebook of (source role, destination role, operation, tier) tuples, evaluated first match wins. Table~\ref{tab:rulebook} gives the rules; the full deployed ordering is reproduced in Appendix~\ref{appx:material}. The operator loop between HMI and PLC is tier CRITICAL and is never enforced against, a safety invariant so that the defence can never cut the loop that keeps the process safe. The dangerous operations are FORBIDDEN, subject to a deliberate ordering. A diagnostic, a program download or a malformed request is refused to a PLC or HMI from every source. A control write is refused from every source as well, except the two that are pre-authorised for it and whose rows are placed before the block, the engineering workstation and the remediation agent, so their legitimate actuation of the PLC classifies as OPERATIONAL rather than FORBIDDEN. Routine reads from the supervisory roles are OPERATIONAL, and an actuating write from a supervisory, historian or scada role is SENSITIVE. On top of the first match, one rule adjusts the tier by criticality: a SENSITIVE operation aimed at a CRITICAL asset, outside an authorised maintenance window, is elevated to FORBIDDEN, because nothing but the control loop and an authorised engineer may actuate the safety-critical process. The decision is shown in Figure~\ref{fig:decision}. The resulting tier and the observed rate then select a graded response, which is described in Section~\ref{sec:implementation}.
+The tier of an operation is decided by a rulebook of (source role, destination role, operation, tier) tuples, evaluated first match wins. Table~\ref{tab:rulebook} gives the rules; the full deployed ordering is reproduced in Appendix~\ref{appx:material}. The operator loop between HMI and PLC is tier CRITICAL and is never enforced against, a safety invariant so that the defence can never cut the loop that keeps the process safe. The dangerous operations are FORBIDDEN, subject to a deliberate ordering. A diagnostic, a program download or a malformed request is refused to a PLC or HMI from every source. A control write is refused from every source as well, except the two that are pre-authorised for it and whose rows are placed before the block, the engineering workstation and the remediation agent, so their legitimate actuation of the PLC classifies as OPERATIONAL rather than FORBIDDEN. Routine reads from the supervisory roles are OPERATIONAL, and an actuating write from a supervisory, historian or scada role is SENSITIVE. On top of the first match, one rule adjusts the tier by criticality: a SENSITIVE operation aimed at a CRITICAL asset, outside an authorised maintenance window, is elevated to FORBIDDEN, because nothing but the control loop and an authorised engineer may actuate the safety-critical process. The decision is drawn, with the pipeline it feeds, in Figure~\ref{fig:carsflow}. The resulting tier and the observed rate then select a graded response, which is described in Section~\ref{sec:implementation}.
 
 \begin{table}[t]
 \centering
@@ -143,13 +143,6 @@ any & any & any & FORBIDDEN \\
 \caption{The rulebook, evaluated first match wins (rows with a shared tier grouped for presentation; the exact deployed order is in Appendix~\ref{appx:material}). A SENSITIVE operation on a CRITICAL asset, outside a maintenance window, is elevated to FORBIDDEN.}
 \label{tab:rulebook}
 \end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.82\textwidth]{{fig04_decision.drawio}.png}
-\caption{The CARS operation decision. The source role and operation give a tier by first match in the rulebook; a sensitive operation on a critical asset is elevated to forbidden; the tier and the observed rate then select the graded response.}
-\label{fig:decision}
-\end{figure}
 
 The decision, from the source role and operation through the criticality elevation to the graded response, is stated as pseudocode in Listing~\ref{lst:decide}, independent of the implementation language; the deployed code that realises it is annotated in Appendix~\ref{appx:logic}.
 
@@ -198,14 +191,7 @@ Table~0 realises the anti-spoof binding as OpenFlow rules. Each protected host h
 
 \subsection{Operation classification}
 
-The operation carried by a packet is recovered by deep packet inspection. A Snort sensor reads a mirror of the gateway switch and matches the function field of each industrial request. For S7comm to a PLC on port 102, the function byte that follows the protocol header distinguishes a read (\texttt{0x04}), a write or control action (\texttt{0x05}), and the diagnostic control and stop functions (\texttt{0x28} and \texttt{0x29}). For Modbus to the simulated unit on port 502, the function code distinguishes a register read (\texttt{0x03}), coil and register writes (\texttt{0x05}, \texttt{0x06}, \texttt{0x0F}, \texttt{0x10}), a diagnostic (\texttt{0x08}) and the encapsulated-interface program function (\texttt{0x2B}); any function code above the defined range is flagged as malformed. Figure~\ref{fig:ops} summarises the mapping. Each match raises an alert that names the operation, which is what allows the decision of Section~\ref{sec:model} to treat the same connection differently according to what it carries.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.9\textwidth]{{fig07_ops.drawio}.png}
-\caption{Operation classes recovered by deep packet inspection from the S7comm and Modbus function fields, as encoded in the deployed Snort rules.}
-\label{fig:ops}
-\end{figure}
+The operation carried by a packet is recovered by deep packet inspection. A Snort sensor reads a mirror of the gateway switch and matches the function field of each industrial request. For S7comm to a PLC on port 102, the function byte that follows the protocol header distinguishes a read (\texttt{0x04}), a write or control action (\texttt{0x05}), and the diagnostic control and stop functions (\texttt{0x28} and \texttt{0x29}). For Modbus to the simulated unit on port 502, the function code distinguishes a register read (\texttt{0x03}), coil and register writes (\texttt{0x05}, \texttt{0x06}, \texttt{0x0F}, \texttt{0x10}), a diagnostic (\texttt{0x08}) and the encapsulated-interface program function (\texttt{0x2B}); any function code above the defined range is flagged as malformed. These are the operation classes the decision of Figure~\ref{fig:carsflow} reasons about. Each match raises an alert that names the operation, which is what allows the decision of Section~\ref{sec:model} to treat the same connection differently according to what it carries.
 
 \subsection{From detection to response}
 
@@ -213,8 +199,8 @@ Detection and response are joined by the chain shown in Figure~\ref{fig:detresp}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{{fig06_detresp.drawio}.png}
-\caption{The detection-to-response path: a mirrored packet is classified by Snort, the alert is forwarded to the controller, which decides against the rulebook and criticality and installs the flow rule that enforces the response.}
+\includegraphics[width=\textwidth]{fig_cars_detresp.png}
+\caption{Detection to response, and self-heal. A mirrored attacker frame is classified by Snort, the bridge forwards the alert to the controller, which decides against the rulebook and criticality and installs the enforcing flow rule; the wire-to-enforcement window has a median of 7.6\,ms. On \texttt{hard\_timeout} expiry the rule is removed and the source forgiven, so the response self-heals unless the attack renews it, and a flow-integrity check watches the tables throughout. Drawn for this report from the deployed detection path.}
 \label{fig:detresp}
 \end{figure}
 
@@ -322,14 +308,7 @@ Cell-1 runs a live tank-level process, provided by Factory IO on the Windows mac
 \section{Deployment}
 \label{sec:deployment}
 
-CARS is deployed across the machines of the testbed as shown in Figure~\ref{fig:deployment}. The arrangement keeps the two planes apart: the controller, which decides, is separate from the switches, which enforce, and the sensing sits with the fabric so that detection stays close to the traffic while the decision stays central.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{{fig03_deployment.drawio}.png}
-\caption{Deployment. The controller governs the three switches (\texttt{ovs1}, \texttt{ovsgw}, \texttt{ovs2}) over the OpenFlow control plane; the fabric, the Snort sensor and the supporting agents run together, and the engineering workstation with Factory IO is the live process.}
-\label{fig:deployment}
-\end{figure}
+CARS is deployed across the machines of the testbed, in the arrangement drawn in Figure~\ref{fig:arch}. The arrangement keeps the two planes apart: the controller, which decides, is separate from the switches, which enforce, and the sensing sits with the fabric so that detection stays close to the traffic while the decision stays central.
 
 The controller runs as an os-ken application, \href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}, launched with link observation enabled. It holds the whole decision logic described in Section~\ref{sec:model}, speaks OpenFlow~1.3 to the switches on port \texttt{6653}, and exposes the control interface used for responses and for the guarded operations on port \texttt{8080}. Nothing else of CARS runs on this node. It runs continuously and prints each decision as it is taken; a live extract is shown in Figure~\ref{fig:decisionlog}, and its status interface (Figure~\ref{fig:status}) reports the three switches connected and both guards enabled.
 

@@ -32,7 +32,7 @@ Repository path & Role in this dissertation \\
 \section{Full OpenFlow tables}
 \label{appx:flows}
 
-The complete three-table pipeline of Section~\ref{sec:pipeline}, dumped from each switch with \texttt{ovs-ofctl -O OpenFlow13 dump-flows}. Table~0 is GUARD (identity binding and anti-spoof), Table~1 is POLICY (the stateful conntrack layer with the allowlist under cookie \texttt{0xa2} and the default-deny), and Table~2 is the L2 learning switch. These are the source for Figure~\ref{fig:pipeline}.
+The complete three-table pipeline of Section~\ref{sec:pipeline}, dumped from each switch with \texttt{ovs-ofctl -O OpenFlow13 dump-flows}. Table~0 is GUARD (identity binding and anti-spoof), Table~1 is POLICY (the stateful conntrack layer with the allowlist under cookie \texttt{0xa2} and the default-deny), and Table~2 is the L2 learning switch. These are the source for the pipeline in Figure~\ref{fig:carsflow}.
 
 \lstinputlisting[style=carsdump,caption={Cell-1 switch \texttt{ovs1}, tables 0 to 2.},label={lst:ovs1}]{appendix_listings/flows_ovs1.txt}
 \lstinputlisting[style=carsdump,caption={Gateway switch \texttt{ovsgw}, tables 0 to 2.},label={lst:ovsgw}]{appendix_listings/flows_ovsgw.txt}
@@ -52,7 +52,7 @@ The proactive A2 policy read from \texttt{a2\_policy.json} on the controller: th
 \section{Detection rules}
 \label{appx:snort}
 
-The Snort rules that recover the industrial operation by deep packet inspection, backing Figures~\ref{fig:detresp} and~\ref{fig:ops}. Each rule maps an S7 or Modbus function to one of the operation classes CARS reasons about. The S7 rules are shown in their hardened form: after the fragmentation finding of Section~\ref{sec:evaldpi}, the operation match was re-anchored to the S7 job header with \texttt{distance}/\texttt{within} rather than a fixed packet offset, and TCP stream reassembly was enabled on the ICS ports (Listing~\ref{lst:dpihard}), so a PDU split across TCP segments is still recovered.
+The Snort rules that recover the industrial operation by deep packet inspection, backing Figures~\ref{fig:detresp} and~\ref{fig:carsflow}. Each rule maps an S7 or Modbus function to one of the operation classes CARS reasons about. The S7 rules are shown in their hardened form: after the fragmentation finding of Section~\ref{sec:evaldpi}, the operation match was re-anchored to the S7 job header with \texttt{distance}/\texttt{within} rather than a fixed packet offset, and TCP stream reassembly was enabled on the ICS ports (Listing~\ref{lst:dpihard}), so a PDU split across TCP segments is still recovered.
 
 \lstinputlisting[style=carssrc,caption={S7 and Modbus operation-class rules from \texttt{cars.rules}.},label={lst:snort}]{appendix_listings/snort_rules.txt}
 
