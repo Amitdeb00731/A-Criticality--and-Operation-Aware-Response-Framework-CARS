@@ -93,28 +93,19 @@ Every protected asset is assigned a criticality tier by the consequence of its c
 
 \begin{table}[t]
 \centering
-\begin{tabular}{llcc}
+\begin{tabular}{clp{0.40\textwidth}l}
 \hline
-Asset & Role & Criticality & Weight \\
+Tier & $w$ & Assigned to an asset whose compromise\ldots & Response effect \\
 \hline
-PLC1 & plc & CRITICAL & 3 \\
-PLC2 & plc & HIGH & 2 \\
-HMI1 & hmi & HIGH & 2 \\
-HMI2 & hmi & MEDIUM & 1 \\
-Historian & historian & MEDIUM & 1 \\
-Modbus unit & plc & LOW & 0 \\
+CRITICAL & 3 & directly endangers safety or the running process, such as a PLC on a live control or safety loop & hold $30+15w=75$\,s; escalates soonest \\
+HIGH & 2 & causes serious operational disruption, such as an operator HMI or a secondary controller & hold 60\,s \\
+MEDIUM & 1 & has operational value but a recoverable loss, such as a historian or data collector & hold 45\,s \\
+LOW & 0 & is of limited consequence, such as an auxiliary or low-value unit & hold 30\,s; escalates latest \\
 \hline
 \end{tabular}
-\caption{The asset-criticality model: each protected asset's consequence tier and the weight that scales the response. The weight sets the duration of a block or isolate to $30 + 15w$ seconds and brings escalation forward at higher weight. The concrete address bindings behind these assets are read live from the \texttt{/cars/criticality} interface (Figure~\ref{fig:criticality}) and given in full in Appendix~\ref{appx:material}.}
+\caption{The criticality model, defined generally for any OT asset set. An asset is placed in a tier by the consequence of its compromise, and the tier's weight $w$ scales the response: it sets the block or isolate duration to $30+15w$ seconds and brings escalation forward at higher weight. The tiers are independent of any particular plant; the concrete assignment for the testbed on which CARS is evaluated is given in Chapter~\ref{chap:evaluation}, Table~\ref{tab:critassets}.}
 \label{tab:criticality}
 \end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{term_criticality.png}
-\caption{The criticality read live from the controller with \texttt{curl \$API/cars/criticality}, backing Table~\ref{tab:criticality}: the six tiered assets and the weight of each tier. Captured on 3 August 2026.}
-\label{fig:criticality}
-\end{figure}
 
 \subsection{Roles and operations}
 
@@ -312,17 +303,17 @@ CARS is deployed across the machines of the testbed, in the arrangement shown by
 
 The controller runs as an os-ken application, \href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}, launched with link observation enabled. It holds the whole decision logic described in Section~\ref{sec:model}, speaks OpenFlow~1.3 to the switches on port \texttt{6653}, and exposes the control interface used for responses and for the guarded operations on port \texttt{8080}. Nothing else of CARS runs on this node. It runs continuously and prints each decision as it is taken; a live extract is shown in Figure~\ref{fig:decisionlog}, and its status interface (Figure~\ref{fig:status}) reports the three switches connected and both guards enabled.
 
-\begin{figure}[t]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{term_status.png}
-\caption{The controller status from \texttt{curl \$API/cars/status}: the three switches connected (datapath identifiers \texttt{2}, \texttt{1}, \texttt{3}), identity and ARP guards enabled, and the running mean decide time. Captured on 3 August 2026.}
+\includegraphics[width=0.82\textwidth]{term_status.png}
+\caption{The controller status from \texttt{curl \$API/cars/status}: the three switches connected, identity and ARP guards enabled, and the running mean decide time. Captured 3 August 2026.}
 \label{fig:status}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{term_decision_log.png}
-\caption{The deployed controller running live. Each line records one decision: the source and destination, the protocol and operation, the verdict and response, the asset criticality, and the decide-and-enforce time. Captured from the controller console on 3 August 2026, confirming the engine runs as a service and logs every decision.}
+\includegraphics[width=0.86\textwidth]{term_decision_log.png}
+\caption{The deployed controller running live: each line is one decision, giving the source and destination, the protocol and operation, the verdict and response, the asset criticality, and the decide-and-enforce time. Captured from the controller console on 3 August 2026.}
 \label{fig:decisionlog}
 \end{figure}
 

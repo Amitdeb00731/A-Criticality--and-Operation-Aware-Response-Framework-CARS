@@ -26,7 +26,7 @@ for i,s in enumerate(["asset registry + criticality tiers","role / operation tax
     P.append(f'<text x="160" y="{165+i*26}" text-anchor="middle" font-family="Helvetica" font-size="12" fill="{INK}">{esc("- "+s)}</text>')
 txt(160,320,"describes a site; the engine is unchanged",10,CFG,"middle","600","italic")
 # --- control plane: the decision engine ---
-box(320,95,540,175,"#eaf1f9",CTRL,"Control plane — CARS decision engine",None,INK,15)
+box(320,95,540,175,"#eaf1f9",CTRL,"Control plane: CARS decision engine",None,INK,15)
 box(340,135,160,120,"#ffffff",CTRL,"Proactive policy",["identity binding","conduit allowlist","default-deny"],INK,7,12,1.6)
 box(512,135,180,120,"#ffffff",CTRL,"Reactive decision",["operation x role x","criticality -> tier","-> response ladder"],INK,7,12,1.6)
 box(704,135,140,120,"#ffffff",CTRL,"Self-check",["flow-integrity","authenticated","control API"],INK,7,12,1.6)
@@ -36,7 +36,7 @@ arrow(270,180,320,180,CFG,2.4)
 box(910,140,230,80,"#f2ebf7",SENS,"DPI sensor",["recovers the industrial operation","from mirrored traffic"],INK,9,13)
 arrow(910,180,860,180,SENS,2.2); txt(885,170,"operation",9.5,SENS,"middle","600")
 # --- data plane: enforcement pipeline ---
-box(320,370,540,120,"#e8f5ee",DP,"Data plane — enforcement pipeline (on every switch)",None,INK,15)
+box(320,370,540,120,"#e8f5ee",DP,"Data plane: enforcement pipeline (on every switch)",None,INK,15)
 for i,(t,c) in enumerate([("Table 0\nGUARD","identity"),("Table 1\nPOLICY","stateful + reactive"),("Table 2\nSWITCH","forward")]):
     bx=340+i*172
     P.append(f'<rect x="{bx}" y="410" width="152" height="64" rx="7" fill="#ffffff" stroke="{DP}" stroke-width="1.6"/>')

@@ -21,11 +21,11 @@ def chip(x,y,w,s):
 W,H=1180,470
 txt(60,40,"A packet's path through the CARS fabric",18,INK,"start","700")
 txt(40,92,"packet",12,SUB); arrow(40,100,90,100)
-box(90,72,250,110,"#eaf1f9",GUARD,"Table 0 — GUARD",["identity binding (anti-spoof):","a bound source goes to Table 1,","a spoofed one is dropped"])
+box(90,72,250,110,"#eaf1f9",GUARD,"Table 0: GUARD",["identity binding (anti-spoof):","a bound source goes to Table 1,","a spoofed one is dropped"])
 arrow(340,127,392,127)
-box(392,72,300,110,"#e8f5ee",POLICY,"Table 1 — POLICY (stateful)",["established passes; an allowlisted","conduit commits; default-deny;","reactive rules sit on top"])
+box(392,72,300,110,"#e8f5ee",POLICY,"Table 1: POLICY (stateful)",["established passes; an allowlisted","conduit commits; default-deny;","reactive rules sit on top"])
 arrow(692,127,744,127)
-box(744,72,250,110,"#eef0f2",SWITCH,"Table 2 — SWITCH",["learning forward to the","destination asset"])
+box(744,72,250,110,"#eef0f2",SWITCH,"Table 2: SWITCH",["learning forward to the","destination asset"])
 arrow(994,127,1044,127); txt(1052,131,"asset",12,SUB,"start")
 # decision band
 txt(60,222,"The reactive decision that installs a rule into Table 1",15,INK,"start","700")
@@ -43,11 +43,12 @@ arrow(920,325,970,325)
 box(970,240,170,180,"#eef2f6","#5b6b7d","Response ladder")
 for i,r in enumerate(["ALLOW","MONITOR","THROTTLE","DEFLECT","ISOLATE","BLOCK","REFUSE"]):
     txt(1055,276+i*19,r,11.5,INK,"middle","700" if r in("ISOLATE","BLOCK","REFUSE") else "400")
-# feedback arrow ladder -> Table 1, clean, labelled below the ladder
-P.append(f'<path d="M 1055 240 C 1055 205, 560 196, 542 184" fill="none" stroke="{ACC}" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#ah)"/>')
-txt(1055,440,"→ reactive rule 0x00ca",11,ACC,"middle","600")
-txt(1055,455,"criticality-scaled self-heal",11,ACC,"middle","400")
-txt(700,192,"the chosen response is installed into Table 1",11.5,ACC,"middle","600","italic")
+# feedback arrow: response ladder -> Table 1 (install the chosen response)
+P.append(f'<path d="M 1055 240 C 1055 205, 660 202, 545 184" fill="none" stroke="{ACC}" stroke-width="2.6" marker-end="url(#ah)"/>')
+P.append('<rect x="608" y="191" width="250" height="21" rx="4" fill="white" opacity="0.92"/>')
+txt(733,206,"install the response into Table 1",11.5,ACC,"middle","700")
+txt(1055,442,"reactive rule, cookie 0x00ca",10.5,ACC,"middle","600")
+txt(1055,456,"criticality-scaled self-heal",10.5,ACC,"middle","400")
 svg=f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" font-family="Helvetica">
 <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="{LINE}"/></marker></defs>
 <rect width="{W}" height="{H}" fill="white"/>

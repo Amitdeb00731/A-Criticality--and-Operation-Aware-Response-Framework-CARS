@@ -90,7 +90,32 @@ To probe further, the engine was driven across its entire decision domain, every
 \section{Criticality-graded response}
 \label{sec:evalcriticality}
 
-The criticality model earns its place only if the target's importance changes the outcome. The sweep, rerun with \href{\repourl/blob/main/06_Build/cars_criticality_proof.sh}{\texttt{cars\_criticality\_proof.sh}}, holds the actor and the operation fixed and varies only the target's tier, in three parts: the bounded elevation of the decision, the proportionality of the response, and the invariants that criticality must never break.
+The criticality model earns its place only if the target's importance changes the outcome. The sweep, rerun with \href{\repourl/blob/main/06_Build/cars_criticality_proof.sh}{\texttt{cars\_criticality\_proof.sh}}, holds the actor and the operation fixed and varies only the target's tier, in three parts: the bounded elevation of the decision, the proportionality of the response, and the invariants that criticality must never break. The testbed instantiates the general model of Section~\ref{sec:model} with the six assets of Table~\ref{tab:critassets}, read live from the controller (Figure~\ref{fig:criticality}); these span the four tiers the sweep drives.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llcc}
+\hline
+Asset & Role & Tier & Weight $w$ \\
+\hline
+PLC1 & plc & CRITICAL & 3 \\
+PLC2 & plc & HIGH & 2 \\
+HMI1 & hmi & HIGH & 2 \\
+HMI2 & hmi & MEDIUM & 1 \\
+Historian & historian & MEDIUM & 1 \\
+Modbus unit & plc & LOW & 0 \\
+\hline
+\end{tabular}
+\caption{The testbed instantiation of the criticality model (Table~\ref{tab:criticality}): the six protected assets and the tier each is assigned by the consequence of its compromise. The concrete address bindings are read live from the \texttt{/cars/criticality} interface (Figure~\ref{fig:criticality}) and listed in full in Appendix~\ref{appx:material}.}
+\label{tab:critassets}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{term_criticality.png}
+\caption{The criticality read live from the controller with \texttt{curl \$API/cars/criticality}, backing Table~\ref{tab:critassets}: the six tiered assets and the weight of each tier. Captured on 3 August 2026.}
+\label{fig:criticality}
+\end{figure}
 
 Elevation is bounded. A SENSITIVE operation on a CRITICAL asset is raised to FORBIDDEN, as the grey cases of Table~\ref{tab:accuracy} show for a SCADA write to PLC1, whereas a read is never elevated: the same SCADA reading the same CRITICAL PLC1 stays OPERATIONAL and is allowed. The elevation is specific to the critical tier: the same actuating write against the HIGH PLC2, weight two, is not raised to FORBIDDEN but stays SENSITIVE and is rate-limited, so the two assets are handled differently by design, which the four-tier sweep and the two-hundred-and-forty-decision run below exercise directly. The model suspends this elevation within an authorised maintenance window (Section~\ref{sec:model}), so scheduled engineering is not blocked by the rule that protects the asset at other times.
 
@@ -312,14 +337,24 @@ The attacker is a single Kali virtual machine, dual-homed by design (Figure~\ref
 \label{fig:travelpath}
 \end{figure}
 
-Every packet that enters the fabric meets the same three-table pipeline (Figure~\ref{fig:carspipeline}). Table~0 (GUARD) binds each protected identity to its physical port and MAC and drops a forgery before it can reach policy. Table~1 (POLICY) passes an established connection, then an allowlisted conduit, then any reactive rule the controller has installed, and default-denies everything else. Table~2 forwards what survives. In parallel, the gateway switch mirrors traffic to Snort, whose alerts the bridge turns into an operation and a rate and posts to the controller, whose \texttt{classify()} and \texttt{select\_response()} decide a tier and a graded response and, when warranted, install a reactive drop stamped with cookie \texttt{0x00ca}. Three termination classes fall out of this pipeline: a spoofed identity dies at Table~0; a non-conduit source is default-denied and, on any attempt against the PLC, reactively isolated; and an allowlisted conduit that turns malicious is caught by the deep-packet inspection loop. The two pivots exercise the middle class; the false-data injection of Section~\ref{sec:evalcampaign} exercised the third.
+Every packet that enters the fabric meets the same three-table pipeline of Section~\ref{sec:pipeline} (Figure~\ref{fig:carsflow}). What matters for the anatomy is where each attack class terminates in it, set out in Table~\ref{tab:termination}: a spoofed identity dies at Table~0; a non-conduit source is default-denied and, on any attempt against the PLC, reactively isolated; and an allowlisted conduit that turns malicious is delivered one packet, then caught by the deep-packet-inspection loop that recovers the S7 operation and installs the \texttt{0x00ca} isolate. The two pivots exercise the middle class; the false-data injection of Section~\ref{sec:evalcampaign} exercised the third.
 
-\begin{figure}[t]
+\begin{table}[t]
 \centering
-\includegraphics[width=\textwidth]{story_pipeline.png}
-\caption{The CARS decision pipeline and where each attack class terminates. The two pivots (non-conduit sources) are cut at Table~1; the allowlisted insider is delivered one packet, then caught by the DPI loop that recovers the S7 operation and installs the \texttt{0x00ca} isolate.}
-\label{fig:carspipeline}
-\end{figure}
+\begin{tabular}{p{0.28\textwidth}p{0.22\textwidth}p{0.36\textwidth}}
+\hline
+Attack class & Terminates at & Outcome \\
+\hline
+Spoofed protected identity (protected address, wrong port) & Table~0, GUARD & dropped at ingress, never reaches policy \\
+Unregistered / non-conduit source (both pivots) & Table~1, default-deny & the attempt is FORBIDDEN; the source is reactively ISOLATEd (cookie \texttt{0x00ca}) \\
+Out-of-state packet (forged ACK) & Table~1, conntrack & refused, no established state \\
+Dangerous operation on an allowlisted conduit (the insider FDI) & reactive DPI loop & the first packet is delivered, then Snort recovers \texttt{op=CONTROL}, the engine classifies FORBIDDEN and installs the ISOLATE \\
+Authorised, benign operation & Table~2, SWITCH & forwarded to the asset \\
+\hline
+\end{tabular}
+\caption{Where each attack class terminates in the pipeline of Figure~\ref{fig:carsflow}, rather than re-drawing the pipeline itself. The two pivots are the unregistered-source class; the false-data injection of Section~\ref{sec:evalcampaign} is the allowlisted-conduit class.}
+\label{tab:termination}
+\end{table}
 
 \textbf{Pivot A, the IT attacker.} The Kali opens an S7 session to \texttt{192.168.2.10:102} over \texttt{eth2}. The frame is routed through the perimeter and arrives at the gateway switch source-NATed: the mirror records \texttt{192.168.2.1.33440 > 192.168.2.10.102} with the SYN flag, preceded by an ARP for the PLC, so every northern host has collapsed onto the one gateway identity. The controller resolves \texttt{192.168.2.1} to the \texttt{gateway} role, finds no allowlisted conduit to the CRITICAL PLC1, and classifies the attempt FORBIDDEN; because the destination is CRITICAL the response is an immediate source isolation. The audit line reads \texttt{FORBIDDEN 192.168.2.1(gateway) -> 192.168.2.10(plc) TCP => ISOLATE source 192.168.2.1 75s [CRIT:CRITICAL]}, and a matching flow appears on both \texttt{ovs1} and \texttt{ovsgw}: \texttt{cookie=0xca, priority=110, nw\_src=192.168.2.1, actions=drop, hard\_timeout=75}. The consequence for the attacker is a TCP connect timeout with zero writes landed; the gateway rule absorbed the SYN retransmits (\texttt{n\_packets}=4 at \texttt{ovsgw}) and the PLC-side capture shows nothing reaching the process. The containment is total but, as first captured, \emph{coarse}: the quarantine was a source isolation on \texttt{192.168.2.1}, so it stopped this attacker and every other northern host alike, the NAT collapse leaving CARS no finer handle on identity. That coarse cut is itself a cost, a denial of service on the shared gateway conduit, and it prompted a refinement to the response selection: a shared, NAT-collapsed identity is now cut at the conduit rather than the source. Verified on the deployed engine, the same attempt from \texttt{192.168.2.1} now installs \texttt{cookie=0xca, priority=100, nw\_src=192.168.2.1, nw\_dst=192.168.2.10, actions=drop}, dropping only the PLC-bound flow while the gateway's other traffic is untouched by construction, whereas a true single host such as Pivot~B still draws the finer source isolation (Appendix~\ref{appx:gapevidence}). The residual limit is stated honestly: across a NAT, CARS cannot separate the rogue IT host from its legitimate neighbours on that one conduit, so full per-host attribution still needs the boundary firewall to carry the real source.
 

@@ -30,6 +30,18 @@
   keywordstyle=\bfseries,showstringspaces=false,%
   morekeywords={function,if,else,for,each,return,goto,on,switch,install,commit,break,and,or,not}}
 
+% ---- single-sided digital PDF: drop the blank verso pages the two-sided class
+% ---- inserts before each chapter (\cleardoublepage -> a plain \clearpage) -----
+\let\cleardoublepage\clearpage
+
+% ---- float placement: pack floats with text, avoid float-only/blank pages ----
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+
 \begin{document}
 
 % ---- title page (built from the \documentclass options) --------------------
