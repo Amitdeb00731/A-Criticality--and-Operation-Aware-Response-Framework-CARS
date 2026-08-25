@@ -42,6 +42,10 @@
 \setcounter{topnumber}{3}
 \setcounter{totalnumber}{4}
 
+% ---- confine appendix floats so a deferred figure cannot land at the top of a
+% ---- page where a listing is continuing and split the listing box ----------
+\usepackage{placeins}
+
 \begin{document}
 
 % ---- title page (built from the \documentclass options) --------------------
