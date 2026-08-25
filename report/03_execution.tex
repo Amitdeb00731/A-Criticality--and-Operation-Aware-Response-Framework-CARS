@@ -38,7 +38,7 @@ CARS is placed as the enforcement point in the SDN fabric, between the operation
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{fig_cars_arch.png}
-\caption{The CARS architecture and its deployment. The controller decides and governs the fabric over an out-of-band control plane; the three OpenFlow switches enforce in the data plane and carry the protected assets by role and criticality tier; a Snort sensor reads a gateway mirror; and the Factory IO tank closes a hardware-in-the-loop with PLC1. The dashed groups mark which physical node runs each part. Drawn for this report from the deployed system.}
+\caption{The CARS framework, independent of any particular plant. A control-plane decision engine holds the three layers, proactive policy, the reactive criticality- and operation-aware decision, and the self-check; a deep-packet-inspection sensor supplies the operation; and the engine installs rules into a data-plane enforcement pipeline, GUARD then stateful POLICY then SWITCH, on every switch it governs. Everything specific to a deployment is a site configuration the engine loads; the design principles are stated below the figure. The concrete testbed instantiation of this architecture is Figure~\ref{fig:topology}.}
 \label{fig:arch}
 \end{figure}
 
@@ -71,8 +71,8 @@ on packet P at a switch, ingress port p:
     else:                                           goto Table 1
 
     // Table 1 - stateful policy, highest matching priority wins
-    if a reactive rule matches P.src:              DROP or meter  // an active isolate / block / throttle
-    else if P is an established connection:         goto Table 2   // return traffic of an allowed session
+    if a reactive rule matches P.src:              DROP or meter  // active isolate/block/throttle
+    else if P is an established connection:         goto Table 2   // return traffic, allowed session
     else if (P.src, P.dst, P.port) is allowlisted: commit; goto Table 2   // a named conduit
     else if P.dst is a protected asset:            DROP           // default-deny
     else:                                           commit; goto Table 2
@@ -171,7 +171,7 @@ function SELECT_RESPONSE(tier, weight, flood, count):
         if flood or weight = 3:  return BLOCK
         return THROTTLE, then BLOCK on persistence
     // tier = FORBIDDEN: a single command can harm
-    if source is a shared (NAT) identity:  return BLOCK   // cut the conduit, not every host behind it
+    if source is a shared (NAT) identity:  return BLOCK   // cut the conduit, not the host
     if count < escalation-threshold(weight):  return BLOCK
     return ISOLATE
 \end{lstlisting}
@@ -220,15 +220,15 @@ How a chosen response becomes a flow rule, and how it self-heals, is stated as p
 function ENFORCE(response, source, dest, weight):
     timeout <- 30 + 15 * weight                    // 75 / 60 / 45 / 30 s for CRITICAL..LOW
     if response = ISOLATE:
-        install drop  matching (src = source)               // quarantine the source on every conduit
+        install drop  matching (src = source)               // quarantine the source
     else if response = BLOCK:
-        install drop  matching (src = source, dst = dest)   // cut only the offending conduit
+        install drop  matching (src = source, dst = dest)   // cut the one conduit
     else if response = THROTTLE:
         install meter matching (src = source, dst = dest)   // rate-limit, do not cut
     stamp the rule with cookie 0x00ca and hard_timeout = timeout
 
 on hard_timeout expiry of a reactive rule:
-    remove the rule and clear the source's offence count    // self-heals unless the attack renews it
+    remove the rule and clear the source's offence count    // self-heals unless renewed
 \end{lstlisting}
 
 \subsection{Forwarding integrity and control authentication}
@@ -308,7 +308,7 @@ Cell-1 runs a live tank-level process, provided by Factory IO on the Windows mac
 \section{Deployment}
 \label{sec:deployment}
 
-CARS is deployed across the machines of the testbed, in the arrangement drawn in Figure~\ref{fig:arch}. The arrangement keeps the two planes apart: the controller, which decides, is separate from the switches, which enforce, and the sensing sits with the fabric so that detection stays close to the traffic while the decision stays central.
+CARS is deployed across the machines of the testbed, in the arrangement shown by the topology of Figure~\ref{fig:topology}. The arrangement keeps the two planes apart: the controller, which decides, is separate from the switches, which enforce, and the sensing sits with the fabric so that detection stays close to the traffic while the decision stays central.
 
 The controller runs as an os-ken application, \href{\repourl/blob/main/06_Build/cars_engine.py}{\texttt{cars\_engine.py}}, launched with link observation enabled. It holds the whole decision logic described in Section~\ref{sec:model}, speaks OpenFlow~1.3 to the switches on port \texttt{6653}, and exposes the control interface used for responses and for the guarded operations on port \texttt{8080}. Nothing else of CARS runs on this node. It runs continuously and prints each decision as it is taken; a live extract is shown in Figure~\ref{fig:decisionlog}, and its status interface (Figure~\ref{fig:status}) reports the three switches connected and both guards enabled.
 
