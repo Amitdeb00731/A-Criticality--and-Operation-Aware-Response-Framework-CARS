@@ -81,6 +81,11 @@
 
 % ---- appendices ------------------------------------------------------------
 \appendix
+% ---- appendix floats: forbid top-of-page floats so a deferred figure can
+% ---- never land above a continuing listing and split its box; figures fall
+% ---- to a page bottom or their own float page instead --------------------
+\setcounter{topnumber}{0}
+\setcounter{bottomnumber}{2}
 \input{appendix}
 
 \end{document}
