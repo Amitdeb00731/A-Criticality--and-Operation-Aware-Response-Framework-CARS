@@ -95,7 +95,7 @@ Two further live checks referenced from Section~\ref{sec:implementation}. Figure
 \section{Complete evaluation matrix}
 \label{appx:matrix}
 
-The full decision matrix of Section~\ref{sec:evalaccuracy}, all twenty-seven cases with the columns the body table abbreviates (source, destination, operation, rate, ground-truth label, tier, response, verdict, note), regenerated from the deployed engine via \texttt{/cars/respond}.
+The full decision matrix of Section~\ref{sec:evalconformance}, all twenty-seven cases with the columns the body table abbreviates (source, destination, operation, rate, ground-truth label, tier, response, verdict, note), regenerated from the deployed engine via \texttt{/cars/respond}.
 
 \lstinputlisting[style=carssrc,caption={The evaluation matrix, \texttt{cars\_eval\_matrix.csv}.},label={lst:matrix}]{appendix_listings/eval_matrix.csv}
 
@@ -349,7 +349,7 @@ while time.time() < end:
 
 \subsection*{Evaluation and proof harnesses}
 
-\noindent \textbf{Conformance harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
+\noindent \textbf{Conformance harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalconformance} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
 
 \begin{lstlisting}[style=carspseudo,caption={Driving each case through the engine and scoring it against intent, in pseudocode.},label={lst:eval}]
 disarm enforcement                              // decision-only pass; re-armed at the end
