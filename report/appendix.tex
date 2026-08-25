@@ -208,7 +208,7 @@ def classify(src_ip, dst_ip, op=None):
     return "FORBIDDEN", s, d                       # nothing matched -> default deny
 \end{lstlisting}
 
-\noindent The role lookup resolves each address to its registered role; the loop returns the tier of the first rulebook row whose source, destination and operation all match, and defaults to FORBIDDEN when none do. This is the exact path the conformance evaluation drives through \texttt{/cars/respond}. The remaining load-bearing pieces of the controller and of the supporting scripts follow in the same form.
+\noindent The role lookup resolves each address to its registered role; the loop returns the tier of the first rulebook row whose source, destination and operation all match, and defaults to FORBIDDEN when none do. This is the exact path the conformance evaluation drives through \texttt{/cars/respond}. The remaining load-bearing pieces follow below in two forms: pieces that are pure decision or process logic are given as language-agnostic pseudocode, and pieces whose exact bytes, capture filters or detection rules are themselves the evidence, the protocol frames, the wire captures and the Snort rules, are shown as the deployed excerpt. Each caption links to the real source file.
 
 \subsection*{Controller: the rest of the decision-to-enforcement path}
 
@@ -269,56 +269,63 @@ add(0, OFPMatch(), GOTO)                            # default -> policy table
 
 \noindent \textbf{Control-API authentication (\texttt{\_app()}).} Every state-changing endpoint requires a shared token; the read-only status endpoints and the Snort detection feed are excluded so the bridge is unchanged.
 
-\begin{lstlisting}[style=carssrc,caption={Token gate on the control endpoints.},label={lst:auth}]
-_CONTROL = ('/cars/defense','/cars/maintenance','/cars/reload','/cars/reload-a2',
-            '/cars/block','/cars/unblock','/cars/restore')
-if path in _CONTROL and environ.get('HTTP_X_CARS_TOKEN','') != self.api_token:
-    return reply({"error": "unauthorized - X-CARS-Token required"}, '401 Unauthorized')
-# /cars/respond (Snort bridge feed) is intentionally excluded
+\begin{lstlisting}[style=carspseudo,caption={Token gate on the control endpoints, in pseudocode.},label={lst:auth}]
+CONTROL_ENDPOINTS <- { defense, maintenance, reload, reload-a2, block, unblock, restore }
+on a request to `path`:
+    if path in CONTROL_ENDPOINTS and request token != the shared API token:
+        reply 401 Unauthorized              // a state-changing call must carry the token
+    // the read-only status endpoints and the /cars/respond sensor feed are excluded
 \end{lstlisting}
 
 \subsection*{The supporting scripts}
 
 \noindent \textbf{Detection bridge (\href{\repourl/blob/main/06_Build/snort_bridge.py}{\texttt{snort\_bridge.py}}).} Snort raises the alerts; the bridge recovers the ICS operation from the alert text, measures its arrival rate, and posts the source, destination, operation and rate to the controller, which alone decides. The brain, not the sensor, holds the policy.
 
-\begin{lstlisting}[style=carssrc,caption={Operation recovery from the Snort alert, forwarded to the controller.},label={lst:bridge}]
-API = "http://10.10.10.1:8080/cars/respond"     # the brain decides; bridge only reports
-mo = re.search(r'CARS-(MODBUS|S7)-(WRITE|READ|CONTROL|DIAG|PROGRAM|ILLEGAL)', line)
-if mo: proto = mo.group(1); op = mo.group(2)     # recover the operation
-key = (src, dst, op)                             # keep read vs write distinct
-# rate of this (src,dst,op) measured, then POSTed with op+rate to API
+\begin{lstlisting}[style=carspseudo,caption={Operation recovery from the Snort alert, forwarded to the controller, in pseudocode.},label={lst:bridge}]
+for each new Snort alert line:
+    match the alert tag  CARS-<proto>-<operation>      // proto in {S7, MODBUS}
+    if it matches:
+        proto, operation <- the tag's fields            // recover the industrial operation
+        key  <- (source, dest, operation)               // keep read and write distinct
+        rate <- arrival rate of this key over the window
+        post (source, dest, operation, rate) to the controller   // the brain decides; the bridge only reports
 \end{lstlisting}
 
 \noindent \textbf{Flow-integrity self-check (\href{\repourl/blob/main/06_Build/cars_flow_audit.py}{\texttt{cars\_flow\_audit.py}}).} A trusted baseline of the immutable policy (Table~0 GUARD and the Table~1 A2 allowlist, cookie \texttt{0xa2}) is captured at a clean start; the only additions permitted at runtime are the reactive rules (cookie \texttt{0xca}). Anything else appearing on a switch is flagged as drift and surfaced into the controller's decision log.
 
-\begin{lstlisting}[style=carssrc,caption={Flow identity and the drift model.},label={lst:flowaudit}]
-# identity = bridge,table,priority,cookie,MATCH (not actions): a tampered action on a
-# policy rule shows as "changed"; a bogus new rule as "extra".
-def key_of(br, s): return "%s|t%s|p%s|c%s|%s" % (br, s[0], s[1], s[2], s[3])
-# baseline = GUARD (t0) + A2 allowlist (t1, cookie 0xa2); the ONLY legitimate live
-# additions carry the reactive cookie 0xca. Anything else later -> drift -> audit.
+\begin{lstlisting}[style=carspseudo,caption={Flow identity and the drift model, in pseudocode.},label={lst:flowaudit}]
+// a rule's identity = (switch, table, priority, cookie, match) -- not its actions,
+// so a tampered action on a policy rule shows as "changed", a bogus rule as "extra".
+baseline <- the GUARD rules (table 0) and the allowlist (table 1, cookie 0xa2), captured at a clean start
+every interval:
+    live <- the rules currently installed on each switch
+    for each live rule NOT carrying the reactive cookie 0xca:
+        if its identity is not in baseline:    report DRIFT (extra or changed)
+    for each baseline rule:
+        if it is missing from live:            report DRIFT (missing)
+    // the only legitimate live additions are the reactive 0xca rules; anything else is audited
 \end{lstlisting}
 
 \noindent \textbf{Process-state remediation (\href{\repourl/blob/main/06_Build/cars_remediation.py}{\texttt{cars\_remediation.py}}).} The novel maintain half of block-and-maintain: it detects sensor tampering by process anomaly (a level the bang-bang control law physically cannot produce) and writes the last-good value back over S7, holding the process while the source is quarantined.
 
-\begin{lstlisting}[style=carssrc,caption={Anomaly-triggered last-good restore over S7.},label={lst:remediation}]
-last_good = SEED
-while True:
-    lvl = s7_read(c)                         # read Tank.Level over S7
-    if tampered(lvl, prev):                  # a value the control law cannot produce
-        s7_write(c, last_good)               # RESTORE last-good on tamper
-        feed("RESTORED", level=round(lvl,1), last_good=round(last_good,1))
+\begin{lstlisting}[style=carspseudo,caption={Anomaly-triggered last-good restore over S7, in pseudocode.},label={lst:remediation}]
+last_good <- seed level
+loop forever:
+    level <- read Tank.Level over S7
+    if level is tampered (a value the bang-bang control law cannot produce):
+        write last_good back to the PLC over S7          // restore the last healthy value
+        record a RESTORED event (level, last_good)
     else:
-        last_good = lvl                       # healthy -> advance last-good
+        last_good <- level                                // healthy: advance the last-good value
 \end{lstlisting}
 
 \noindent \textbf{Latency harness (\href{\repourl/blob/main/07_Evaluation/cars2_mttm.py}{\texttt{cars2\_mttm.py}}).} Times the reaction window on a single clock: start the attack, poll for the isolate to appear in the controller's block set, and record attack-frame-to-enforcement.
 
-\begin{lstlisting}[style=carssrc,caption={Single-clock mean-time-to-mitigate measurement.},label={lst:mttm}]
-t0 = time.time()
-# ... launch the attack ...
-while not blocked() and time.time() - t0 < 15: time.sleep(0.02)  # poll for isolate
-mttm = time.time() - t0                       # attack-frame -> enforcement
+\begin{lstlisting}[style=carspseudo,caption={Single-clock mean-time-to-mitigate measurement, in pseudocode.},label={lst:mttm}]
+t0 <- now
+launch the attack
+while not blocked and (now - t0) < 15 s:  wait briefly     // poll for the isolate to appear
+mttm <- now - t0                                           // attack frame -> enforcement, on one clock
 \end{lstlisting}
 
 \noindent \textbf{Attack tool (\href{\repourl/blob/main/06_Build/cars_fdi_overflow.py}{\texttt{cars\_fdi\_overflow.py}}).} The false-data injection used in Section~\ref{sec:evalcampaign}: a compromised host opens an S7 session to the PLC and writes the output area at high rate, blinding the level sensor and jamming the discharge valve. Each write is a CONTROL operation to the output area, which CARS recovers and forbids.
@@ -335,15 +342,17 @@ while time.time() < end:
 
 \noindent \textbf{Conformance harness (\href{\repourl/blob/main/06_Build/cars_eval.py}{\texttt{cars\_eval.py}}).} Drives the labelled case set of Section~\ref{sec:evalaccuracy} through the deployed engine over \texttt{/cars/respond}, scores each answer against its intent label, and writes \texttt{cars\_eval\_matrix.csv}. It disarms for the decision-only pass so nothing is enforced on the live conduits, then re-arms.
 
-\begin{lstlisting}[style=carssrc,caption={Driving each case through the engine and scoring it against intent.},label={lst:eval}]
-def respond(src,dst,op,rate=0,dpid=1):            # one case -> the deployed decision path
-    return post("/cars/respond",{"src":src,"dst":dst,"op":op,"proto":"S7","dpid":dpid,"rate":rate})
-def verdict(label,resp):
-    permit = resp in {"ALLOW","MONITOR","REFUSE"}
-    if label in ("legit","flood_exempt"): return "TN" if permit else "FP"
-    if label == "attack":                 return "TP" if not permit else "FN"
-    return "grey"                                 # grey rows shown, not scored
-post("/cars/defense",{"on":False},auth=True)      # decision-only pass; re-armed at the end
+\begin{lstlisting}[style=carspseudo,caption={Driving each case through the engine and scoring it against intent, in pseudocode.},label={lst:eval}]
+disarm enforcement                              // decision-only pass; re-armed at the end
+for each case (source, dest, operation, rate, label):
+    response <- ask the deployed engine  (/cars/respond)
+    permit   <- response in { ALLOW, MONITOR, REFUSE }
+    if label in { legit, flood-exempt }:
+        verdict <- permit ? TN : FP             // restricting legitimate work is a false positive
+    else if label = attack:
+        verdict <- permit ? FN : TP             // permitting an attack is a false negative
+    else:
+        verdict <- grey                         // grey rows are shown, not scored
 \end{lstlisting}
 
 \noindent \textbf{Criticality sweep (\href{\repourl/blob/main/06_Build/cars_criticality_proof.sh}{\texttt{cars\_criticality\_proof.sh}}).} Holds the actor and operation fixed and varies only the target's tier. Part~1 runs disarmed to show the bounded elevation as a pure decision; Part~2 runs armed to measure the tier-scaled quarantine ($30 + 15w$ seconds), healing the reactive rule after each fire.
@@ -395,9 +404,14 @@ arm true; heal; capture armed 15      # then: arm false; capture disarmed 15
 
 \noindent \textbf{ICS operation battery (\href{\repourl/blob/main/06_Build/cars_ics_battery.sh}{\texttt{cars\_ics\_battery.sh}}).} Fires the full ICS operation spectrum from one trusted operator (\texttt{.31}) at the Modbus unit (\texttt{.20}) and shows the three verdicts the one conduit draws, backing Table~\ref{tab:dpi}.
 
-\begin{lstlisting}[style=carssrc,caption={Fire each operation on the same conduit and await the new decision.},label={lst:battery}]
-probe(){ restore; b=$(alast); ip netns exec opns "$@" >/dev/null 2>&1; wait_dec "$b"; }
-# READ -> OPERATIONAL/ALLOW | WRITE -> SENSITIVE/THROTTLE | CONTROL,DIAG,PROGRAM,ILLEGAL -> FORBIDDEN/BLOCK
+\begin{lstlisting}[style=carspseudo,caption={Fire each operation on the same conduit and await the new decision, in pseudocode.},label={lst:battery}]
+function probe(operation):
+    restore the conduit                     // clear any prior reactive rule
+    mark the current end of the decision log
+    run `operation` from the trusted operator
+    wait for the new decision to appear
+// expected: READ -> OPERATIONAL/ALLOW ; WRITE -> SENSITIVE/THROTTLE ;
+//           CONTROL, DIAG, PROGRAM, ILLEGAL -> FORBIDDEN/BLOCK
 \end{lstlisting}
 
 \subsection*{Attack clients and the process model}
@@ -423,12 +437,14 @@ ATTACKS = {'coil':0x05, 'diag':0x08, 'program':0x2B, 'illegal':0x64}  # CONTROL 
 
 \noindent \textbf{Process model (\href{\repourl/blob/main/06_Build/cars_process.py}{\texttt{cars\_process.py}}).} The soft co-simulation of the water-tank bang-bang loop, driving the real Q0.3 relay on PLC1 over S7 from the authorised controller identity. It reasserts the actuator every cycle and reports readback-versus-intent mismatches, which are the moments an attacker's write momentarily reached the relay.
 
-\begin{lstlisting}[style=carssrc,caption={The bang-bang control law, the dynamics, and the interference health metric.},label={lst:process}]
-if   level <= LOW:  pump = True                 # control law (eq.1)
-elif level >= HIGH: pump = False
-level += FILL if pump else -DRAIN               # dynamics (eq.2)
-c.write_area(PA, 0, 0, bytearray([0x08 if pump else 0x00]))   # actuate + reassert Q0.3 every cycle
-if (got != 0) != pump: bad += 1                 # readback != intent = attacker interference reached the relay
+\begin{lstlisting}[style=carspseudo,caption={The bang-bang control law, the dynamics, and the interference health metric, in pseudocode.},label={lst:process}]
+each cycle:
+    if level <= LOW:        pump <- on             // control law (eq.1)
+    else if level >= HIGH:  pump <- off
+    level <- level + (FILL if pump else -DRAIN)    // tank dynamics (eq.2)
+    write the pump relay Q0.3 = pump               // actuate and re-assert every cycle
+    got <- read the relay back
+    if got != pump:  interference <- interference + 1   // readback != intent: a foreign write reached the relay
 \end{lstlisting}
 
 \subsection*{Gap mitigations: DPI hardening and the process guardian}
@@ -464,13 +480,13 @@ c.write_area(PE, 0, 100, bytearray(struct.pack('>f', 4.5)))    # reported ~90 wh
 
 \noindent \textbf{Process guardian (\href{\repourl/blob/main/report/gap_evidence/gap_evidence/scripts/cars_process_guardian.py}{\texttt{cars\_process\_guardian.py}}).} The defence-in-depth layer of Section~\ref{sec:evalguardian}: an independent, read-only monitor that adds the high-side envelope, symmetric rate and liveness checks the low-side remediation agent lacks, and raises alarms only. It never writes the PLC and never touches enforcement or the remediation agent.
 
-\begin{lstlisting}[style=carssrc,caption={The high-side envelope, rate and liveness checks (alarm-only).},label={lst:guardian}]
-if lvl > CEIL:    alarm("HIGH_LEVEL", level=lvl, ceiling=CEIL)   # the excursion the low-side agent MISSES
-if lvl < FLOORV:  alarm("LOW_LEVEL",  level=lvl, floor=FLOORV)
-if prev is not None and abs(lvl - prev) > MAXDELTA:
-    alarm("RATE", level=lvl, prev=prev)                          # a physically impossible per-poll jump
-if abs(lvl - last_val) <= 0.6 and now - last_change > STALL_S:
-    alarm("STALL", level=lvl)                                    # level frozen while it should cycle = stopped/held
+\begin{lstlisting}[style=carspseudo,caption={The high-side envelope, rate and liveness checks (alarm-only), in pseudocode.},label={lst:guardian}]
+on each poll of the level:
+    if level > CEILING:               alarm HIGH_LEVEL   // the high excursion the low-side agent misses
+    if level < FLOOR:                 alarm LOW_LEVEL
+    if |level - previous| > MAX_DELTA: alarm RATE         // a physically impossible per-poll jump
+    if level has not changed for longer than STALL_TIME:  alarm STALL   // frozen while it should cycle = held
+    // alarms only: never writes the PLC, never touches enforcement or the remediation agent
 \end{lstlisting}
 
 \section{The CARS intelligence dashboard}
