@@ -672,6 +672,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \label{fig:statjitter}
 \end{figure}
 
+\FloatBarrier
 \subsection{Long-run and stress-test campaign}
 \label{appx:longrun}
 
@@ -705,9 +706,14 @@ The figures below back the long-run and stress test of Section~\ref{sec:evallong
 \label{fig:statconnpool}
 \end{figure}
 
+% flush the preceding statistics figures so the small capture below sits
+% directly under the sentence that references it, with no figure able to
+% land between them or split the box
+\FloatBarrier
 That the freeze is the endpoint's limit rather than a defect in the policy is confirmed on the switch: an isolate installs a single drop scoped to the attacker's source address alone, so it cannot match the legitimate conduit. Listing~\ref{lst:connscope} is a live capture taken on \texttt{ovs1} while an isolation was in force, showing the reactive rule matching only \texttt{nw\_src=192.168.2.77} while the \texttt{192.168.2.55} to \texttt{192.168.2.10} conduit remained a committed allow with its counter advancing.
 
 \lstinputlisting[style=carsdump,caption={The isolate is source-scoped: the reactive drop matches the attacker alone, and the legitimate Factory IO conduit is untouched during the isolation (captured live on \texttt{ovs1}).},label={lst:connscope}]{appendix_listings/conn_scope.txt}
+\FloatBarrier
 
 \begin{figure}[htbp]
 \centering
