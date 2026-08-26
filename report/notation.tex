@@ -32,6 +32,12 @@ FC & Modbus function code \\
 OB & Organisation block (PLC program unit) \\
 DB & Data block (PLC memory area) \\
 S7 & Siemens S7 communication protocol \\
+PDU & Protocol data unit \\
+TPKT & ISO transport packet header on TCP (the \texttt{03 00} bytes) carrying S7comm \\
+COTP & Connection-oriented transport protocol (ISO 8073), the layer beneath S7comm \\
+MBAP & Modbus application protocol header (carries the Modbus function code) \\
+DPID & OpenFlow datapath identifier (per switch) \\
+REAL & S7 IEEE~754 single-precision (32-bit) floating-point data type \\
 TP, TN, FP, FN & True positive, true negative, false positive, false negative \\
 \hline
 \end{tabular}
@@ -39,4 +45,4 @@ TP, TN, FP, FN & True positive, true negative, false positive, false negative \\
 
 \vspace{0.5em}
 \noindent
-S7 addressing follows the Siemens convention used throughout: \texttt{\%I} for process inputs and \texttt{\%Q} for process outputs at the bit level, \texttt{\%ID} and \texttt{\%QD} for the corresponding double-word (32-bit) analogue channels, and \texttt{\%M} for internal memory bits (merkers). For example, \texttt{\%ID100} is the analogue level input from the tank sensor, \texttt{\%QD100} and \texttt{\%QD104} drive the fill and discharge valves, and \texttt{\%M0.1} and \texttt{\%M0.2} are the HMI start and stop bits.
+S7 addressing follows the Siemens convention used throughout: \texttt{\%I} for process inputs and \texttt{\%Q} for process outputs at the bit level, \texttt{\%ID} and \texttt{\%QD} for the corresponding double-word (32-bit) analogue channels, which on this process carry REAL (IEEE~754 single-precision floating-point) values rather than double integers, so the level and valve values pass as native floats without \texttt{SCALE}/\texttt{NORM\_X} conversion, and \texttt{\%M} for internal memory bits (merkers). For example, \texttt{\%ID100} is the analogue level input from the tank sensor, \texttt{\%QD100} and \texttt{\%QD104} drive the fill and discharge valves, and \texttt{\%M0.1} and \texttt{\%M0.2} are the HMI start and stop bits.
