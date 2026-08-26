@@ -238,7 +238,7 @@ Independence from the hardware is demonstrated, not merely asserted. The same en
 \section{Testbed instantiation}
 \label{sec:testbed}
 
-To validate CARS against a real physical process, the design was instantiated on a hardware testbed rather than an emulation, so that a response can be judged against its effect on a real process. The instantiation fills the site configuration of Section~\ref{sec:portability} with the assets, roles and conduits this bench presents: four machines and two real PLCs, arranged as the two-cell topology of Figure~\ref{fig:topology}. The physical process cell, with its PLC and operator HMI, is shown in Figure~\ref{fig:hardware}.
+To validate CARS against a live process on real control hardware, the design was instantiated on a hardware testbed rather than a pure emulation, so that a response can be judged against its effect on a running process driven by real PLCs, with the tank itself a hardware-in-the-loop co-simulation. The instantiation fills the site configuration of Section~\ref{sec:portability} with the assets, roles and conduits this bench presents: four machines and two real PLCs, arranged as the two-cell topology of Figure~\ref{fig:topology}. The physical process cell, with its PLC and operator HMI, is shown in Figure~\ref{fig:hardware}.
 
 \begin{figure}[t]
 \centering
@@ -270,7 +270,7 @@ The fabric is divided into two process cells and a gateway, each an OpenFlow swi
 \label{fig:ovsshow}
 \end{figure}
 
-\subsection{The physical process}
+\subsection{The hardware-in-the-loop process}
 
 Cell-1 runs a live tank-level process, provided by Factory IO on the Windows machine and controlled by PLC1 over S7 across the fabric, as shown in Figure~\ref{fig:hil}. Factory IO supplies the level from a sensor and the state of the Start, Reset and Stop buttons as PLC inputs, and renders the fill valve, the discharge valve and the indicator lamps from the PLC outputs. The control runs in a cyclic block, OB30, which scales the raw sensor to a level of zero to one hundred, latches a running state from the operator buttons, and holds the level in a band by opening the fill valve below thirty and closing it above seventy against a constant discharge. The level that the PLC computes, held in a data block, is the process value that CARS protects; driving it out of its band, or blinding the PLC to it, is the physical harm the evaluation measures. The running scene and the operator HMI are shown in Figure~\ref{fig:process}, and the Factory IO driver that binds the scene to PLC1 in Figure~\ref{fig:driver}.
 
