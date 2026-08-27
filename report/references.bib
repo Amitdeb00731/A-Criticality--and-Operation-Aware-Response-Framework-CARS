@@ -356,3 +356,27 @@
   month       = jun,
   url         = {https://opennetworking.org/wp-content/uploads/2014/10/openflow-spec-v1.3.0.pdf}
 }
+
+% Open vSwitch does not scale well to large OpenFlow rule-sets; the megaflow classifier dominates datapath CPU (86-97% at 100K-500K rules) and rule updates trigger megaflow invalidation and control-path upcalls. Corroborates the CARS flow-table saturation finding (Section 4, Figure 4.13). Verified against the primary PDF.
+@inproceedings{rashelbach2022scaling,
+  author    = {Rashelbach, Alon and Rottenstreich, Ori and Silberstein, Mark},
+  title     = {Scaling {Open vSwitch} with a Computational Cache},
+  booktitle = {19th USENIX Symposium on Networked Systems Design and Implementation (NSDI 22)},
+  year      = {2022},
+  pages     = {1359--1374},
+  publisher = {USENIX Association},
+  isbn      = {978-1-939133-27-4},
+  url       = {https://www.usenix.org/conference/nsdi22/presentation/rashelbach}
+}
+
+% Canonical Open vSwitch paper: the tuple-space-search classifier and megaflow cache whose per-rule cost grows with table state, the mechanism behind the CARS flow-table latency bend (Figure 4.13). Verified against the primary PDF.
+@inproceedings{pfaff2015design,
+  author    = {Pfaff, Ben and Pettit, Justin and Koponen, Teemu and Jackson, Ethan J. and Zhou, Andy and Rajahalme, Jarno and Gross, Jesse and Wang, Alex and Stringer, Joe and Shelar, Pravin and Amidon, Keith and Casado, Mart{\'i}n},
+  title     = {The Design and Implementation of {Open vSwitch}},
+  booktitle = {12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15)},
+  year      = {2015},
+  pages     = {117--130},
+  publisher = {USENIX Association},
+  isbn      = {978-1-931971-218},
+  url       = {https://www.usenix.org/conference/nsdi15/technical-sessions/presentation/pfaff}
+}
