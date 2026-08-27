@@ -626,7 +626,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_traffic_baseline.png}
-\caption{Normal OT traffic baseline: per-conduit mean packets/s and the protocol mix, from a 31-second steady-state capture (6{,}490 packets, 9 conduits). The cyclic engineering-to-PLC S7 flow dominates; the remainder is PLC replies and background multicast. Source: \texttt{results/b1/baseline.pcap} via \href{\repourl/blob/main/07_Evaluation/overnight/b1_analyze.py}{\texttt{b1\_analyze.py}}.}
+\caption{Normal OT traffic baseline: per-conduit mean packets/s and the protocol mix, from a 31-second steady-state capture (6{,}490 packets, 9 conduits; the seven carrying more than one packet per second are shown, the two sub-packet reply flows omitted). The cyclic engineering-to-PLC S7 flow dominates; the remainder is PLC replies and background multicast. Source: \texttt{results/b1/baseline.pcap} via \href{\repourl/blob/main/07_Evaluation/overnight/b1_analyze.py}{\texttt{b1\_analyze.py}}.}
 \label{fig:stattraffic}
 \end{figure}
 
@@ -654,7 +654,7 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{stat_transparency.png}
-\caption{Process transparency: the tank-level distribution armed against disarmed, over roughly seven thousand interleaved, load-matched per-second samples. The two distributions coincide (means 51.5 against 50.7\%) and neither leaves the control band, so arming the defence has no measurable effect on the process. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/e2/interleaved.csv}{\texttt{results/e2/interleaved.csv}}.}
+\caption{Process transparency: the tank-level distribution armed against disarmed, over roughly seven thousand interleaved, load-matched per-second samples. The two distributions coincide (means 50.7\% armed and 51.5\% disarmed) and neither leaves the control band, so arming the defence has no measurable effect on the process. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/e2/interleaved.csv}{\texttt{results/e2/interleaved.csv}}.}
 \label{fig:stattransparency}
 \end{figure}
 
@@ -718,6 +718,6 @@ That the freeze is the endpoint's limit rather than a defect in the policy is co
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{stat_longrun_stability.png}
-\caption{Process stability under continuous attack: the tank level across the ninety-two-minute paced run, held within the 20 to 78 control band throughout. The controller and its remediation agent reported the process online in all ninety-two one-minute snapshots (this is the agent's PLC link sampled once a minute, which does not capture sub-minute client outages) and the flow auditor reported no drift. The two dashed marks are the brief Factory IO client evictions that the liveness guard caught and recovered. Source: the \texttt{night\_paw2\_0153} run, reduced by \href{\repourl/blob/main/07_Evaluation/overnight/night/night_analyze.py}{\texttt{night\_analyze.py}}.}
+\caption{Process stability under continuous attack: the tank level over the ninety-two one-minute snapshots of the paced run (the same run as the second paced bar of Figure~\ref{fig:statconnpool}, about ninety-one minutes), held within the 20 to 78 control band throughout. The controller and its remediation agent reported the process online in all ninety-two one-minute snapshots (this is the agent's PLC link sampled once a minute, which does not capture sub-minute client outages) and the flow auditor reported no drift. The two dashed marks are the brief Factory IO client evictions that the liveness guard caught and recovered. Source: the \texttt{night\_paw2\_0153} run, reduced by \href{\repourl/blob/main/07_Evaluation/overnight/night/night_analyze.py}{\texttt{night\_analyze.py}}.}
 \label{fig:statlongstab}
 \end{figure}
