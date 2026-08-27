@@ -2,7 +2,7 @@
 # Point 11 - vast accuracy test. Drives a large LABELLED corpus through the deployed decision path
 # (/cars/respond, decision-only with enforcement DISARMED so no rules are installed), scores
 # TP/TN/FP/FN against security intent, and reports accuracy + false-positive rate with a 95% Wilson CI.
-# Run on Dell 1:  python3 vast_accuracy.py
+# Run on Dell 1:  python3 vast_conformance.py
 import urllib.request, json, time, math, csv, os
 
 API = "http://10.10.10.1:8080"

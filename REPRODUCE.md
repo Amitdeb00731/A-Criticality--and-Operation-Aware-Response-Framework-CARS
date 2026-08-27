@@ -155,7 +155,7 @@ Use `examples/site.testbed.yaml` (real GUARD bindings). The system runs as the `
 
 | Claim | Harness |
 |---|---|
-| 100% decision accuracy over 2,078 cases | `07_Evaluation/overnight/vast_accuracy.py` (data: `results/vast/vast.csv`) |
+| Zero false positives and zero false negatives over the 2,078-case corpus | `07_Evaluation/overnight/vast_conformance.py` (data: `results/vast/vast.csv`) |
 | Reaction window (median 7.6 ms) | `07_Evaluation/cars2_mttm.py`, `06_Build/cars_mttm.sh` |
 | Criticality-scaled response ladder | `06_Build/cars_criticality_proof.sh` |
 | Wire-level block-and-maintain (0 vs 973) | `06_Build/cars_wire_campaign.sh` / `_disarmed.sh` |
