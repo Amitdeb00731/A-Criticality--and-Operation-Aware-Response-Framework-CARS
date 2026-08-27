@@ -73,7 +73,7 @@ r1, = axR.plot(ceil["t_s"], ceil["reactive_flows"], color=BLUE, lw=2.4,
 axR.set_xlabel("time (s)")
 axR.set_ylabel("reactive flows on gateway", color=BLUE)
 axR.tick_params(axis="y", labelcolor=BLUE)
-axR.set_ylim(0, 105000)
+axR.set_ylim(0, 122000)          # headroom so annotations clear every curve
 axR.set_xlim(0, 100)
 axR.grid(True, alpha=0.25)
 
@@ -93,20 +93,21 @@ axRc.tick_params(axis="y", labelcolor=GREEN)
 axRc.set_ylim(250, 440)
 
 # mark the 94k saturation peak (t=75.3); the memory curve reads 393 MB there
-axR.set_title("Saturation: 24 injectors (~2000 flows/s)", pad=14)
-bbox = dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.85)
-axR.annotate("control plane saturates at ~94k flows:\n"
-             "channel drops, switches fail-secure, S7 loop stalls",
-             xy=(75.3, 94118), xytext=(6, 74000), color="#8a1f1f",
-             fontsize=9, bbox=bbox,
+axR.set_title("Saturation: 24 injectors (~2000 flows/s)", pad=16)
+bbox = dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.9)
+# saturation label lifted into the top headroom, clear of every curve
+axR.annotate("~94k flows: control plane saturates,\n"
+             "channel to fail-secure, S7 loop stalls",
+             xy=(75.3, 94118), xytext=(47, 113000), color="#8a1f1f",
+             fontsize=8.5, ha="left", va="center", bbox=bbox,
              arrowprops=dict(arrowstyle="->", color="#8a1f1f", lw=1.2))
 axR.annotate("self-heal drain\n94k to 0 in ~23 s",
-             xy=(90, 40000), xytext=(78, 60000), color=GREEN,
+             xy=(91, 30000), xytext=(80, 52000), color=GREEN,
              fontsize=9, bbox=bbox,
              arrowprops=dict(arrowstyle="->", color=GREEN, lw=1.2))
 # memory: 393 MB at the flow peak, lingering to 425 MB through the drain
-axRc.annotate("393 MB at peak,\nlingers to 425 MB", xy=(75.3, 393.0),
-              xytext=(40, 300), color=GREEN, fontsize=8.5, bbox=bbox,
+axRc.annotate("memory 393 MB at peak,\nlingers to 425 MB", xy=(75.3, 393.0),
+              xytext=(41, 312), color=GREEN, fontsize=8.5, ha="left", bbox=bbox,
               arrowprops=dict(arrowstyle="->", color=GREEN, lw=1))
 
 lines = [r1, r2, r3]
