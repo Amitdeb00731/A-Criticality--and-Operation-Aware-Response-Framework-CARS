@@ -90,7 +90,9 @@ r3, = axRc.plot(ceil["t_s"], ceil["vswitchd_mb"], color=GREEN, lw=1.8,
                 ls=":", marker="s", ms=3, label="ovs-vswitchd memory")
 axRc.set_ylabel("ovs-vswitchd memory (MB)", color=GREEN)
 axRc.tick_params(axis="y", labelcolor=GREEN)
-axRc.set_ylim(250, 440)
+# widen the memory axis so the green curve sits in a lower band, visually
+# separated from the blue flows curve (data unchanged; axis range only)
+axRc.set_ylim(250, 560)
 
 # mark the 94k saturation peak (t=75.3); the memory curve reads 393 MB there
 axR.set_title("Saturation: 24 injectors (~2000 flows/s)", pad=16)
@@ -107,7 +109,7 @@ axR.annotate("self-heal drain\n94k to 0 in ~23 s",
              arrowprops=dict(arrowstyle="->", color=GREEN, lw=1.2))
 # memory: 393 MB at the flow peak, lingering to 425 MB through the drain
 axRc.annotate("memory 393 MB at peak,\nlingers to 425 MB", xy=(75.3, 393.0),
-              xytext=(41, 312), color=GREEN, fontsize=8.5, ha="left", bbox=bbox,
+              xytext=(43, 296), color=GREEN, fontsize=8.5, ha="left", bbox=bbox,
               arrowprops=dict(arrowstyle="->", color=GREEN, lw=1))
 
 lines = [r1, r2, r3]
