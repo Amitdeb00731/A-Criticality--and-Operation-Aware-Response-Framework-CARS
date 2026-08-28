@@ -695,7 +695,7 @@ The figures below back the long-run and stress test of Section~\ref{sec:evallong
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{stat_longrun_tierladder.png}
-\caption{Criticality-scaled isolation timeout over 120 tier probes across the four runs. Every probe installed 75/60/45/30\,s for CRITICAL/HIGH/MEDIUM/LOW with no deviation, at a median engine decide-time of 0.50\,ms. Source: the four \texttt{night\_*} runs, reduced by \href{\repourl/blob/main/07_Evaluation/overnight/night/night_analyze.py}{\texttt{night\_analyze.py}}.}
+\caption{Criticality-scaled isolation timeout over 120 tier probes across the four runs. Every probe installed 75/60/45/30\,s for CRITICAL/HIGH/MEDIUM/LOW with no deviation, at a median engine decide-time of 0.50\,ms under the concurrent night-campaign load, against the 0.027\,ms of the dedicated clean run of Section~\ref{sec:evallatency}. Source: the four \texttt{night\_*} runs, reduced by \href{\repourl/blob/main/07_Evaluation/overnight/night/night_analyze.py}{\texttt{night\_analyze.py}}.}
 \label{fig:statlongtier}
 \end{figure}
 
