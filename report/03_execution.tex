@@ -47,12 +47,12 @@ Two separations shape the design. The controller, which decides, is separate fro
 \section{The enforcement pipeline}
 \label{sec:pipeline}
 
-Before the pipeline itself, Figure~\ref{fig:sysarch} gives the concrete shape of the system and how its parts connect: a single CARS controller governs three Open vSwitch switches over OpenFlow, a Snort sensor reads a mirror of the gateway switch to recover the industrial operation, and the protected assets, the two process cells and the supervisory hosts, sit on the switches behind them. This is the plain component view; the abstract framework was Figure~\ref{fig:arch} and the full addressed testbed is Figure~\ref{fig:topology}.
+Before the pipeline itself, Figure~\ref{fig:sysarch} gives the general shape of the system and how its parts connect: a single CARS controller governs the OpenFlow switches over OpenFlow, a DPI sensor reads a mirror of the gateway switch to recover the industrial operation, and the protected assets, the PLCs driving their processes and the supervisory hosts, sit on the switches behind them, with an uplink from the gateway to the enterprise IT and DMZ zones. This is the plain component view; the abstract framework was Figure~\ref{fig:arch} and the full addressed testbed is Figure~\ref{fig:topology}.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.95\textwidth]{fig_cars_sysarch.png}
-\caption[The system architecture: controller, switches, IDS and assets]{The concrete system architecture. One CARS controller (the os-ken decision engine) programs three Open vSwitch switches, \texttt{ovs1}, \texttt{ovsgw} and \texttt{ovs2}, over OpenFlow (dashed); a Snort IDS reads a mirror of the gateway switch (dotted); and process traffic crosses the switches (solid) to the protected assets. The two cells are joined to the gateway by a patch link and a NAT transit.}
+\caption[The system architecture: controller, switches, IDS and assets]{The system architecture in general form. One CARS controller (the decision engine) programs the OpenFlow switches over OpenFlow (dashed); an IDS reads a mirror of the gateway switch (dotted); process traffic crosses the switches (solid) to the protected assets, each PLC driving its process, with the supervisory hosts and an uplink to the enterprise IT and DMZ zones on the gateway. The concrete testbed instantiation of this architecture is Figure~\ref{fig:topology}.}
 \label{fig:sysarch}
 \end{figure}
 
