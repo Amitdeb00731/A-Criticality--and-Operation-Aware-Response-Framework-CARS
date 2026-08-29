@@ -49,10 +49,10 @@ ax.annotate("decision\n0.026 ms  (0.3%)", xy=(97.7, yB+hB), xytext=(88, 64),
 ax.text(6, yB-3.5, "0 ms", ha="left", va="top", fontsize=8.5, color=GRY_E)
 ax.text(97.4, yB-3.5, "7.6 ms (median)", ha="right", va="top", fontsize=8.5, color=GRY_E)
 
-# --- Row C: the decision, expanded into its six in-memory steps ---
-ax.text(6, 34, "the 0.026 ms, expanded — six in-memory steps (audit log follows, just after)",
-        ha="left", va="center", fontsize=8.5, color=GRY_E)
-ax.add_patch(FancyBboxPatch((4, 6), 95, 24, boxstyle="round,pad=0.2,rounding_size=1.2",
+# --- Row C: the decision, expanded ---
+ax.text(6, 33, "0.026 ms expanded", ha="left", va="center", fontsize=8.5, color=GRY_E)
+# dashed container = the timed window
+ax.add_patch(FancyBboxPatch((4, 14), 95, 16, boxstyle="round,pad=0.2,rounding_size=1.2",
                             fc="none", ec=GRY_E, lw=0.7, linestyle=(0,(4,3))))
 steps = [("1 classify", "role × op → tier"), ("2 elevate", "SENSITIVE → FORBID"),
          ("3 rate/state", "rate → flood flag"), ("4 select", "tier → response"),
@@ -60,12 +60,18 @@ steps = [("1 classify", "role × op → tier"), ("2 elevate", "SENSITIVE → FOR
 w, gap, x0 = 13.2, 2.5, 6.0
 xs = [x0 + i*(w+gap) for i in range(6)]
 for x, (t, s) in zip(xs, steps):
-    ax.add_patch(FancyBboxPatch((x, 9), w, 18, boxstyle="round,pad=0.2,rounding_size=1.0",
+    ax.add_patch(FancyBboxPatch((x, 16), w, 12, boxstyle="round,pad=0.2,rounding_size=1.0",
                                 fc=TEAL_F, ec=TEAL_E, lw=1.0))
-    ax.text(x + w/2, 21, t, ha="center", va="center", fontsize=8, color=TEAL_T, weight="medium")
-    ax.text(x + w/2, 14, s, ha="center", va="center", fontsize=6.6, color=TEAL_T)
+    ax.text(x + w/2, 25, t, ha="center", va="center", fontsize=8, color=TEAL_T, weight="medium")
+    ax.text(x + w/2, 19, s, ha="center", va="center", fontsize=6.6, color=TEAL_T)
 for i in range(5):
-    arrow(xs[i] + w, xs[i+1], 18)
+    arrow(xs[i] + w, xs[i+1], 22)
+# audit + console log: OUTSIDE the timed window
+ax.add_patch(FancyBboxPatch((70, 1), 29, 10, boxstyle="round,pad=0.2,rounding_size=1.0",
+                            fc=GRY_F, ec=GRY_E, lw=0.9))
+ax.text(84.5, 7.3, "audit + console log", ha="center", va="center", fontsize=7.5, color=GRY_T, weight="medium")
+ax.text(84.5, 3.6, "after the timer", ha="center", va="center", fontsize=6.6, color=GRY_E)
+ax.annotate("", xy=(85.5, 11), xytext=(91.1, 16), arrowprops=dict(arrowstyle="-|>", color=GRY_E, lw=1.2))
 
 fig.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01)
 fig.savefig("fig_reaction_window.png", dpi=200, bbox_inches="tight", facecolor="white")
