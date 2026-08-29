@@ -429,7 +429,34 @@ Underneath these tests the process stayed live within the limits of the sampling
 \subsection{Framework limits: flow-table capacity}
 \label{sec:evalflowtable}
 
-The connection pool is the endpoint's limit; the controller has its own, in the flow table it fills. Why the table grows at all is the granularity of the isolate response: an ISOLATE matches a single source address, so the controller installs one reactive drop rule, on every switch, for each distinct attacking source it quarantines. A flood mounted from many distinct source addresses therefore makes the controller install one new flow per source, and the reactive table grows in step with the number of distinct sources seen; a flood from a single source, by contrast, installs just one rule however many packets it sends. That per-source growth is the limit this section bounds. To reach it the enforcement layer was driven directly by the stress harness \href{\repourl/blob/main/07_Evaluation/overnight/flowtable_stress.py}{\texttt{flowtable\_stress.py}}: it posts a stream of \emph{distinct} unregistered sources, drawn from the \texttt{100.64.0.0/10} carrier-grade-NAT range so that none is a real host, to \texttt{/cars/respond} as FORBIDDEN \texttt{CONTROL} requests against the critical PLC, and it is that distinctness, a new source address on every post, that forces the engine to classify each one FORBIDDEN and install a fresh source-scoped isolate per switch, so the reactive table fills one flow at a time. Concurrent worker threads raise the post rate to the saturation point in its \texttt{ceiling} mode, while a \texttt{sustain} mode holds the flood past twice the timeout to show the table plateaus rather than growing without bound; the gateway's OpenFlow table was sampled as it filled (Figure~\ref{fig:flowtable}). The switches carry no configured flow cap and the kernel connection-tracker holds 262{,}144 entries, so the ceiling is set by the controller and the switch software rather than a fixed limit.
+The connection pool is the endpoint's limit; the controller has its own, in the flow table it fills. Why the table grows at all is the granularity of the isolate response: an ISOLATE matches a single source address, so the controller installs one reactive drop rule, on every switch, for each distinct attacking source it quarantines. A flood mounted from many distinct source addresses therefore makes the controller install one new flow per source, and the reactive table grows in step with the number of distinct sources seen; a flood from a single source, by contrast, installs just one rule however many packets it sends. That per-source growth is the limit this section bounds. To reach it the enforcement layer was driven directly by the stress harness \href{\repourl/blob/main/07_Evaluation/overnight/flowtable_stress.py}{\texttt{flowtable\_stress.py}}: it posts a stream of \emph{distinct} unregistered sources, drawn from the \texttt{100.64.0.0/10} carrier-grade-NAT range so that none is a real host, to \texttt{/cars/respond} as FORBIDDEN \texttt{CONTROL} requests against the critical PLC, and it is that distinctness, a new source address on every post, that forces the engine to classify each one FORBIDDEN and install a fresh source-scoped isolate per switch, so the reactive table fills one flow at a time. Concurrent worker threads raise the post rate to the saturation point in its \texttt{ceiling} mode, while a \texttt{sustain} mode holds the flood past twice the timeout to show the table plateaus rather than growing without bound; the gateway's OpenFlow table was sampled as it filled (Figure~\ref{fig:flowtable}). The harness logic, the distinct-source flood and the sampling of the filling table, is stated as pseudocode in Listing~\ref{lst:flowtable}.
+
+\begin{lstlisting}[style=carspseudo,caption={The flow-table saturation harness (\texttt{flowtable\_stress.py}): a flood of distinct sources posted to the controller, each forcing one source-scoped isolate, sampled as the reactive table fills and then self-heals on timeout.},label={lst:flowtable}]
+globals: next_ip <- 100.64.0.0             // carrier-grade-NAT range, no real host
+
+function NEXT_SOURCE():                     // a fresh, distinct source every call
+    s <- next_ip; next_ip <- next_ip + 1   // this distinctness forces a new flow
+    return s
+
+function POST(src):                         // one attack event to the controller
+    send {src, dst = CRITICAL_PLC, op = CONTROL, proto = S7} to /cars/respond
+    // engine: unregistered src + forbidden CONTROL -> ISOLATE(src)
+    //         -> installs one 0x00ca drop rule per switch
+
+function WORKER(cap):                        // many run at once to raise the rate
+    while not stopped:
+        if reactive_flows() >= cap:  wait; continue     // safety ceiling
+        POST(NEXT_SOURCE())
+
+function RUN(threads, cap):
+    start `threads` WORKERs
+    every 5 s:
+        sample reactive_flows, install_latency, decide_ms, vswitchd_memory
+        if decide_ms spikes or install_latency > 25 ms or flows >= cap:
+            record the ceiling; break         // first sign of saturation
+    stop all WORKERs
+    watch reactive_flows drain to zero as the hard_timeouts expire   // self-heal
+\end{lstlisting} The switches carry no configured flow cap and the kernel connection-tracker holds 262{,}144 entries, so the ceiling is set by the controller and the switch software rather than a fixed limit.
 
 Under a single injector at about four hundred isolations a second the fabric was untroubled. Reactive flows tracked the sources one for one to twenty thousand, the per-install time stayed flat at two milliseconds and the decide time under a tenth of a millisecond, and the process ran undisturbed. Once the flood stopped the criticality-scaled hard timeout drained the whole table to zero within its window, so a sustained flood cannot grow the table without bound: it plateaus near the install rate times the timeout and self-heals from there.
 
