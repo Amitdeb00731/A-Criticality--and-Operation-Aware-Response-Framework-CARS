@@ -50,19 +50,22 @@ ax.text(6, yB-3.5, "0 ms", ha="left", va="top", fontsize=8.5, color=GRY_E)
 ax.text(97.4, yB-3.5, "7.6 ms (median)", ha="right", va="top", fontsize=8.5, color=GRY_E)
 
 # --- Row C: the decision, expanded into its six in-memory steps ---
-ax.text(6, 33, "the 0.026 ms, expanded — six in-memory steps (audit log follows, just after)",
+ax.text(6, 34, "the 0.026 ms, expanded — six in-memory steps (audit log follows, just after)",
         ha="left", va="center", fontsize=8.5, color=GRY_E)
-ax.add_patch(FancyBboxPatch((4, 13), 95, 15, boxstyle="round,pad=0.2,rounding_size=1.2",
+ax.add_patch(FancyBboxPatch((4, 6), 95, 24, boxstyle="round,pad=0.2,rounding_size=1.2",
                             fc="none", ec=GRY_E, lw=0.7, linestyle=(0,(4,3))))
-labels = ["1 classify", "2 elevate", "3 rate/state", "4 select", "5 timeout", "6 enforce"]
+steps = [("1 classify", "role × op → tier"), ("2 elevate", "SENSITIVE → FORBID"),
+         ("3 rate/state", "rate → flood flag"), ("4 select", "tier → response"),
+         ("5 timeout", "weight → 30+15w s"), ("6 enforce", "rule → switch")]
 w, gap, x0 = 13.2, 2.5, 6.0
 xs = [x0 + i*(w+gap) for i in range(6)]
-for x, lab in zip(xs, labels):
-    ax.add_patch(FancyBboxPatch((x, 16.5), w, 9, boxstyle="round,pad=0.2,rounding_size=1.0",
+for x, (t, s) in zip(xs, steps):
+    ax.add_patch(FancyBboxPatch((x, 9), w, 18, boxstyle="round,pad=0.2,rounding_size=1.0",
                                 fc=TEAL_F, ec=TEAL_E, lw=1.0))
-    ax.text(x + w/2, 21, lab, ha="center", va="center", fontsize=8.5, color=TEAL_T)
+    ax.text(x + w/2, 21, t, ha="center", va="center", fontsize=8, color=TEAL_T, weight="medium")
+    ax.text(x + w/2, 14, s, ha="center", va="center", fontsize=6.6, color=TEAL_T)
 for i in range(5):
-    arrow(xs[i] + w, xs[i+1], 21)
+    arrow(xs[i] + w, xs[i+1], 18)
 
 fig.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01)
 fig.savefig("fig_reaction_window.png", dpi=200, bbox_inches="tight", facecolor="white")
