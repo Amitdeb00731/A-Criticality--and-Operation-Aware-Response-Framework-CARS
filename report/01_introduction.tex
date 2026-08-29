@@ -19,7 +19,7 @@ The aim of the project was to design, build and evaluate an SDN intrusion-respon
 
 \begin{itemize}
 \item Design a response model that grades enforcement by asset criticality and operation class, and that is bounded, reversible and evidence-generating.
-\item Implement the model as an OpenFlow controller with a layered pipeline, together with the integrity checks needed to remain trustworthy under control-plane compromise.
+\item Implement the model as an OpenFlow controller with a layered pipeline, together with integrity checks that detect tampering with the forwarding state and refuse an unauthenticated disarm of the defence, so that control-plane tampering is caught rather than trusted (a fully subverted controller is out of scope, Section~\ref{sec:threat}).
 \item Keep the design portable, separating a controller core from the site-specific configuration of assets, roles and conduits, so that the same engine applies to any plant rather than to one testbed.
 \item Build a representative hardware testbed with real PLCs, an operator panel and a live hardware-in-the-loop process, and instantiate CARS on it to validate the design against real physical consequences.
 \item Evaluate decision conformance and false positives, and validate each capability at the packet level against realistic attacks, comparing protected with unprotected operation.
