@@ -45,7 +45,7 @@
 % Flow-integrity / policy checking for industrial SDN (basis of cars_flow_audit.py)
 @inproceedings{melis2018policychecker,
   author    = {Melis, Andrea and Berardi, Davide and Contoli, Chiara and Callegati, Franco and Esposito, Flavio and Prandini, Marco},
-  title     = {A Policy Checker Approach for Secure Industrial SDN},
+  title     = {A Policy Checker Approach for Secure Industrial {SDN}},
   booktitle = {2018 2nd Cyber Security in Networking Conference (CSNet)},
   year      = {2018},
   publisher = {IEEE},
@@ -66,13 +66,6 @@
   url       = {https://academic.oup.com/jigpal/article-abstract/28/4/461/5691244}
 }
 
-% SDN + NFV for incident response in ICS (defined, not cited in the body)
-@article{murillo2018leveraging,
-  author    = {Murillo Piedrahita, Andr{\'e}s F. and Gaur, Vikram and Giraldo, Jairo and C{\'a}rdenas, {\'A}lvaro A. and Rueda, Sandra Julieta},
-  title     = {Leveraging Software-Defined Networking for Incident Response in Industrial Control Systems},
-  journal   = {IEEE Software}
-}
-
 % ICS testbed methodology
 @inproceedings{antonioli2015minicps,
   author    = {Antonioli, Daniele and Tippenhauer, Nils Ole},
@@ -87,7 +80,7 @@
 
 @inproceedings{gardiner2019oops,
   author    = {Gardiner, Joseph and Craggs, Barnaby and Green, Benjamin and Rashid, Awais},
-  title     = {Oops I Did It Again: Further Adventures in the Land of {ICS} Security Testbeds},
+  title     = {{Oops I Did It Again}: Further Adventures in the Land of {ICS} Security Testbeds},
   booktitle = {Proceedings of the ACM Workshop on Cyber-Physical Systems Security and PrivaCy (CPS-SPC '19)},
   year      = {2019},
   month     = nov,
@@ -124,7 +117,7 @@
   title     = {{SoK}: A Taxonomy for Contrasting Industrial Control Systems Asset Discovery Tools},
   booktitle = {Proceedings of the 17th International Conference on Availability, Reliability and Security (ARES '22)},
   year      = {2022},
-  publisher = {Association for Computing Machinery},
+  publisher = {ACM},
   address   = {Vienna, Austria},
   pages     = {1--12},
   doi       = {10.1145/3538969.3538979}
@@ -132,7 +125,7 @@
 
 % Physics-based / process-invariant intrusion detection (context for the process guardian, Section 4.8)
 @inproceedings{cardenas2011attacks,
-  author    = {C{\'a}rdenas, Alvaro A. and Amin, Saurabh and Lin, Zong-Syun and Huang, Yu-Lun and Huang, Chi-Yen and Sastry, Shankar},
+  author    = {C{\'a}rdenas, {\'A}lvaro A. and Amin, Saurabh and Lin, Zong-Syun and Huang, Yu-Lun and Huang, Chi-Yen and Sastry, Shankar},
   title     = {Attacks Against Process Control Systems: Risk Assessment, Detection, and Response},
   booktitle = {Proceedings of the 6th ACM Symposium on Information, Computer and Communications Security (ASIACCS '11)},
   year      = {2011},
@@ -145,7 +138,7 @@
 % SDN / OpenFlow foundations
 @article{lara2014openflow,
   author  = {Lara, Adrian and Kolasani, Anisha and Ramamurthy, Byrav},
-  title   = {Network Innovation using OpenFlow: A Survey},
+  title   = {Network Innovation using {OpenFlow}: A Survey},
   journal = {IEEE Communications Surveys \& Tutorials},
   volume  = {16},
   number  = {1},
@@ -223,9 +216,9 @@
   doi       = {10.1145/3407023.3409314}
 }
 
-% SDN/NFV virtualised incident-response functions for control systems (journal companion to murillo2018leveraging)
+% SDN/NFV virtualised incident-response functions for control systems (cited in Section 2.3)
 @article{murillo2018virf,
-  author    = {Murillo Piedrahita, Andr{\'e}s F. and Gaur, Vikram and Giraldo, Jairo and C{\'a}rdenas, Alvaro A. and Rueda, Sandra Julieta},
+  author    = {Murillo Piedrahita, Andr{\'e}s F. and Gaur, Vikram and Giraldo, Jairo and C{\'a}rdenas, {\'A}lvaro A. and Rueda, Sandra Julieta},
   title     = {Virtual incident response functions in control systems},
   journal   = {Computer Networks},
   volume    = {135},
@@ -249,8 +242,8 @@
 
 % SDN-based firewall / whitelisting for industrial (Industry 4.0) systems
 @article{tsuchiya2018firewall,
-  author    = {Tsuchiya, Akihiro and Fraile, Francisco and Koshijima, Ichiro and {\'O}rtiz, Angel and Poler, Ra{\'u}l},
-  title     = {Software defined networking firewall for industry 4.0 manufacturing systems},
+  author    = {Tsuchiya, Akihiro and Fraile, Francisco and Koshijima, Ichiro and Ortiz, {\'A}ngel and Poler, Ra{\'u}l},
+  title     = {Software defined networking firewall for {Industry 4.0} manufacturing systems},
   journal   = {Journal of Industrial Engineering and Management},
   volume    = {11},
   number    = {2},
@@ -361,7 +354,7 @@
 % OpenFlow protocol primary source; version 1.3.0 (wire protocol 0x04) is the version os-ken implements and CARS deploys
 @techreport{onf2012openflow13,
   author      = {{Open Networking Foundation}},
-  title       = {OpenFlow Switch Specification, Version 1.3.0 (Wire Protocol 0x04)},
+  title       = {{OpenFlow} Switch Specification, Version 1.3.0 (Wire Protocol 0x04)},
   institution = {Open Networking Foundation},
   type        = {ONF Technical Specification},
   number      = {TS-006},
@@ -400,7 +393,6 @@
   title       = {Common Vulnerability Scoring System version 3.1: Specification Document},
   institution = {Forum of Incident Response and Security Teams (FIRST)},
   year        = {2019},
-  note        = {Section 5, Qualitative Severity Rating Scale: None, Low, Medium, High, Critical},
   url         = {https://www.first.org/cvss/v3.1/specification-document}
 }
 
@@ -410,8 +402,7 @@
   institution = {International Electrotechnical Commission (IEC)},
   type        = {International Standard},
   number      = {IEC 61508:2010},
-  year        = {2010},
-  note        = {Edition 2.0; defines four Safety Integrity Levels, SIL 1--4}
+  year        = {2010}
 }
 
 @techreport{iec62443_33,
@@ -420,6 +411,5 @@
   institution = {International Electrotechnical Commission (IEC)},
   type        = {International Standard},
   number      = {IEC 62443-3-3:2013},
-  year        = {2013},
-  note        = {Edition 1.0; defines four security levels, SL 1--4, by attacker capability}
+  year        = {2013}
 }
