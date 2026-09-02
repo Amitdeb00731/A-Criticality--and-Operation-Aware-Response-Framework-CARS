@@ -173,7 +173,7 @@
                       {MSci}{Master   of     Science}
                       {MSc} {Master   of     Science}
                       {PhD} {Doctor   of Philosophy}
-                    }~in the Faculty of Engineering.                                
+                    }~in the Faculty of Science and Engineering.
 
                               \vspace*{1.0cm}
                           \rule{0.5\textwidth}{0.5pt}
@@ -199,8 +199,8 @@
   \chapter*{Declaration}
 
   This dissertation is submitted to the University of Bristol in accordance 
-  with the requirements of the degree of {\dissertation@degree} in the Faculty 
-  of Engineering.  It has not been submitted for any other degree or diploma 
+  with the requirements of the degree of {\dissertation@degree} in the Faculty
+  of Science and Engineering.  It has not been submitted for any other degree or diploma
   of any examining body.  Except where specifically acknowledged, it is all 
   the work of the Author. 
 
