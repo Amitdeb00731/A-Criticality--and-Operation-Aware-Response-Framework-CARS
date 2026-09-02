@@ -150,9 +150,11 @@
   \vspace*{\fill}
   \begin{center}
                 \includegraphics[scale=0.3]{logo_uob_color}                \\
-                              \vspace*{1.0cm}
-                          DEPARTMENT OF ENGINEERING MATHEMATICS                        \\
-                              \vspace*{2.0cm}
+                              \vspace*{0.9cm}
+  {\large\scshape Faculty of Science and Engineering}\\[0.34cm]
+  \parbox{15cm}{\begin{center}School of Computer Science, Electrical and Electronic Engineering, and Engineering Mathematics\end{center}}\\[0.34cm]
+  {\large MSc Cyber Security (Infrastructures Security)}\\
+                              \vspace*{1.4cm}
   \parbox{16cm}{\begin{center}\LARGE \dissertation@title@major \end{center}} \\
                               \vspace*{0.5cm}
   \mbox{\IfEq{\dissertation@title@minor}{}{}{\Large \dissertation@title@minor}} \\
