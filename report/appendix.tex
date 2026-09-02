@@ -67,7 +67,7 @@ The operation-aware tier depends on what the Snort mirror carries, and that mirr
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig_cellblindspot.png}
-\caption{The spatial coverage of the operation-aware tier. The Snort mirror taps \texttt{ovsgw} only: gateway-crossing traffic is inspected (green), while a purely intra-cell path (red), an in-cell foothold reaching \texttt{PLC2} over \texttt{ovs2}, never reaches the mirror and is not operation-aware. The proactive layer still applies on every switch, so an unregistered intra-cell source is refused regardless. This is an architectural illustration of a coverage boundary, not a tested attack.}
+\caption[Operation-aware coverage boundary]{The spatial coverage of the operation-aware tier. The Snort mirror taps \texttt{ovsgw} only: gateway-crossing traffic is inspected (green), while a purely intra-cell path (red), an in-cell foothold reaching \texttt{PLC2} over \texttt{ovs2}, never reaches the mirror and is not operation-aware. The proactive layer still applies on every switch, so an unregistered intra-cell source is refused regardless. This is an architectural illustration of a coverage boundary, not a tested attack.}
 \label{fig:cellblindspot}
 \end{figure}
 
@@ -80,14 +80,14 @@ Two further live checks referenced from Section~\ref{sec:implementation}. Figure
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{term_guard.png}
-\caption{GUARD anti-spoof drop counters from \texttt{curl \$API/cars/guard}, per binding and per switch (all zero, armed and quiescent).}
+\caption[GUARD anti-spoof counters]{GUARD anti-spoof drop counters from \texttt{curl \$API/cars/guard}, per binding and per switch (all zero, armed and quiescent).}
 \label{fig:appguard}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{term_meter.png}
-\caption{The OpenFlow meter behind the THROTTLE response, from \texttt{ovs-ofctl dump-meters ovsgw}.}
+\caption[The THROTTLE meter]{The OpenFlow meter behind the THROTTLE response, from \texttt{ovs-ofctl dump-meters ovsgw}.}
 \label{fig:appmeter}
 \end{figure}
 
@@ -128,7 +128,7 @@ WRITE (-> THROTTLE)  MBAP+PDU: 00 01 00 00 00 06 00 06 00 04 00 07
 \centering
 \begin{minipage}[t]{0.49\textwidth}\centering\includegraphics[width=\linewidth]{wire_modbus_fc3.png}\end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}\centering\includegraphics[width=\linewidth]{wire_modbus_fc6.png}\end{minipage}
-\caption{The Modbus operation on the wire, same conduit \texttt{.31$\to$.20}. Left: \texttt{Function Code: Read Holding Registers (3)}, permitted. Right: \texttt{Function Code: Write Single Register (6)} setting register~4 to~7, throttled. The verdict turns on this field.}
+\caption[Modbus operation on the wire]{The Modbus operation on the wire, same conduit \texttt{.31$\to$.20}. Left: \texttt{Function Code: Read Holding Registers (3)}, permitted. Right: \texttt{Function Code: Write Single Register (6)} setting register~4 to~7, throttled. The verdict turns on this field.}
 \label{fig:modbusdpi}
 \end{figure}
 
@@ -137,14 +137,14 @@ Two further S7 views complete the picture. Figure~\ref{fig:wiredisarmed} shows t
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{wire_disarmed.png}
-\caption{Disarmed, the attacker's S7 Write Var (frame 452) reaches the PLC. With CARS armed the same write is dropped in the fabric (Figure~\ref{fig:wireproof}).}
+\caption[S7 write reaches the PLC, disarmed]{Disarmed, the attacker's S7 Write Var (frame 452) reaches the PLC. With CARS armed the same write is dropped in the fabric (Figure~\ref{fig:wireproof}).}
 \label{fig:wiredisarmed}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{wire_s7_stream.png}
-\caption{The attacker's Setup frame (\texttt{.31$\to$.10}, highlighted) amongst the legitimate \texttt{.55} Factory IO loop traffic on the PLC port. CARS must pick the malicious operation out of a continuous stream of legitimate S7 reads and writes.}
+\caption[Attack frame amid legitimate loop traffic]{The attacker's Setup frame (\texttt{.31$\to$.10}, highlighted) amongst the legitimate \texttt{.55} Factory IO loop traffic on the PLC port. CARS must pick the malicious operation out of a continuous stream of legitimate S7 reads and writes.}
 \label{fig:s7stream}
 \end{figure}
 
@@ -172,7 +172,7 @@ The process devastation of Section~\ref{sec:evaldevastation} has a second, quiet
 \centering
 \begin{minipage}[c]{0.42\textwidth}\centering\includegraphics[width=\linewidth]{p6_tank_disarmed.png}\end{minipage}\hfill
 \begin{minipage}[c]{0.54\textwidth}\centering\includegraphics[width=\linewidth]{p6_hmi_deceived.jpg}\end{minipage}
-\caption{The sensor-spoof deception, disarmed. Left: the real Factory IO tank, filled. Right: the operator HMI at the same moment, reading zero. The reported process has been divorced from the real one.}
+\caption[Sensor-spoof deception, disarmed]{The sensor-spoof deception, disarmed. Left: the real Factory IO tank, filled. Right: the operator HMI at the same moment, reading zero. The reported process has been divorced from the real one.}
 \label{fig:p6deception}
 \end{figure}
 
@@ -182,21 +182,21 @@ The external vectors were driven from the Kali attacker \texttt{192.168.2.77}. R
 \centering
 \includegraphics[width=0.82\textwidth]{p1_recon_ports.png}\\[4pt]
 \includegraphics[width=0.82\textwidth]{p1_recon_isolate.png}
-\caption{Reconnaissance from Kali, armed. Top: the port scan of PLC1, every port \texttt{filtered}. Bottom: the reactive rule installed against the scanner, \texttt{cookie=0xca}, \texttt{priority=110}, \texttt{nw\_src=192.168.2.77}, \texttt{actions=drop}, \texttt{hard\_timeout=75}.}
+\caption[Reconnaissance blocked, armed]{Reconnaissance from Kali, armed. Top: the port scan of PLC1, every port \texttt{filtered}. Bottom: the reactive rule installed against the scanner, \texttt{cookie=0xca}, \texttt{priority=110}, \texttt{nw\_src=192.168.2.77}, \texttt{actions=drop}, \texttt{hard\_timeout=75}.}
 \label{fig:p1recon}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{p2_guard_after.png}
-\caption{Identity spoofing at GUARD. After forging ARP as the trusted seam \texttt{192.168.2.31} from Kali, the anti-spoof counter \texttt{dpid3 arp 192.168.2.31} registers the dropped frames (running total 10), every forged frame dropped at ingress with all other bindings untouched. The controller logged each as \texttt{REFUSED (identity-spoof)}.}
+\caption[Identity spoofing dropped at GUARD]{Identity spoofing at GUARD. After forging ARP as the trusted seam \texttt{192.168.2.31} from Kali, the anti-spoof counter \texttt{dpid3 arp 192.168.2.31} registers the dropped frames (running total 10), every forged frame dropped at ingress with all other bindings untouched. The controller logged each as \texttt{REFUSED (identity-spoof)}.}
 \label{fig:p2spoof}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{p2_mttm.png}
-\caption{Reaction window (mean-time-to-mitigate) over one hundred autonomous trials, attack-frame to enforcement on a single clock: median 7.6\,ms, mean 11.2\,ms, standard deviation 11.8\,ms, minimum 5.5\,ms, maximum 72.9\,ms, every trial ending in ISOLATE.}
+\caption[Reaction window over 100 trials]{Reaction window (mean-time-to-mitigate) over one hundred autonomous trials, attack-frame to enforcement on a single clock: median 7.6\,ms, mean 11.2\,ms, standard deviation 11.8\,ms, minimum 5.5\,ms, maximum 72.9\,ms, every trial ending in ISOLATE.}
 \label{fig:mttm}
 \end{figure}
 
@@ -507,7 +507,7 @@ The dashboard (\href{\repourl/blob/main/06_Build/cars_dashboard.py}{\texttt{cars
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{dash_overview.png}
-\caption{The CARS dashboard's discovered topology. Switches (\texttt{ovsgw}, \texttt{ovs1}, \texttt{ovs2}) in blue, the supervisory hosts (EWS, SCADA, the historians, CARS-Remediation) and PLCs discovered live with their roles and criticality rings, the CARS controller and Snort IDS, the modelled north side (Enterprise firewall, DMZ/jump, OT NAT) and the Cell-2 NAT path to PLC2. Unregistered hosts (the on-segment attacker seams \texttt{192.168.2.66} and \texttt{192.168.2.67}) are flagged. Everything shown is polled live from the controller, not drawn by hand.}
+\caption[Dashboard discovered topology]{The CARS dashboard's discovered topology. Switches (\texttt{ovsgw}, \texttt{ovs1}, \texttt{ovs2}) in blue, the supervisory hosts (EWS, SCADA, the historians, CARS-Remediation) and PLCs discovered live with their roles and criticality rings, the CARS controller and Snort IDS, the modelled north side (Enterprise firewall, DMZ/jump, OT NAT) and the Cell-2 NAT path to PLC2. Unregistered hosts (the on-segment attacker seams \texttt{192.168.2.66} and \texttt{192.168.2.67}) are flagged. Everything shown is polled live from the controller, not drawn by hand.}
 \label{fig:dashtopo}
 \end{figure}
 
@@ -626,49 +626,49 @@ The figures below plot the measured data behind the Critical Evaluation. Each is
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_traffic_baseline.png}
-\caption{Normal OT traffic baseline: per-conduit mean packets/s and the protocol mix, from a 31-second steady-state capture (6{,}490 packets, 9 conduits; the seven carrying more than one packet per second are shown, the two sub-packet reply flows omitted). The cyclic engineering-to-PLC S7 flow dominates; the remainder is PLC replies and background multicast. Source: \texttt{results/b1/baseline.pcap} via \href{\repourl/blob/main/07_Evaluation/overnight/b1_analyze.py}{\texttt{b1\_analyze.py}}.}
+\caption[Normal OT traffic baseline]{Normal OT traffic baseline: per-conduit mean packets/s and the protocol mix, from a 31-second steady-state capture (6{,}490 packets, 9 conduits; the seven carrying more than one packet per second are shown, the two sub-packet reply flows omitted). The cyclic engineering-to-PLC S7 flow dominates; the remainder is PLC replies and background multicast. Source: \texttt{results/b1/baseline.pcap} via \href{\repourl/blob/main/07_Evaluation/overnight/b1_analyze.py}{\texttt{b1\_analyze.py}}.}
 \label{fig:stattraffic}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.62\textwidth]{stat_confusion.png}
-\caption{Decision conformance at scale over the 2{,}078-case labelled corpus, which is attack-heavy by design (2{,}040 attacks against 38 legitimate or exempt cases). Every attack was restrained (no false negative) and every legitimate or exempt case permitted (no false positive). Because the decision is deterministic and the corpus is imbalanced, the two per-class error rates, both zero, are the meaningful figures rather than any aggregate. The attack side, where the label and the default-deny share the same registration test, is a coverage-and-robustness result; the zero false positive over the authorised cases is the trust result. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/vast/vast.csv}{\texttt{results/vast/vast.csv}}.}
+\caption[Decision conformance at scale]{Decision conformance at scale over the 2{,}078-case labelled corpus, which is attack-heavy by design (2{,}040 attacks against 38 legitimate or exempt cases). Every attack was restrained (no false negative) and every legitimate or exempt case permitted (no false positive). Because the decision is deterministic and the corpus is imbalanced, the two per-class error rates, both zero, are the meaningful figures rather than any aggregate. The attack side, where the label and the default-deny share the same registration test, is a coverage-and-robustness result; the zero false positive over the authorised cases is the trust result. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/vast/vast.csv}{\texttt{results/vast/vast.csv}}.}
 \label{fig:statconfusion}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{stat_criticality_surface.png}
-\caption{Operation- and source-graded response over 240 live judgements. The trusted host keeps its reads (with a small tail of persistence-escalated cuts as its offence count rises across the sequence) and is cut on the operations its role must not perform, whereas the unregistered attacker is cut on every operation. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/critbeh/judgements.csv}{\texttt{results/critbeh/judgements.csv}}.}
+\caption[Operation- and source-graded response]{Operation- and source-graded response over 240 live judgements. The trusted host keeps its reads (with a small tail of persistence-escalated cuts as its offence count rises across the sequence) and is cut on the operations its role must not perform, whereas the unregistered attacker is cut on every operation. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/critbeh/judgements.csv}{\texttt{results/critbeh/judgements.csv}}.}
 \label{fig:statcrit}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_flowintegrity.png}
-\caption{Flow-integrity, ten-second poll versus the event-driven monitor. Left: a two-second transient injection is missed by the poll on 25 of 30 trials but caught on all 30 by the event-driven monitor; a persistent injection is caught by both. Right: median detection latency, 8.5\,s for the poll against 0.27\,s for the monitor (log axis). Sources: \href{\repourl/blob/main/07_Evaluation/overnight/results/flowint/persistent.csv}{\texttt{persistent.csv}} and \href{\repourl/blob/main/07_Evaluation/overnight/results/flowint/transient.csv}{\texttt{transient.csv}} for the poll, and \href{\repourl/blob/main/07_Evaluation/overnight/results/gap4_flowmonitor/transient_eventdriven.csv}{\texttt{transient\_eventdriven.csv}} for the event-driven monitor.}
+\caption[Flow-integrity: poll vs event-driven monitor]{Flow-integrity, ten-second poll versus the event-driven monitor. Left: a two-second transient injection is missed by the poll on 25 of 30 trials but caught on all 30 by the event-driven monitor; a persistent injection is caught by both. Right: median detection latency, 8.5\,s for the poll against 0.27\,s for the monitor (log axis). Sources: \href{\repourl/blob/main/07_Evaluation/overnight/results/flowint/persistent.csv}{\texttt{persistent.csv}} and \href{\repourl/blob/main/07_Evaluation/overnight/results/flowint/transient.csv}{\texttt{transient.csv}} for the poll, and \href{\repourl/blob/main/07_Evaluation/overnight/results/gap4_flowmonitor/transient_eventdriven.csv}{\texttt{transient\_eventdriven.csv}} for the event-driven monitor.}
 \label{fig:statflowint}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{stat_transparency.png}
-\caption{Process transparency: the tank-level distribution armed against disarmed, over roughly seven thousand interleaved, load-matched per-second samples. The two distributions coincide (means 50.7\% armed and 51.5\% disarmed) and neither leaves the control band, so arming the defence has no measurable effect on the process. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/e2/interleaved.csv}{\texttt{results/e2/interleaved.csv}}.}
+\caption[Process transparency: armed vs disarmed]{Process transparency: the tank-level distribution armed against disarmed, over roughly seven thousand interleaved, load-matched per-second samples. The two distributions coincide (means 50.7\% armed and 51.5\% disarmed) and neither leaves the control band, so arming the defence has no measurable effect on the process. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/e2/interleaved.csv}{\texttt{results/e2/interleaved.csv}}.}
 \label{fig:stattransparency}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.78\textwidth]{stat_mttm_load.png}
-\caption{Reaction window against background load, measured at the controller's decision-and-log stage: both the background and the probe are posted directly to \texttt{/cars/respond}, so this characterises the controller (\texttt{classify}, \texttt{select\_response} and the audit write), not the Snort-to-file-to-HTTP sensor bridge. The window holds in the tens of milliseconds to about a thousand operations a second and rises only as this single-threaded stage nears its sixteen-to-eighteen-thousand-a-second bench ceiling. The sensor bridge is a separate and lower ceiling, the acknowledged bottleneck carried to the future work (Section~\ref{sec:threats}), and is not what this curve measures. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/gap1_live/curve.csv}{\texttt{results/gap1\_live/curve.csv}}.}
+\caption[Reaction window against background load]{Reaction window against background load, measured at the controller's decision-and-log stage: both the background and the probe are posted directly to \texttt{/cars/respond}, so this characterises the controller (\texttt{classify}, \texttt{select\_response} and the audit write), not the Snort-to-file-to-HTTP sensor bridge. The window holds in the tens of milliseconds to about a thousand operations a second and rises only as this single-threaded stage nears its sixteen-to-eighteen-thousand-a-second bench ceiling. The sensor bridge is a separate and lower ceiling, the acknowledged bottleneck carried to the future work (Section~\ref{sec:threats}), and is not what this curve measures. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/gap1_live/curve.csv}{\texttt{results/gap1\_live/curve.csv}}.}
 \label{fig:statload}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.92\textwidth]{stat_jitter.png}
-\caption{Reconnection jitter on the legitimate conduit: restarting the passive Snort sensor is transparent (no dip), whereas a forced controller reconnection stalls forwarding. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/jitter/timeline.csv}{\texttt{results/jitter/timeline.csv}} (one spurious counter sample removed).}
+\caption[Reconnection jitter on the legitimate conduit]{Reconnection jitter on the legitimate conduit: restarting the passive Snort sensor is transparent (no dip), whereas a forced controller reconnection stalls forwarding. Source: \href{\repourl/blob/main/07_Evaluation/overnight/results/jitter/timeline.csv}{\texttt{results/jitter/timeline.csv}} (one spurious counter sample removed).}
 \label{fig:statjitter}
 \end{figure}
 
@@ -681,28 +681,28 @@ The figures below back the long-run and stress test of Section~\ref{sec:evallong
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_longrun_mttm.png}
-\caption{Reaction window over the long-run and stress campaign. The source-cut path (356 attacks, median 8.5\,ms) sits close to the 7.6\,ms controlled single-clock reference of Section~\ref{sec:evallatency}; the false-data injections from the compromised trusted host form a separate mode near 100\,ms, the conduit-block path that installs after the first packets. 437 of the 440 measured attacks are shown: two under-load DDoS-probe samples, which belong to the load curve rather than the clean reaction window, and one physically impossible negative row from a stale-rule read, are excluded.}
+\caption[Reaction window, long-run campaign]{Reaction window over the long-run and stress campaign. The source-cut path (356 attacks, median 8.5\,ms) sits close to the 7.6\,ms controlled single-clock reference of Section~\ref{sec:evallatency}; the false-data injections from the compromised trusted host form a separate mode near 100\,ms, the conduit-block path that installs after the first packets. 437 of the 440 measured attacks are shown: two under-load DDoS-probe samples, which belong to the load curve rather than the clean reaction window, and one physically impossible negative row from a stale-rule read, are excluded.}
 \label{fig:statlongmttm}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_longrun_pervector.png}
-\caption{Per-vector reaction window pooled over the four runs (box is the interquartile range, line the median). The source-cut vectors sit at roughly 7 to 12\,ms; the two false-data injection vectors from the compromised trusted host sit near 100\,ms because they draw a conduit block rather than an immediate source cut.}
+\caption[Per-vector reaction window]{Per-vector reaction window pooled over the four runs (box is the interquartile range, line the median). The source-cut vectors sit at roughly 7 to 12\,ms; the two false-data injection vectors from the compromised trusted host sit near 100\,ms because they draw a conduit block rather than an immediate source cut.}
 \label{fig:statlongpervec}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{stat_longrun_tierladder.png}
-\caption{Criticality-scaled isolation timeout over 120 tier probes across the four runs. Every probe installed 75/60/45/30\,s for CRITICAL/HIGH/MEDIUM/LOW with no deviation, at a median engine decide-time of 0.50\,ms under the concurrent night-campaign load, against the 0.026\,ms of the dedicated clean run of Section~\ref{sec:evallatency}.}
+\caption[Criticality-scaled timeout, 120 probes]{Criticality-scaled isolation timeout over 120 tier probes across the four runs. Every probe installed 75/60/45/30\,s for CRITICAL/HIGH/MEDIUM/LOW with no deviation, at a median engine decide-time of 0.50\,ms under the concurrent night-campaign load, against the 0.026\,ms of the dedicated clean run of Section~\ref{sec:evallatency}.}
 \label{fig:statlongtier}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{stat_connpool_gradient.png}
-\caption{The S7-1200 (1212C) connection-pool limit. The CPU exposes six dynamic connection resources; repeatedly isolating S7 sessions leaves half-open sessions that consume them. Packing about five isolations into each short cycle evicted the legitimate Factory IO client at 4.0 times an hour and the run could not be sustained; pacing to one isolation per cycle held the process for about ninety minutes at 1.3 to 2.0 evictions an hour. This is the empirical confirmation of the connection-pool caveat in Section~\ref{sec:threats}.}
+\caption[S7-1200 connection-pool limit]{The S7-1200 (1212C) connection-pool limit. The CPU exposes six dynamic connection resources; repeatedly isolating S7 sessions leaves half-open sessions that consume them. Packing about five isolations into each short cycle evicted the legitimate Factory IO client at 4.0 times an hour and the run could not be sustained; pacing to one isolation per cycle held the process for about ninety minutes at 1.3 to 2.0 evictions an hour. This is the empirical confirmation of the connection-pool caveat in Section~\ref{sec:threats}.}
 \label{fig:statconnpool}
 \end{figure}
 
@@ -718,6 +718,6 @@ That the freeze is the endpoint's limit rather than a defect in the policy is co
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{stat_longrun_stability.png}
-\caption{Process stability under continuous attack: the tank level over the ninety-two one-minute snapshots of the paced run (the same run as the second paced bar of Figure~\ref{fig:statconnpool}, about ninety-one minutes), held within the 20 to 78 control band throughout. The controller and its remediation agent reported the process online in all ninety-two one-minute snapshots (this is the agent's PLC link sampled once a minute, which does not capture sub-minute client outages) and the flow auditor reported no drift. The two dashed marks are the brief Factory IO client evictions that the liveness guard caught and recovered.}
+\caption[Process stability under continuous attack]{Process stability under continuous attack: the tank level over the ninety-two one-minute snapshots of the paced run (the same run as the second paced bar of Figure~\ref{fig:statconnpool}, about ninety-one minutes), held within the 20 to 78 control band throughout. The controller and its remediation agent reported the process online in all ninety-two one-minute snapshots (this is the agent's PLC link sampled once a minute, which does not capture sub-minute client outages) and the flow auditor reported no drift. The two dashed marks are the brief Factory IO client evictions that the liveness guard caught and recovered.}
 \label{fig:statlongstab}
 \end{figure}
