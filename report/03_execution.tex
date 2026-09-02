@@ -225,10 +225,10 @@ Response & What it does on the wire & Selected when \\
 \hline
 ALLOW & forwards the traffic and records it; installs no reactive rule & the operation is legitimate for the source, operation and asset \\
 MONITOR & forwards but raises an alert for the record & a permitted operation is worth watching \\
-THROTTLE & attaches a rate-limiting meter to the conduit (priority~100, cookie \texttt{0x00ca}) & a SENSITIVE actuation, or a non-critical flood, that should be slowed rather than cut \\
+THROTTLE & attaches a rate-limiting meter to the conduit & a SENSITIVE actuation, or a non-critical flood, that should be slowed rather than cut \\
 DEFLECT & rewrites the destination to a honeypot and installs the forward and reverse rules & the source is to be drawn off to a decoy rather than dropped (provided by the engine; not exercised in this evaluation) \\
-ISOLATE & drops all traffic from the offending source (priority~110, cookie \texttt{0x00ca}) & a FORBIDDEN operation from a source that persists; quarantines the whole host \\
-BLOCK & drops the single offending conduit (priority~100, cookie \texttt{0x00ca}) & a FORBIDDEN first offence, a shared NAT identity, or a flood on a critical asset; cuts the one flow, not the host \\
+ISOLATE & drops all traffic from the offending source & a FORBIDDEN operation from a source that persists; quarantines the whole host \\
+BLOCK & drops the single offending conduit & a FORBIDDEN first offence, a shared NAT identity, or a flood on a critical asset; cuts the one flow, not the host \\
 REFUSE & mirrors and alerts only; installs no rule, never enforces & the operator control loop (tier CRITICAL); the safety cap that the defence must never cut \\
 \hline
 \end{tabular}
