@@ -61,7 +61,7 @@ CARS enforces its policy in the data plane as a pipeline of three OpenFlow table
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{fig_cars_flow.png}
-\caption[A packet's path through the CARS fabric]{A packet's path through the CARS fabric, and the reactive decision that installs rules into it. Above, the three-table pipeline: a packet is admitted only if its identity binds at Table~0 (GUARD), its connection is permitted at the stateful Table~1 (POLICY), and it is then forwarded at Table~2 (SWITCH). Below, the decision that produces the reactive rules on Table~1: deep packet inspection recovers the operation, the rulebook maps the source role, operation and destination to a tier, a sensitive operation on a critical asset is elevated, and the tier, weight and rate select the graded response, installed under cookie \texttt{0x00ca} with a criticality-scaled self-heal (proactive policy carries \texttt{0x00a2}). Drawn for this report from the deployed pipeline, rulebook and Snort rules.}
+\caption[A packet's path through the CARS fabric]{A packet's path through the CARS fabric, and the reactive decision that installs rules into it. Above, the three-table pipeline: a packet is admitted only if its identity binds at Table~0 (GUARD), its connection is permitted at the stateful Table~1 (POLICY), and it is then forwarded at Table~2 (SWITCH). Below, the decision that produces the reactive rules on Table~1: deep packet inspection recovers the operation, the rulebook maps the source role, operation and destination to a tier, a sensitive operation on a critical asset is elevated, and the tier, weight and rate select the graded response, installed into Table~1 with a criticality-scaled self-heal. Drawn for this report from the deployed pipeline, rulebook and Snort rules.}
 \label{fig:carsflow}
 \end{figure}
 
@@ -94,7 +94,7 @@ The proactive and reactive rules carry distinct cookies, so the flow-integrity c
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\textwidth]{flow_armed_vs_disarmed.png}
-\caption[A malicious write's path, armed and disarmed]{The path of a malicious S7 write in each state of the defence. Disarmed, the write crosses the fabric, reaches the critical PLC and drives the process to an unsafe state. Armed, the reactive rule (\texttt{cookie 0x00ca}) drops it in the fabric, so it never reaches the PLC and the process is held. The armed-versus-disarmed contrast is measured in Chapter~\ref{chap:evaluation}.}
+\caption[A malicious write's path, armed and disarmed]{The path of a malicious S7 write in each state of the defence. Disarmed, the write crosses the fabric, reaches the critical PLC and drives the process to an unsafe state. Armed, the reactive rule drops it in the fabric, so it never reaches the PLC and the process is held. The armed-versus-disarmed contrast is measured in Chapter~\ref{chap:evaluation}.}
 \label{fig:flow}
 \end{figure}
 
